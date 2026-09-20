@@ -1,340 +1,220 @@
-# 🎨 VELOCITY X — Design System & UI/UX Master Specification (design.md)
+# 🎨 VELOCITY X — Visual Design System & Chromatic Master Guide (design.md)
 
 > **Document Classification**: Design Master Architecture (DS-001)  
 > **Aesthetic Philosophy**: Cyber-Kinetic Hyper-Realism & Midnight Automotive Pursuit  
-> **Inspirations**: *Need for Speed: Most Wanted*, *Cyberpunk 2077*, *Porsche Digital Cockpit*  
-> **UI Paradigm**: Glassmorphism with Luminous Neon Accents & Dual-Thumb Ergonomics  
-> **Last Updated**: September 20, 2026 | Version 2.0 (Executive Edition)  
+> **Chromatic Paradigm**: High-Contrast Obsidian Dark Mode with Luminous Photonic Neons  
+> **Inspirations**: *Need for Speed: Most Wanted*, *Cyberpunk 2077*, *Porsche Digital Mission R*  
+> **Last Updated**: September 20, 2026 | Version 3.0 (Chromatic Master Edition)  
 
 ---
 
-## 1. Design DNA & Visual Tenets
+## 🌈 The Chromatic Vision & Visual DNA
+
+VELOCITY X is defined by high-contrast darkness punctured by razor-sharp luminous photons. The color system is engineered to provide **instant subconscious recognition** at speeds exceeding 300 km/h:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│                             THE 5 PILLARS OF CYBER-KINETIC UI                            │
+│                             THE 4 CHROMATIC ENERGY DOMAINS                               │
+├───────────────────────────────┬───────────────────────────────┬──────────────────────────┤
+│ ⚡ DOMAIN 1: KINETIC VELOCITY │ 🚨 DOMAIN 2: POLICE PURSUIT   │ 👑 DOMAIN 3: ECONOMY     │
+│ Cyber Cyan (#00f3ff)          │ Interceptor Red (#ff1133)     │ Liquid Gold (#e6c300)    │
+│ Electric Blue (#0066ff)       │ Pursuit Blue (#0066ff)        │ Molten Amber (#ffaa00)   │
+├───────────────────────────────┼───────────────────────────────┼──────────────────────────┤
+│ 🏎️ DOMAIN 4: ADRENALINE      │ 🖤 DOMAIN 5: MIDNIGHT CHASSIS │ 🌸 DOMAIN 6: NEON GLOW   │
+│ Crimson Flare (#ff0055)       │ Midnight Obsidian (#080b12)   │ Neon Pink (#ff0088)      │
+│ Flame Orange (#ff7700)        │ Carbon Deck (#11141a)         │ Emerald Green (#00ff66)  │
+└───────────────────────────────┴───────────────────────────────┴──────────────────────────┘
+```
+
+---
+
+## 🎨 Master Color Palette & Visual Swatches
+
+Below is the complete chromatic reference with live visual color badges, exact color coordinates (HEX, RGB, HSL), contrast compliance, and in-game application:
+
+### 1. Primary Kinetic & Brand Accents
+
+| Visual Swatch & Token | HEX | RGB | HSL | Contrast vs Dark | In-Game Role & Application |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| ![#00f3ff](https://img.shields.io/badge/CYBER_CYAN-%2300f3ff?style=for-the-badge&logoColor=black&labelColor=080b12) | `#00f3ff` | `rgb(0, 243, 255)` | `hsl(183°, 100%, 50%)` | **14.2:1 (AAA)** | **Primary Brand Color**: Tachometer needle, Apex Roadster paint, NOS fuel reserves, active touch buttons, HUD rimlines. |
+| ![#0066ff](https://img.shields.io/badge/ELECTRIC_BLUE-%230066ff?style=for-the-badge&logoColor=white&labelColor=080b12) | `#0066ff` | `rgb(0, 102, 255)` | `hsl(216°, 100%, 50%)` | **5.8:1 (AA)** | **High-Speed Acceleration**: Nitro secondary exhaust flame core, play button gradient, police flasher secondary. |
+| ![#080b12](https://img.shields.io/badge/MIDNIGHT_OBSIDIAN-%23080b12?style=for-the-badge&logoColor=white&labelColor=000000) | `#080b12` | `rgb(8, 11, 18)` | `hsl(222°, 38%, 5%)` | **Base Root** | **Atmospheric Canvas**: Sky backdrop, distant horizon fog, road base tarmac, menu vignette. |
+| ![#0e1420](https://img.shields.io/badge/SLATE_GLASS-%230e1420?style=for-the-badge&logoColor=white&labelColor=080b12) | `rgba(14,20,32,0.85)` | `rgb(14, 20, 32)` | `hsl(220°, 39%, 9%)` | **Surface** | **Glassmorphic Cards**: Frosted HUD cards, garage showroom modal, tactical rearview mirror frame. |
+
+---
+
+### 2. High-Octane Adrenaline & Danger
+
+| Visual Swatch & Token | HEX | RGB | HSL | Contrast vs Dark | In-Game Role & Application |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| ![#ff0055](https://img.shields.io/badge/CRIMSON_FLARE-%23ff0055?style=for-the-badge&logoColor=white&labelColor=080b12) | `#ff0055` | `rgb(255, 0, 85)` | `hsl(340°, 100%, 50%)` | **6.8:1 (AAA)** | **Near-Miss & Calipers**: Near-miss alert banner, Veloce GT supercar lacquer, glowing alloy brake calipers. |
+| ![#ff7700](https://img.shields.io/badge/FLAME_ORANGE-%23ff7700?style=for-the-badge&logoColor=black&labelColor=080b12) | `#ff7700` | `rgb(255, 119, 0)` | `hsl(28°, 100%, 50%)` | **8.4:1 (AAA)** | **Collision Sparks**: Near-miss pill gradient, metallic crash spark particles, NOS depletion warning. |
+| ![#ff1133](https://img.shields.io/badge/POLICE_RED-%23ff1133?style=for-the-badge&logoColor=white&labelColor=080b12) | `#ff1133` | `rgb(255, 17, 51)` | `hsl(351°, 100%, 53%)` | **7.2:1 (AAA)** | **Emergency Flasher**: 8 Hz police roof strobe lightbar (Left side), screen-edge pursuit strobe vignette. |
+| ![#0066ff](https://img.shields.io/badge/POLICE_BLUE-%230066ff?style=for-the-badge&logoColor=white&labelColor=080b12) | `#0066ff` | `rgb(0, 102, 255)` | `hsl(216°, 100%, 50%)` | **5.8:1 (AA)** | **Emergency Flasher**: 8 Hz police roof strobe lightbar (Right side), screen-edge pursuit strobe vignette. |
+
+---
+
+### 3. Multipliers, Economy & Currency
+
+| Visual Swatch & Token | HEX | RGB | HSL | Contrast vs Dark | In-Game Role & Application |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| ![#e6c300](https://img.shields.io/badge/LIQUID_GOLD-%23e6c300?style=for-the-badge&logoColor=black&labelColor=080b12) | `#e6c300` | `rgb(230, 195, 0)` | `hsl(51°, 100%, 45%)` | **11.2:1 (AAA)** | **Currency & Records**: In-game gold coin badges, new all-time high score banner, Titan V8 car paint. |
+| ![#ffaa00](https://img.shields.io/badge/MOLTEN_AMBER-%23ffaa00?style=for-the-badge&logoColor=black&labelColor=080b12) | `#ffaa00` | `rgb(255, 170, 0)` | `hsl(40°, 100%, 50%)` | **10.4:1 (AAA)** | **Multiplier Streaks**: Combo multiplier badge (`x2, x3, x5, x8`), combo decay timer bar, vehicle ram armor bar. |
+
+---
+
+## 🏎️ Supercar Clearcoat Lacquer Palette (Garage Paint Shop)
+
+Every supercar utilizes Three.js `MeshPhysicalMaterial` with physical clearcoat lacquer (`clearcoat: 1.0`, `clearcoatRoughness: 0.08`, `metalness: 0.85-0.95`). Here is the definitive color guide for the paint shop:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                              SUPERCAR PAINT FINISH CATALOG                               │
+├───────────────────┬───────────┬──────────────────────────────────────────────────────────┤
+│ FINISH NAME       │ HEX CODE  │ LIVE CHROMATIC BADGE                                     │
+├───────────────────┼───────────┼──────────────────────────────────────────────────────────┤
+│ ⚡ Cyber Cyan     │ `#00f3ff` │ ![](https://img.shields.io/badge/Cyber_Cyan-%2300f3ff?style=for-the-badge&logoColor=black)   │
+│ 🖤 Midnight Carbon│ `#11141a` │ ![](https://img.shields.io/badge/Midnight_Carbon-%2311141a?style=for-the-badge&logoColor=white) │
+│ 🏎️ Crimson Flare  │ `#ff0044` │ ![](https://img.shields.io/badge/Crimson_Flare-%23ff0044?style=for-the-badge&logoColor=white)  │
+│ 👑 Liquid Gold    │ `#e6c300` │ ![](https://img.shields.io/badge/Liquid_Gold-%23e6c300?style=for-the-badge&logoColor=black)   │
+│ 🧪 Toxic Lime     │ `#22ff44` │ ![](https://img.shields.io/badge/Toxic_Lime-%2322ff44?style=for-the-badge&logoColor=black)    │
+│ 🔮 Ultraviolet    │ `#a822ff` │ ![](https://img.shields.io/badge/Ultraviolet-%23a822ff?style=for-the-badge&logoColor=white)  │
+└───────────────────┴───────────┴──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🌸 RGB Neon Ground Underglow Formulations
+
+Simulates real-time double-pass ground illumination (Planar additive decal + dynamic PointLight with 3.2m falloff radius):
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                               RGB NEON UNDERGLOW CATALOG                                 │
+├───────────────────┬───────────┬──────────────────────────────────────────────────────────┤
+│ GLOW NAME         │ HEX CODE  │ LIVE CHROMATIC BADGE                                     │
+├───────────────────┼───────────┼──────────────────────────────────────────────────────────┤
+│ ❄️ Ice Blue       │ `#00f3ff` │ ![](https://img.shields.io/badge/Ice_Blue-%2300f3ff?style=for-the-badge&logoColor=black)      │
+│ 🌸 Neon Pink      │ `#ff0088` │ ![](https://img.shields.io/badge/Neon_Pink-%23ff0088?style=for-the-badge&logoColor=white)    │
+│ 🌲 Emerald Green  │ `#00ff66` │ ![](https://img.shields.io/badge/Emerald_Green-%2300ff66?style=for-the-badge&logoColor=black) │
+│ ☀️ Solar Amber    │ `#ff9900` │ ![](https://img.shields.io/badge/Solar_Amber-%23ff9900?style=for-the-badge&logoColor=black)  │
+│ 👻 Ghost Purple   │ `#9933ff` │ ![](https://img.shields.io/badge/Ghost_Purple-%239933ff?style=for-the-badge&logoColor=white) │
+└───────────────────┴───────────┴──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🌈 Dynamic Multi-Color Gradients & Shaders
+
+In VELOCITY X, static flat colors are forbidden. Every dynamic element uses high-energy linear and radial gradients:
+
+### 1. The Speedometer High-Velocity Arc Gradient
+Used in `MobileHUD.tsx` on the radial tachometer track (transitions smoothly as speed surges):
+```css
+/* 0 km/h (Cyber Cyan) ➔ 180 km/h (Molten Amber) ➔ 300 km/h (Crimson Flare) */
+background: linear-gradient(90deg, #00f3ff 0%, #ffaa00 65%, #ff0055 100%);
+```
+- **0–140 km/h**: Calming, high-visibility **Cyber Cyan** (`#00f3ff`).
+- **140–220 km/h**: High-heat warning **Molten Amber** (`#ffaa00`).
+- **220–320 km/h (Redline & NOS)**: Violent adrenaline **Crimson Flare** (`#ff0055`).
+
+### 2. The Nitrous Oxide (NOS) Rocket Exhaust Jet
+Used in `ParticleSystem.ts` for dual exhaust fire particles:
+```css
+/* Electric Cyan Flame Core ➔ Deep Rocket Blue */
+background: radial-gradient(circle, #00f3ff 0%, #0066ff 70%, transparent 100%);
+```
+
+### 3. The Near-Miss Electric Banner
+Used in `MobileHUD.tsx` when weaving inches from civilian vehicles:
+```css
+/* Crimson Flare ➔ Hot Flame Orange */
+background: linear-gradient(135deg, #ff0055 0%, #ff7700 100%);
+box-shadow: 0 0 20px rgba(255, 0, 85, 0.6);
+```
+
+### 4. Police Pursuit Red-Blue Alternating Vignette
+Used in `Engine.ts` & `MobileHUD.tsx` during high-speed police chases (8 Hz alternating pulse):
+```css
+/* Phase A (Red Strobe) */
+box-shadow: inset 0 0 80px 20px rgba(255, 17, 51, 0.75);
+
+/* Phase B (Blue Strobe) */
+box-shadow: inset 0 0 80px 20px rgba(0, 102, 255, 0.75);
+```
+
+---
+
+## 📐 Component UI Color Blueprint
+
+Below is an explicit color-mapped architectural schematic showing exactly which color token applies to every single component:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────┐
+│                         EXPLICIT COMPONENT COLOR SCHEMATIC                               │
 ├──────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                          │
-│  1. 300 KM/H GLANCEABILITY    2. PERIPHERAL HORIZON       3. PHOTOREALISTIC PBR          │
-│     Telemetry readable in        Center highway lanes        Clearcoat lacquer &         │
-│     under 50 milliseconds        100% unobstructed           wet tarmac speculars        │
+│  [AUDIO: #00f3ff] [INSTALL: #00f3ff]      [REARVIEW MIRROR]              [COINS: #e6c300]│
+│                                           Frame: #283349                 Border: #ffaa00 │
+│                                           Glass: #101622 -> #1e293b                      │
+│                                           Left Strobe:  #ff1133 [RED]                    │
+│                                           Right Strobe: #0066ff [BLUE]                   │
+│                                           Distance:     #ff3344                          │
 │                                                                                          │
-│                  4. TACTILE DUAL-THUMB        5. LUMINOUS ADRENALINE                     │
-│                     Ergonomic hit zones          8 Hz police strobes &                   │
-│                     with haptic rumble           speed-warp bloom                        │
 │                                                                                          │
+│                                 4-LANE RACING HIGHWAY                                    │
+│                                 Tarmac:       #181a20                                    │
+│                                 Outer Line:   #ffaa00 [YELLOW]                           │
+│                                 Inner Dashes: #ffffff [WHITE]                            │
+│                                 Guardrails:   #4a5568                                    │
+│                                 Skyscrapers:  #0a0e18                                    │
+│                                                                                          │
+│                                                                                          │
+│  ┌─────────────────────────┐                             ┌─────────────────────────────┐ │
+│  │ LEFT THUMB STEERING     │     ┌─────────────────┐     │ RIGHT THUMB PEDALS          │ │
+│  │ Button Surface: #0e1626 │     │ COCKPIT CLUSTER │     │                             │ │
+│  │ Border:         #00f3ff │     │ Arc: Grad below │     │ [NOS BUTTON]                │ │
+│  │ Icon/Text:      #00f3ff │     │ Speed:  #ffffff │     │ Background: #00f3ff Glow    │ │
+│  │ Active Bloom:   Cyan G. │     │ Unit:   #00f3ff │     │ Ring:       #00f3ff         │ │
+│  │                         │     │ Gear:   #00f3ff │     │                             │ │
+│  │                         │     │ RPM:    #00f3ff │     │ [BRAKE]       [GAS PEDAL]   │ │
+│  │                         │     │ Redline:#ff0033 │     │ Border:#ff0055 Border:#00f3ff││
+│  │                         │     │ NOS Bar:#00f3ff │     │ Grad:  Crimson Grad:  Cyan  │ │
+│  └─────────────────────────┘     └─────────────────┘     └─────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **Glanceability Under Extreme Speed**:
-   When the player is weaving between 18-wheeler trucks at 280+ km/h, they cannot read small paragraphs. Telemetry uses massive, high-contrast digital typography (`Orbitron 900`), glowing radial SVG arcs, and instant color-coded alerts.
-2. **Peripheral Horizon Protection**:
-   The center of the screen is sacred. All HUD instruments are pushed to the top and bottom edges, leaving the 4 highway lanes 100% clear for high-speed traffic anticipation.
-3. **Photorealistic Automotive Lacquer (No Cartoon / No Low-Poly)**:
-   Vehicles feature multi-layered procedural `MeshPhysicalMaterial` with metallic clearcoat lacquer, specular asphalt puddle reflections, and glowing alloy brake calipers.
-4. **Tactile Dual-Thumb Ergonomics**:
-   Controls are mapped directly to the natural biomechanical resting zones of human thumbs on horizontal mobile screens.
-5. **Luminous Energy & Adrenaline**:
-   Electric cyan photons, molten amber streaks, and alternating red-blue emergency strobes pulse dynamically with game intensity.
+---
+
+## 🔤 Typography Color & Glow Rules
+
+| Typography Token | Font Family | Default Color | Active / Glow State |
+| :--- | :--- | :--- | :--- |
+| **Game Title** | `Orbitron 900` | `#ffffff` | Accent `<span class="highlight">` in `#00f3ff` with `text-shadow: 0 0 25px #00f3ff` |
+| **Digital Speedometer** | `Orbitron 900` | `#ffffff` | High-visibility crisp white with subtle `0 0 10px rgba(255,255,255,0.4)` bloom |
+| **Speed Unit (KM/H)** | `Orbitron 700` | `#00f3ff` | Electric cyber cyan, uppercase letter-spacing 1px |
+| **Gear Indicator** | `Orbitron 800` | `#00f3ff` | Contained in `#1e293b` dark slate pill |
+| **Near-Miss Banner** | `Orbitron 900` | `#ffffff` | On `#ff0055` to `#ff7700` gradient with flame icon in `#ffea00` |
+| **Combo Multiplier Tag**| `Orbitron 900` | `#ffaa00` | Contained in `#000000` pitch black pill with amber outline |
+| **Coins Display** | `Orbitron 800` | `#e6c300` | Contained in translucent pill with amber border and gold coin icon |
+| **Telemetry Labels** | `Rajdhani 700` | `#64748b` | Muted slate grey to prevent distracting peripheral glare |
 
 ---
 
-## 2. Design Tokens & Color Architecture
+## ♿ Accessibility, Colorblind Safety & Sensory Redundancy
 
-```
-┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│                                 CORE COLOR SPECTRUM & TOKENS                             │
-├───────────────────┬───────────┬──────────────────────┬─────────────┬─────────────────────┤
-│ TOKEN NAME        │ HEX CODE  │ RGB / ALPHA          │ CONTRAST    │ ROLE & SEMANTICS    │
-├───────────────────┼───────────┼──────────────────────┼─────────────┼─────────────────────┤
-│ `--bg-dark`       │ `#080b12` │ `rgb(8, 11, 18)`     │ Base        │ Root canvas & fog   │
-│ `--bg-card`       │ Translucent│ `rgba(14, 20, 32, 0.82)`│ 12.8:1  │ Glassmorphic modals │
-│ `--bg-border`     │ Translucent│ `rgba(0, 243, 255, 0.25)`│ 4.5:1   │ Neon cyber rimlines │
-│ `--cyan`          │ `#00f3ff` │ `rgb(0, 243, 255)`   │ 14.2:1 (AAA)│ Primary UI & Speed  │
-│ `--cyan-glow`     │ Translucent│ `rgba(0, 243, 255, 0.45)`│ Glow    │ Button touch bloom  │
-│ `--crimson`       │ `#ff0055` │ `rgb(255, 0, 85)`    │ 6.8:1 (AAA) │ Near-Miss & Calipers│
-│ `--crimson-glow`  │ Translucent│ `rgba(255, 0, 85, 0.45)`│ Glow    │ Brake pedal light   │
-│ `--amber`         │ `#ffaa00` │ `rgb(255, 170, 0)`   │ 10.4:1 (AAA)│ Multiplier combos   │
-│ `--gold`          │ `#e6c300` │ `rgb(230, 195, 0)`   │ 11.2:1 (AAA)│ Currency & Trophies │
-│ `--police-red`    │ `#ff1133` │ `rgb(255, 17, 51)`   │ 7.2:1 (AAA) │ 8Hz Roof Strobe     │
-│ `--police-blue`   │ `#0066ff` │ `rgb(0, 102, 255)`   │ 5.8:1 (AA)  │ 8Hz Roof Strobe     │
-└───────────────────┴───────────┴──────────────────────┴─────────────┴─────────────────────┘
-```
+VELOCITY X ensures 100% playability for players with color vision deficiencies (Deuteranopia, Protanopia, Tritanopia):
 
-### 2.1 Supercar Automotive Paint Formulations
-Every vehicle lacquer finish is engineered with physical specular reflection values:
-
-```
-┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│                                 AUTOMOTIVE LACQUER FORMULAS                              │
-├───────────────────┬───────────┬───────────┬───────────┬───────────┬──────────────────────┤
-│ FINISH NAME       │ HEX CODE  │ METALNESS │ ROUGHNESS │ CLEARCOAT │ OPTICAL CHARACTER    │
-├───────────────────┼───────────┼───────────┼───────────┼───────────┼──────────────────────┤
-│ ⚡ Cyber Cyan     │ `#00f3ff` │ 0.85      │ 0.18      │ 1.00      │ Electric metallic    │
-│ 🖤 Midnight Carbon│ `#11141a` │ 0.92      │ 0.12      │ 1.00      │ Deep obsidian mirror │
-│ 🏎️ Crimson Flare  │ `#ff0044` │ 0.88      │ 0.16      │ 1.00      │ Candy-apple racing red│
-│ 👑 Liquid Gold    │ `#e6c300` │ 0.95      │ 0.14      │ 1.00      │ Specular gold nugget │
-│ 🧪 Toxic Lime     │ `#22ff44` │ 0.82      │ 0.20      │ 1.00      │ Pearl-metallic lime  │
-│ 🔮 Ultraviolet    │ `#a822ff` │ 0.86      │ 0.15      │ 1.00      │ Deep royal violet    │
-└───────────────────┴───────────┴───────────┴───────────┴───────────┴──────────────────────┘
-```
-
-### 2.2 RGB Neon Ground Underglow Formulations
-Simulates double-pass real-time ground bounce (Planar additive decal + dynamic PointLight):
-- ❄️ **Ice Blue**: `#00f3ff` (3.2m radius, 1.5 intensity)
-- 🌸 **Neon Pink**: `#ff0088` (3.2m radius, 1.5 intensity)
-- 🌲 **Emerald**: `#00ff66` (3.2m radius, 1.5 intensity)
-- ☀️ **Solar Amber**: `#ff9900` (3.2m radius, 1.5 intensity)
-- 👻 **Ghost Purple**: `#9933ff` (3.2m radius, 1.5 intensity)
+1. **Dual-Coding (Shape + Color)**:
+   - Near-miss alerts never rely solely on crimson red — they prominently display a **🔥 Flame Icon** and bold text **`NEAR MISS! +150 PTS`**.
+   - The Combo streak uses massive numeric typography (`x2, x3, x5, x8`) and a depleting physical progress bar.
+2. **Police Strobe Spatial Distinction**:
+   - The Red strobe is **always on the Left**; the Blue strobe is **always on the Right**. Players with red-green colorblindness easily distinguish which flasher is active via spatial alternation.
+3. **Triple-Sensory Confirmation**:
+   - Every critical gameplay event triggers **Visual** (color pulse), **Audio** (frequency sweep), and **Haptic** (physical vibration jolt).
 
 ---
 
-## 3. Typography & Information Hierarchy
+## 🎯 Summary
 
-We combine two Google Fonts to create the authentic telemetry feel of a high-tech supercar cockpit:
-
-```css
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&display=swap');
-```
-
-```
-┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   TYPOGRAPHY SCALE TABLE                                 │
-├───────────────────┬──────────┬────────┬─────────┬──────────────┬─────────────────────────┤
-│ ROLE / ELEMENT    │ FONT     │ WEIGHT │ SIZE    │ LETTER-SPACE │ TEXT-SHADOW GLOW        │
-├───────────────────┼──────────┼────────┼─────────┼──────────────┼─────────────────────────┤
-│ Game Title (Hero) │ Orbitron │ 900    │ 48–64px │ 6px          │ 0 0 25px var(--cyan)    │
-│ Speedometer Digits│ Orbitron │ 900    │ 26–32px │ 0px          │ 0 0 12px #fff           │
-│ Gear Badge Number │ Orbitron │ 800    │ 13px    │ 0px          │ None                    │
-│ Combo Badge       │ Orbitron │ 900    │ 18px    │ 0px          │ 0 0 10px var(--amber)   │
-│ Near-Miss Banner  │ Orbitron │ 900    │ 14px    │ 1.5px        │ 0 0 16px var(--crimson) │
-│ Button CTAs       │ Orbitron │ 900    │ 14–16px │ 1.5px        │ 0 0 14px var(--cyan)    │
-│ Subtitles/Headers │ Orbitron │ 800    │ 11–13px │ 2px          │ None                    │
-│ Telemetry Labels  │ Rajdhani │ 700    │ 9–10px  │ 1.5px        │ None                    │
-│ Stats / Coins     │ Rajdhani │ 700    │ 14–16px │ 0.5px        │ None                    │
-│ Dialog Body       │ Rajdhani │ 600    │ 13–14px │ 0px          │ None                    │
-└───────────────────┴──────────┴────────┴─────────┴──────────────┴─────────────────────────┘
-```
-
----
-
-## 4. Mobile Ergonomics & Thumb Reachability Heatmap
-
-Modern mobile racing games must respect the natural biomechanics of the human hand in landscape orientation:
-
-```
-┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│                         LANDSCAPE THUMB ERGONOMICS & SAFE ZONES                          │
-├──────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                          │
-│  [Audio] [Install]                [TACTICAL REARVIEW MIRROR]                [Coins 🪙]   │
-│  Top-Left (Low Reach)                  Top-Center Mirror                Top-Right (Glance)│
-│                                                                                          │
-│                                                                                          │
-│                           HIGHWAY RACING & TRAFFIC DECK                                  │
-│                             (100% UNRESTRICTED VISION)                                   │
-│                                                                                          │
-│                                                                                          │
-│   ┌───────────────────────┐                               ┌──────────────────────────┐   │
-│   │ LEFT THUMB ZONE       │                               │ RIGHT THUMB ZONE         │   │
-│   │ (Natural Pivot Arc)   │                               │ (High-Intensity Actions) │   │
-│   │                       │      ┌─────────────────┐      │                          │   │
-│   │   ┌─────┐   ┌─────┐   │      │ SPEED & RPM HUD │      │    ┌─────┐    ┌─────┐    │   │
-│   │   │LEFT │   │RIGHT│   │      │    194 KM/H     │      │    │ NOS │    │ GAS │    │   │
-│   │   │STEER│   │STEER│   │      │  GEAR 4 | NOS%  │      │    └─────┘    │ PED │    │   │
-│   │   └─────┘   └─────┘   │      └─────────────────┘      │    ┌─────┐    │ AL  │    │   │
-│   │                       │                               │    │BRAKE│    │     │    │   │
-│   └───────────────────────┘                               │    └─────┘    └─────┘    │   │
-│                                                           └──────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 4.1 Safe-Area Inset Handling (iPhone Dynamic Island & Notches)
-Every primary container enforces CSS safe-area padding:
-```css
-.mobile-controls-container,
-.mobile-app-header,
-.garage-modal-overlay {
-  padding-left: max(16px, env(safe-area-inset-left));
-  padding-right: max(16px, env(safe-area-inset-right));
-  padding-top: max(12px, env(safe-area-inset-top));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-}
-```
-
----
-
-## 5. UI Component Design Specifications
-
-### 5.1 Cockpit Speedometer & RPM Cluster
-
-```
-        ┌────────────────────────┐
-        │       140  180         │
-        │    100   ▲    220      │
-        │   60    / \      260   │
-        │  20    /   \      300  │
-        │       ┌─────┐          │
-        │       │ 194 │ KM/H     │
-        │       └─────┘          │
-        │  [GEAR 4] [████████░░] │
-        └────────────────────────┘
-```
-
-- **SVG Radial Arc**: Outer 100x100 circle track with `stroke-dasharray="198"`, dynamically calculated via:
-  $$\text{DashOffset} = 198 - \left(\frac{\text{Speed}_{\text{km/h}}}{300}\right) \times 165$$
-- **Color Gradient Arc**: Cyan (`#00f3ff`) at 0 km/h $\rightarrow$ Amber (`#ffaa00`) at 180 km/h $\rightarrow$ Crimson (`#ff0055`) at 300 km/h.
-- **Center Readout**: Large 26px `Orbitron 900` digital counter.
-- **Gear Badge**: Compact pill with cyan bold numeral.
-- **Linear RPM Bar**: 100% width track with redline visual flash when $\text{RPM} > 7,500$.
-- **Nitrous Energy Tube**: Cyan-to-blue energy reservoir tube, flashing orange when active and dimming when $< 15\%$.
-
----
-
-### 5.2 Tactical Top-Center Rearview Mirror
-
-```
-        ┌───────────────────────────────────┐
-        │  [●] RED STROBE    BLUE STROBE [●]│
-        │            ┌─────────┐            │
-        │            │ POLICE  │            │
-        │            │ [=] [=] │            │
-        │            └─────────┘     [24m]  │
-        └───────────────────────────────────┘
-```
-
-- **Glass Finish**: Gradient from `#101622` to `#1e293b` with a dark lower road horizon.
-- **Approaching Cruiser Silhouette**: Scales dynamically in real-time based on distance:
-  $$\text{Scale} = \min\left(1.8, \max\left(0.4, \frac{80 - \text{Dist}}{40}\right)\right)$$
-- **Roof Strobes**: Embedded red and blue LED dots alternating at 8 Hz.
-- **Distance Badge**: Crimson pill displaying real-time distance in meters (e.g., `24m`).
-
----
-
-### 5.3 Dual-Thumb Ergonomic Pedals & Steering Pads
-
-```
-  [LEFT THUMB]                                          [RIGHT THUMB]
- ┌──────────┐ ┌──────────┐                     ┌──────────┐     ┌──────────┐
- │    ▲     │ │    ▲     │                     │  ⚡ NOS   │     │  ▲ GAS   │
- │   /      │ │     \    │                     │  ROCKET  │     │          │
- │  LEFT    │ │   RIGHT  │                     │  (68px)  │     │  RACE    │
- │  (78px)  │ │   (78px) │                     └──────────┘     │  PEDAL   │
- └──────────┘ └──────────┘                     ┌──────────┐     │  (92px)  │
-                                               │ ■ BRAKE  │     │          │
-                                               │ (76px)   │     │          │
-                                               └──────────┘     └──────────┘
-```
-
-- **Touch Interaction**:
-  - `PointerDown`: Instantly scales to `0.92x`, triggers a 10ms haptic tick, and illuminates cyan glow.
-  - `PointerUp / Cancel`: Returns to `1.0x` scale smoothly.
-- **Multi-Touch**: Supported natively via isolated pointer IDs (`touch-action: none`).
-
----
-
-### 5.4 Floating Near-Miss & Combo Badges
-
-```
-       ┌────────────────────────────────────────────────┐
-       │ 🔥 NEAR MISS! +300 PTS               [x2 COMBO]│
-       └────────────────────────────────────────────────┘
-```
-
-- **Animation**: Drops into screen using `slidePop` cubic-bezier easing with bouncy overshoot.
-- **Multiplier Tag**: High-contrast black pill with molten amber border.
-
----
-
-### 5.5 Cyber Showroom Garage Modal
-
-```
- ┌────────────────────────────────────────────────────────────────────────┐
- │ CYBER GARAGE                     [🪙 2,450 COINS]                  [X] │
- ├────────────────────────────────────────────────────────────────────────┤
- │ [ APEX ROADSTER ✓ ]      [ VELOCE GT 🔒 ]       [ TITAN V8 MUSCLE 🔒 ] │
- ├──────────────────────────────────┬─────────────────────────────────────┤
- │ SPECS TELEMETRY                  │ CUSTOMIZATION SHOP                  │
- │                                  │                                     │
- │ TOP SPEED:    240 KM/H           │ METALLIC PAINT                      │
- │ ACCELERATION: [█████████░] 9.2   │ (●) (●) (●) (●) (●) (●)             │
- │ HANDLING:     [█████████▌] 9.5   │                                     │
- │ RAM ARMOR:    [██████░░░░] 6.0   │ RGB NEON UNDERGLOW                  │
- │                                  │ (●) (●) (●) (●) (●)                 │
- ├──────────────────────────────────┴─────────────────────────────────────┤
- │ [                    EQUIPPED & READY TO RACE                         ]│
- └────────────────────────────────────────────────────────────────────────┘
-```
-
-- **Spec Bars**: High-contrast glowing cyan tracks for acceleration and handling, molten amber track for ram armor.
-- **Color Swatches**: Circular buttons with white checkmark on active selection and real-time 3D model update.
-
----
-
-### 5.6 Post-Race Summary Modal (Game Over / Busted)
-
-```
- ┌────────────────────────────────────────────────────────┐
- │           🚨 BUSTED BY HIGHWAY PATROL 🚨               │
- ├────────────────────────────────────────────────────────┤
- │                  [🏆 NEW ALL-TIME RECORD!]             │
- │                                                        │
- │                      FINAL SCORE                       │
- │                        48,250                          │
- │                                                        │
- │     DISTANCE: 3,420 m           NEAR-MISSES: 14        │
- │     POLICE EVADED: 2            REWARD: 🪙 +4,216      │
- ├────────────────────────────────────────────────────────┤
- │ [ 🔧 GARAGE ]                       [ 🔄 RACE AGAIN ]  │
- └────────────────────────────────────────────────────────┘
-```
-
----
-
-## 6. Motion Design, Curves & Dynamic Shaders
-
-### 6.1 Easing Curves & Transitions
-All UI animations utilize custom cubic-bezier curves for a snappy automotive feel:
-
-```css
-/* Snappy popup entrance with overshoot */
---ease-pop: cubic-bezier(0.18, 0.89, 0.32, 1.28);
-
-/* Smooth mechanical deceleration */
---ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-```
-
-### 6.2 Camera FOV Speed Warp Curve
-As speed increases, the camera perspective dynamically stretches to heighten peripheral velocity:
-
-```
-Camera FOV
-   92° ┼───────────────────────────────────────────────● (NOS Boost 320 km/h)
-       │                                            .´
-   80° ┼──────────────────────────────● (Cruise 200 km/h)
-       │                           .´
-   68° ┼─────────● (Idle 0 km/h) .´
-       └─────────┴────────────────────┴────────────────┴─────────────
-       0 km/h    100 km/h             200 km/h         320 km/h
-```
-
-$$\text{FOV}_{\text{target}} = 68^\circ + \left(\frac{\text{Speed}}{280}\right) \times 16^\circ + (\text{isNitro} \times 8^\circ)$$
-
----
-
-## 7. Accessibility, Contrast & Sensory Redundancy
-
-1. **Colorblind-Safe Design**:
-   - Red and Blue police strobes are differentiated by **position** (Left = Red, Right = Blue), not just color.
-   - Near-miss alerts pair text (`NEAR MISS!`) with flame icons and combo numerals (`x2`).
-2. **Sensory Dual-Channel Feedback**:
-   - Every visual near-miss banner is accompanied by a **18ms haptic tick** and an audio whoosh.
-   - Every police collision is reinforced by a **violent camera shake** and a double haptic impact.
-3. **Contrast Compliance**:
-   - All critical text achieves a minimum contrast ratio of **7:1 (WCAG AAA)** against the midnight obsidian backdrop.
-
----
-
-## 8. Summary & Approval
-
-This design specification guarantees that VELOCITY X delivers an unforgettable visual spectacle: photorealistic car finishes, zero visual clutter on the highway, and ultra-responsive dual-thumb cockpit ergonomics engineered specifically for mobile gaming excellence.
+This Chromatic Master Guide ensures that VELOCITY X delivers an unforgettable visual spectacle: deep obsidian asphalt, vibrant cybernetic photon trails, clearcoat automotive lacquer, and flawless dual-thumb mobile cockpit ergonomics.
