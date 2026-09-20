@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0e17"/>
+      <stop offset="50%" stop-color="#121829"/>
+      <stop offset="100%" stop-color="#05070d"/>
+    </linearGradient>
+    <linearGradient id="cyanGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f3ff"/>
+      <stop offset="100%" stop-color="#0066ff"/>
+    </linearGradient>
+    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff0055"/>
+      <stop offset="100%" stop-color="#ff7700"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background Shield / Rounded Hexagon -->
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad)" stroke="#00f3ff" stroke-width="4" stroke-opacity="0.4"/>
+
+  <!-- Speed Chevrons -->
+  <g filter="url(#glow)" opacity="0.9">
+    <path d="M140 370 L256 220 L372 370 L330 370 L256 270 L182 370 Z" fill="url(#cyanGlow)" />
+    <path d="M180 250 L256 150 L332 250 L300 250 L256 190 L212 250 Z" fill="url(#fireGrad)" />
+  </g>
+
+  <!-- High-Tech Tachometer Arc -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#222b40" stroke-width="14" stroke-dasharray="800" stroke-dashoffset="240" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#cyanGlow)" stroke-width="14" stroke-dasharray="800" stroke-dashoffset="480" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Police Flasher Accent (Red / Blue) -->
+  <rect x="220" y="70" width="32" height="12" rx="4" fill="#00e5ff" filter="url(#glow)"/>
+  <rect x="260" y="70" width="32" height="12" rx="4" fill="#ff1744" filter="url(#glow)"/>
+
+  <!-- Velocity X Monogram -->
+  <text x="256" y="440" text-anchor="middle" font-family="'Orbitron', sans-serif" font-weight="900" font-size="44" fill="#ffffff" letter-spacing="6">
+    VELOCITY <tspan fill="#00f3ff">X</tspan>
+  </text>
+</svg>

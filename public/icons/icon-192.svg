@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="192" height="192">
+  <defs>
+    <linearGradient id="bgGrad192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0e17"/>
+      <stop offset="100%" stop-color="#121829"/>
+    </linearGradient>
+    <linearGradient id="cyan192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f3ff"/>
+      <stop offset="100%" stop-color="#0066ff"/>
+    </linearGradient>
+    <linearGradient id="fire192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff0055"/>
+      <stop offset="100%" stop-color="#ff7700"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="url(#bgGrad192)" stroke="#00f3ff" stroke-width="6"/>
+  <path d="M140 370 L256 220 L372 370 L330 370 L256 270 L182 370 Z" fill="url(#cyan192)" />
+  <path d="M180 250 L256 150 L332 250 L300 250 L256 190 L212 250 Z" fill="url(#fire192)" />
+  <rect x="220" y="70" width="32" height="12" rx="4" fill="#00e5ff"/>
+  <rect x="260" y="70" width="32" height="12" rx="4" fill="#ff1744"/>
+  <text x="256" y="440" text-anchor="middle" font-family="'Orbitron', sans-serif" font-weight="900" font-size="44" fill="#ffffff" letter-spacing="6">
+    VELOCITY <tspan fill="#00f3ff">X</tspan>
+  </text>
+</svg>
