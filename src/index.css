@@ -3425,3 +3425,59 @@ body.force-virtual-landscape #root {
   color: #64748b;
   margin-top: 6px;
 }
+
+/* 1,000m Founder Milestone HUD Toast */
+.founder-milestone-banner {
+  position: absolute;
+  top: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 12, 22, 0.94);
+  border: 1.5px solid #00f3ff;
+  border-radius: 16px;
+  padding: 12px 28px;
+  text-align: center;
+  box-shadow: 0 0 35px rgba(0, 243, 255, 0.4), 0 8px 32px rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(14px);
+  z-index: 150;
+  animation: milestonePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  pointer-events: none;
+}
+
+@keyframes milestonePop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.founder-milestone-tag {
+  font-family: var(--font-racing);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #ffd700;
+  margin-bottom: 2px;
+}
+
+.founder-milestone-title {
+  font-family: var(--font-racing);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(0, 243, 255, 0.7);
+}
+
+.founder-milestone-sub {
+  font-family: var(--font-mono, monospace);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #00f3ff;
+  margin-top: 3px;
+}
+

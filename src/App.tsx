@@ -84,6 +84,7 @@ export const App: React.FC = () => {
 
   const [nearMissAlert, setNearMissAlert] = useState<{ text: string; combo: number; id: number } | null>(null);
   const [evadedBonus, setEvadedBonus] = useState<number | null>(null);
+  const [founderMilestoneAlert, setFounderMilestoneAlert] = useState<string | null>(null);
   const [summary, setSummary] = useState<GameSummary | null>(null);
 
   // 1. Initialize Three.js Engine
@@ -104,6 +105,13 @@ export const App: React.FC = () => {
     engine.onPursuitEvadedAlert = (bonus) => {
       setEvadedBonus(bonus);
       setTimeout(() => setEvadedBonus(null), 3000);
+    };
+
+    engine.onFounderMilestone = (milestoneMeters) => {
+      audioManager.playCoinUnlock();
+      HapticsManager.nearMiss();
+      setFounderMilestoneAlert(`👑 ${Math.round(milestoneMeters / 1000)},000M MILESTONE — INDRAJIT KUMAR FOUNDER ZONE`);
+      setTimeout(() => setFounderMilestoneAlert(null), 4500);
     };
 
     engine.onGameOver = (runSummary) => {
@@ -347,11 +355,10 @@ export const App: React.FC = () => {
           <div className="splash-vignette" />
 
           <div className="splash-content-card">
-            <div className="splash-badge">8K ULTRA REALISTIC RACING</div>
             <h1 className="splash-title">
               VELOCITY <span className="highlight">X</span>
             </h1>
-            <p className="splash-subtitle">HIGH-OCTANE HIGHWAY POLICE PURSUIT</p>
+            <p className="splash-subtitle">NEXT-GEN HIGHWAY PURSUIT</p>
 
             {!splashTimerDone ? (
               <div className="splash-loading-wrapper">
@@ -604,6 +611,15 @@ export const App: React.FC = () => {
             nearMissAlert={nearMissAlert}
             evadedBonus={evadedBonus}
           />
+
+          {/* Milestone Founder Gantry Toast (Every 1,000m) */}
+          {founderMilestoneAlert && (
+            <div className="founder-milestone-banner">
+              <div className="founder-milestone-tag">HIGHWAY MILESTONE</div>
+              <div className="founder-milestone-title">{founderMilestoneAlert}</div>
+              <div className="founder-milestone-sub">OFFICIAL ARCHITECT • INDRAJIT KUMAR</div>
+            </div>
+          )}
 
           {/* Smart Device Adaptive Touch Controls (Hidden on PC/Laptop, Left/Right Buttons Hidden on Tilt) */}
           <MobileControls

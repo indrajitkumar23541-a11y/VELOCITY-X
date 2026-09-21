@@ -42,12 +42,12 @@ export class CameraManager {
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFOV, delta * 5);
     this.camera.updateProjectionMatrix();
 
-    // 2. Camera Chase Distance: pulls back slightly at higher speeds for better traffic view
-    const backDistance = 7.5 + speedRatio * 1.5;
-    const height = 3.2 + speedRatio * 0.4;
+    // 2. Camera Chase Distance: low, aggressive hypercar chase framing (Image 4)
+    const backDistance = 5.6 + speedRatio * 1.4;
+    const height = 1.95 + speedRatio * 0.35;
 
     this.targetPos.set(
-      carPos.x * 0.75, // slight lateral lag for dynamic drift feel
+      carPos.x * 0.7, // slight lateral lag for dynamic drift feel
       carPos.y + height,
       carPos.z - backDistance
     );
@@ -77,11 +77,11 @@ export class CameraManager {
       this.currentPos.z
     );
 
-    // 4. Look ahead along the highway
+    // 4. Look ahead along the highway (Focused directly down the expressway)
     this.lookTarget.set(
-      carPos.x * 0.4,
-      carPos.y + 1.2,
-      carPos.z + 18 // look 18m ahead
+      carPos.x * 0.35,
+      carPos.y + 1.05,
+      carPos.z + 16 // look 16m ahead
     );
     this.camera.lookAt(this.lookTarget);
   }

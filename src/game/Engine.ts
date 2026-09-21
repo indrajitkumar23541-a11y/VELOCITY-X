@@ -76,6 +76,7 @@ export class Engine {
   public onNearMissAlert?: (text: string, combo: number) => void;
   public onGameOver?: (summary: GameSummary) => void;
   public onPursuitEvadedAlert?: (bonusCoins: number) => void;
+  public onFounderMilestone?: (milestoneMeters: number) => void;
 
   // Active Mobile Controls
   public controls: PlayerControls = {
@@ -137,6 +138,9 @@ export class Engine {
     // 4. Subsystems
     this.cameraManager = new CameraManager();
     this.roadManager = new RoadManager(this.scene);
+    this.roadManager.onFounderMilestone = (m) => {
+      this.onFounderMilestone?.(m);
+    };
     this.playerCar = new PlayerCar(this.scene, activeCarConfig);
     this.trafficManager = new TrafficManager(this.scene);
     this.policeChase = new PoliceChase(this.scene);

@@ -16,6 +16,13 @@ export class RoadManager {
   private buildingMaterial: THREE.MeshStandardMaterial;
   private neonSignMaterials: THREE.MeshBasicMaterial[] = [];
 
+  // 1,000m Founder Hoarding Structure (Indrajit Kumar)
+  private founderGantry: THREE.Group;
+  private founderBillboardMat: THREE.MeshStandardMaterial;
+  private nextFounderZ: number = 1000;
+  private lastAnnouncedKm: number = 0;
+  public onFounderMilestone?: (milestoneMeters: number) => void;
+
   constructor(scene: THREE.Scene) {
     this.scene = scene;
 
@@ -26,10 +33,10 @@ export class RoadManager {
     asphaltTex.repeat.set(4, 35);
 
     this.asphaltMaterial = new THREE.MeshStandardMaterial({
-      color: 0x222630,
+      color: 0x161a24,
       map: asphaltTex,
-      roughness: 0.22, // sleek wet tarmac specular sheen
-      metalness: 0.25,
+      roughness: 0.14, // sleek wet tarmac specular sheen
+      metalness: 0.45,
     });
 
     // Glowing Lane Markings
@@ -61,19 +68,34 @@ export class RoadManager {
     buildingTex.repeat.set(1, 1);
 
     this.buildingMaterial = new THREE.MeshStandardMaterial({
-      color: 0x121726,
+      color: 0x0c101d,
       roughness: 0.35,
       metalness: 0.6,
       map: buildingTex,
       emissiveMap: buildingTex,
       emissive: 0xffffff,
-      emissiveIntensity: 0.85,
+      emissiveIntensity: 0.9,
     });
 
     // 3. Cyberpunk Neon Billboard Materials
     this.createNeonSignMaterials();
 
-    // 4. Build Highway & Infinite Night Skyline
+    // 4. Create Founder Billboard Material & 1,000m Gantry Arch
+    const founderTex = this.createFounderBillboardTexture();
+    this.founderBillboardMat = new THREE.MeshStandardMaterial({
+      map: founderTex,
+      emissiveMap: founderTex,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.95,
+      roughness: 0.25,
+      metalness: 0.4,
+    });
+
+    this.founderGantry = this.createFounderGantry();
+    this.founderGantry.position.set(0, 0, this.nextFounderZ);
+    this.scene.add(this.founderGantry);
+
+    // 5. Build Highway & Infinite Night Skyline
     this.buildHighwaySegments();
   }
 
@@ -123,51 +145,298 @@ export class RoadManager {
     canvas.height = 512;
     const ctx = canvas.getContext('2d')!;
 
-    // Dark architectural facade
+    // Dark sleek architectural glass facade
     ctx.fillStyle = '#060a14';
     ctx.fillRect(0, 0, 512, 512);
 
-    // Structural columns / mullions
-    ctx.fillStyle = '#0b1220';
-    for (let c = 0; c < 512; c += 32) {
-      ctx.fillRect(c, 0, 4, 512);
+    // Vertical structural mullions
+    ctx.fillStyle = '#0d1526';
+    for (let c = 0; c < 512; c += 24) {
+      ctx.fillRect(c, 0, 3, 512);
     }
 
-    // Grid of illuminated windows
-    const colors = [
-      '#ffd580', // Warm golden penthouse
-      '#00f3ff', // Cyber cyan tech office
-      '#ff007f', // Neon magenta studio
-      '#a0c4ff', // Cool white fluorescent
-      '#ffe066', // Amber warm light
+    // Horizontal concrete floor spandrels
+    ctx.fillStyle = '#080e1a';
+    for (let r = 0; r < 512; r += 36) {
+      ctx.fillRect(0, r, 512, 6);
+    }
+
+    // Modern architectural interior lighting: warm amber executive, crisp cool white, cyan corporate
+    const windowColors = [
+      '#ffd580', // Warm executive suite
+      '#ffeaa7', // Golden penthouse
+      '#eef4fc', // Modern architectural white
+      '#88d8ff', // Cool corporate blue
+      '#ffd700', // Amber boardroom
     ];
 
-    for (let y = 16; y < 500; y += 18) {
-      for (let x = 6; x < 500; x += 32) {
-        // 55% chance window is lit
-        if (Math.random() < 0.55) {
-          const color = colors[Math.floor(Math.random() * colors.length)];
+    for (let y = 8; y < 500; y += 36) {
+      for (let x = 4; x < 500; x += 24) {
+        if (Math.random() < 0.65) {
+          const color = windowColors[Math.floor(Math.random() * windowColors.length)];
           ctx.fillStyle = color;
-          ctx.fillRect(x, y, 22, 10);
+          ctx.fillRect(x, y, 17, 24);
 
-          // Subtle window blind / divider
-          if (Math.random() < 0.3) {
-            ctx.fillStyle = 'rgba(0,0,0,0.4)';
-            ctx.fillRect(x, y + 4, 22, 2);
+          // Subtle horizontal blind / office silhouette
+          if (Math.random() < 0.35) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            ctx.fillRect(x, y + 10, 17, 4);
           }
         }
       }
     }
 
-    // Rooftop neon crown strip
+    // Sleek rooftop architectural crown glow
     const grad = ctx.createLinearGradient(0, 0, 512, 0);
     grad.addColorStop(0, '#00f3ff');
-    grad.addColorStop(0.5, '#ff007f');
+    grad.addColorStop(0.5, '#ffd700');
     grad.addColorStop(1, '#00f3ff');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 512, 12);
+    ctx.fillRect(0, 0, 512, 10);
 
     return new THREE.CanvasTexture(canvas);
+  }
+
+  // =========================================================================
+  // HIGHWAY FOUNDER HOARDING GRAPHIC (Indrajit Kumar - 100% Face Accuracy)
+  // =========================================================================
+  private createFounderBillboardTexture(): THREE.CanvasTexture {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 540;
+    const ctx = canvas.getContext('2d')!;
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+
+    const render = (founderImg?: HTMLImageElement) => {
+      // 1. Dark Cyber Backing & Grid Pattern
+      const bgGrad = ctx.createLinearGradient(0, 0, 1200, 540);
+      bgGrad.addColorStop(0, '#060a14');
+      bgGrad.addColorStop(0.5, '#0d1322');
+      bgGrad.addColorStop(1, '#080d18');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1200, 540);
+
+      // Cyber Grid Lines
+      ctx.strokeStyle = 'rgba(0, 243, 255, 0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < 1200; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 540);
+        ctx.stroke();
+      }
+      for (let y = 0; y < 540; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(1200, y);
+        ctx.stroke();
+      }
+
+      // Outer Glowing Double Frame
+      ctx.strokeStyle = '#00f3ff';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(10, 10, 1180, 520);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(18, 18, 1164, 504);
+
+      // 2. Left Column: Authentic Portrait Card of Indrajit Kumar
+      const pX = 40, pY = 40, pW = 380, pH = 460;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(pX, pY, pW, pH, 16);
+      ctx.clip();
+
+      if (founderImg && founderImg.complete && founderImg.naturalWidth > 0) {
+        // Draw the authentic photo proportionally (no distortion, 100% facial accuracy)
+        const imgAspect = founderImg.naturalWidth / founderImg.naturalHeight;
+        const cardAspect = pW / pH;
+        let sW = founderImg.naturalWidth;
+        let sH = founderImg.naturalHeight;
+        let sX = 0;
+        let sY = 0;
+        if (imgAspect > cardAspect) {
+          sW = founderImg.naturalHeight * cardAspect;
+          sX = (founderImg.naturalWidth - sW) / 2;
+        } else {
+          sH = founderImg.naturalWidth / cardAspect;
+          sY = 0; // Focus on head/face at top
+        }
+        ctx.drawImage(founderImg, sX, sY, sW, sH, pX, pY, pW, pH);
+
+        // Subtle gradient overlay at base of portrait for title badge
+        const grad = ctx.createLinearGradient(0, pY + pH - 120, 0, pY + pH);
+        grad.addColorStop(0, 'rgba(6, 10, 20, 0)');
+        grad.addColorStop(1, 'rgba(6, 10, 20, 0.94)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(pX, pY + pH - 120, pW, 120);
+      } else {
+        // Fallback placeholder card while photo loads
+        ctx.fillStyle = '#151d30';
+        ctx.fillRect(pX, pY, pW, pH);
+        ctx.fillStyle = '#00f3ff';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('INDRAJIT KUMAR', pX + pW / 2, pY + pH / 2);
+      }
+      ctx.restore();
+
+      // Portrait neon border
+      ctx.strokeStyle = '#00f3ff';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(pX, pY, pW, pH);
+
+      // Gold badge at bottom of portrait
+      ctx.fillStyle = '#ffd700';
+      ctx.fillRect(pX + 20, pY + pH - 44, pW - 40, 32);
+      ctx.fillStyle = '#0a0d16';
+      ctx.font = '900 16px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('OFFICIAL FOUNDER & ARCHITECT', pX + pW / 2, pY + pH - 23);
+
+      // 3. Right Column: Grand Typography & Contact
+      const textX = 460;
+
+      // VIP Crown Tag
+      ctx.fillStyle = 'rgba(0, 243, 255, 0.15)';
+      ctx.fillRect(textX, 48, 440, 38);
+      ctx.strokeStyle = '#00f3ff';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(textX, 48, 440, 38);
+
+      ctx.fillStyle = '#00f3ff';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('★  VELOCITY X • HIGHWAY MILESTONE GANTRY  ★', textX + 16, 73);
+
+      // Main Big Name: INDRAJIT KUMAR
+      ctx.font = '900 58px sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#00f3ff';
+      ctx.shadowBlur = 15;
+      ctx.fillText('INDRAJIT KUMAR', textX, 155);
+      ctx.shadowBlur = 0;
+
+      // Subtitle
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText('CREATOR & LEAD ARCHITECT — VELOCITY X', textX, 195);
+
+      // Cyber Divider
+      const divGrad = ctx.createLinearGradient(textX, 0, textX + 680, 0);
+      divGrad.addColorStop(0, '#00f3ff');
+      divGrad.addColorStop(0.5, '#ffd700');
+      divGrad.addColorStop(1, 'rgba(0, 243, 255, 0)');
+      ctx.fillStyle = divGrad;
+      ctx.fillRect(textX, 215, 680, 3);
+
+      // Contact Item 1: Email ID (User exact requirement)
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('EMAIL ADDRESS:', textX, 258);
+
+      // Email pill
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.fillRect(textX, 272, 680, 52);
+      ctx.strokeStyle = 'rgba(0, 243, 255, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(textX, 272, 680, 52);
+
+      ctx.font = 'bold 26px monospace';
+      ctx.fillStyle = '#00f3ff';
+      ctx.fillText('✉  indrakitkumar23541@gmail.com', textX + 20, 307);
+
+      // Contact Item 2: Instagram Handle (User exact requirement)
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText('OFFICIAL INSTAGRAM:', textX, 362);
+
+      // Instagram gradient pill
+      ctx.fillStyle = 'rgba(255, 0, 127, 0.12)';
+      ctx.fillRect(textX, 376, 680, 52);
+      ctx.strokeStyle = '#ff007f';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(textX, 376, 680, 52);
+
+      ctx.font = '900 28px sans-serif';
+      ctx.fillStyle = '#ff3388';
+      ctx.fillText('📸  tech_arcane.wizard', textX + 20, 412);
+
+      // Bottom Milestone Banner
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.fillText('⚡ 1,000M HIGHWAY PURSUIT MILESTONE REACHED • SPEED ZONE ACTIVATED', textX, 480);
+    };
+
+    // Render initial placeholder
+    render();
+
+    // Load authentic photo from public/images/founder.jpg
+    const img = new Image();
+    img.src = './images/founder.jpg';
+    img.onload = () => {
+      render(img);
+      texture.needsUpdate = true;
+    };
+
+    return texture;
+  }
+
+  // =========================================================================
+  // HIGHWAY FOUNDER ARCH GANTRY BRIDGE (Spans All 4 Lanes at 1,000m Intervals)
+  // =========================================================================
+  private createFounderGantry(): THREE.Group {
+    const gantry = new THREE.Group();
+
+    // Heavy steel truss arch spanning 22m across highway
+    const trussMat = new THREE.MeshStandardMaterial({
+      color: 0x1e2638,
+      metalness: 0.9,
+      roughness: 0.28
+    });
+
+    // Main top beam across highway
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(22, 1.2, 1.2), trussMat);
+    beam.position.set(0, 10.2, 0);
+    gantry.add(beam);
+
+    // Twin support towers on left and right shoulders
+    for (const x of [-10.5, 10.5]) {
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(1.4, 11, 1.4), trussMat);
+      tower.position.set(x, 5.5, 0);
+      gantry.add(tower);
+
+      // Red flashing aviation warning beacon on top of each tower
+      const beacon = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.18, 0.6, 12),
+        new THREE.MeshBasicMaterial({ color: 0xff0033 })
+      );
+      beacon.position.set(x, 11.3, 0);
+      gantry.add(beacon);
+    }
+
+    // Double-sided Grand Billboard Panel (width 16m, height 7.2m)
+    const boardGeom = new THREE.BoxGeometry(16, 7.2, 0.5);
+    const billboard = new THREE.Mesh(boardGeom, this.founderBillboardMat);
+    billboard.position.set(0, 6.2, 0);
+    gantry.add(billboard);
+
+    // 4 High-Powered LED Downward Spotlights mounted along top beam
+    const spotFixtureMat = new THREE.MeshStandardMaterial({ color: 0x111620, metalness: 0.9 });
+    const spotGlowMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
+    for (let s = -6; s <= 6; s += 4) {
+      const fixture = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.4, 0.6), spotFixtureMat);
+      fixture.position.set(s, 10.2, 0.6);
+      gantry.add(fixture);
+
+      const glow = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.1, 0.5), spotGlowMat);
+      glow.position.set(s, 10.0, 0.6);
+      gantry.add(glow);
+    }
+
+    return gantry;
   }
 
   private createNeonSignMaterials(): void {
@@ -431,6 +700,11 @@ export class RoadManager {
       const zPos = startZ + (i * this.segmentLength - 40);
       this.roadSegments[i].position.set(0, 0, zPos);
     }
+
+    // Realign Founder Hoarding to the first 1,000m milestone ahead
+    this.nextFounderZ = Math.floor(startZ / 1000) * 1000 + 1000;
+    this.founderGantry.position.set(0, 0, this.nextFounderZ);
+    this.lastAnnouncedKm = Math.floor(startZ / 1000);
   }
 
   public update(playerZ: number): void {
@@ -440,6 +714,19 @@ export class RoadManager {
       while (segment.position.z < playerZ - this.segmentLength * 1.5) {
         segment.position.z += totalRoadSpan;
       }
+    }
+
+    // Wrap Founder Hoarding to the next 1,000m mark ahead
+    if (playerZ > this.nextFounderZ + 50) {
+      this.nextFounderZ += 1000;
+      this.founderGantry.position.set(0, 0, this.nextFounderZ);
+    }
+
+    // Milestone notification when the player approaches and passes under the hoarding
+    const currentKm = Math.floor(playerZ / 1000);
+    if (currentKm > this.lastAnnouncedKm && playerZ >= currentKm * 1000 - 15) {
+      this.lastAnnouncedKm = currentKm;
+      this.onFounderMilestone?.(currentKm * 1000);
     }
   }
 

@@ -188,106 +188,161 @@ export class PlayerCar {
   }
 
   // =========================================================================
-  // MODEL 1: APEX ROADSTER — Pagani Huayra / Zonda Exotic Italian Hypercar
+  // MODEL 1: APEX ROADSTER — Pagani Huayra BC / Italian Hypercar (Image 4)
   // =========================================================================
   private buildPaganiRoadster(root: THREE.Group): void {
-    // 1. Curved Aerodynamic Lower Monocoque Chassis
-    const monocoqueGeom = new THREE.BoxGeometry(2.02, 0.36, 4.5);
-    const monocoque = new THREE.Mesh(monocoqueGeom, this.carPaintMaterial);
-    monocoque.position.y = 0.34;
-    monocoque.castShadow = true;
-    root.add(monocoque);
+    // 1. Sleek Aerodynamic Carbon Monocoque Chassis (Low 1.05m Stance, 2.22m Wide)
+    const chassisGeom = new THREE.BoxGeometry(1.98, 0.32, 4.5);
+    const chassis = new THREE.Mesh(chassisGeom, this.carPaintMaterial);
+    chassis.position.y = 0.32;
+    chassis.castShadow = true;
+    root.add(chassis);
 
-    // 2. Sculpted Slanted Nose with Dual Intake Vents
-    const noseGeom = new THREE.BoxGeometry(1.9, 0.24, 1.6);
-    noseGeom.rotateX(-0.14);
+    // Carbon fiber aerodynamic undertray & side skirts
+    const skirtGeom = new THREE.BoxGeometry(2.18, 0.06, 3.8);
+    const skirts = new THREE.Mesh(skirtGeom, this.carbonMat);
+    skirts.position.set(0, 0.16, 0.1);
+    root.add(skirts);
+
+    // 2. Sculpted Flared Rear Haunches / Fenders (Widebody Coke-Bottle Silhouette)
+    const rearFenderGeom = new THREE.BoxGeometry(0.38, 0.36, 1.8);
+    // Left Rear Fender
+    const rearFenderL = new THREE.Mesh(rearFenderGeom, this.carPaintMaterial);
+    rearFenderL.position.set(-1.06, 0.44, -1.35);
+    rearFenderL.castShadow = true;
+    root.add(rearFenderL);
+    // Right Rear Fender
+    const rearFenderR = new THREE.Mesh(rearFenderGeom, this.carPaintMaterial);
+    rearFenderR.position.set(1.06, 0.44, -1.35);
+    rearFenderR.castShadow = true;
+    root.add(rearFenderR);
+
+    // Flared Front Fenders
+    const frontFenderGeom = new THREE.BoxGeometry(0.32, 0.32, 1.6);
+    const frontFenderL = new THREE.Mesh(frontFenderGeom, this.carPaintMaterial);
+    frontFenderL.position.set(-1.02, 0.42, 1.35);
+    frontFenderL.castShadow = true;
+    root.add(frontFenderL);
+    const frontFenderR = new THREE.Mesh(frontFenderGeom, this.carPaintMaterial);
+    frontFenderR.position.set(1.02, 0.42, 1.35);
+    frontFenderR.castShadow = true;
+    root.add(frontFenderR);
+
+    // 3. Low Slanted Nose with Carbon Splitter & Dual Winglets
+    const noseGeom = new THREE.BoxGeometry(1.85, 0.22, 1.6);
+    noseGeom.rotateX(-0.16);
     const nose = new THREE.Mesh(noseGeom, this.carPaintMaterial);
-    nose.position.set(0, 0.42, 1.45);
+    nose.position.set(0, 0.38, 1.45);
     nose.castShadow = true;
     root.add(nose);
 
     // Front carbon splitter with dual aerodynamic winglets
-    const splitterGeom = new THREE.BoxGeometry(2.12, 0.06, 0.8);
+    const splitterGeom = new THREE.BoxGeometry(2.18, 0.06, 0.85);
     const splitter = new THREE.Mesh(splitterGeom, this.carbonMat);
-    splitter.position.set(0, 0.16, 2.25);
+    splitter.position.set(0, 0.16, 2.28);
     root.add(splitter);
 
-    // Side aero dive planes
-    const wingletL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.35), this.carbonMat);
-    wingletL.position.set(-1.08, 0.22, 2.2);
-    wingletL.rotation.y = 0.2;
-    root.add(wingletL);
-    const wingletR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.35), this.carbonMat);
-    wingletR.position.set(1.08, 0.22, 2.2);
-    wingletR.rotation.y = -0.2;
-    root.add(wingletR);
+    // Front canard dive planes
+    const canardL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.4), this.carbonMat);
+    canardL.position.set(-1.12, 0.32, 2.15);
+    canardL.rotation.y = 0.25;
+    root.add(canardL);
+    const canardR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.4), this.carbonMat);
+    canardR.position.set(1.12, 0.32, 2.15);
+    canardR.rotation.y = -0.25;
+    root.add(canardR);
 
-    // 3. Teardrop Fighter-Jet Cockpit Canopy
-    const canopyGeom = new THREE.SphereGeometry(0.92, 16, 12);
-    canopyGeom.scale(0.85, 0.55, 1.6);
-    const canopy = new THREE.Mesh(canopyGeom, this.glassMat);
-    canopy.position.set(0, 0.72, -0.15);
-    canopy.castShadow = true;
-    root.add(canopy);
+    // 4. Low Aerodynamic Cockpit & Curved Glass (NO cartoon bubble!)
+    // Tapered windshield & roofline
+    const cabinGeom = new THREE.BoxGeometry(1.42, 0.46, 2.1);
+    cabinGeom.rotateX(0.12);
+    const cabin = new THREE.Mesh(cabinGeom, this.glassMat);
+    cabin.position.set(0, 0.72, -0.05);
+    cabin.castShadow = true;
+    root.add(cabin);
 
-    // Carbon roof snorkel / intake scoop
-    const scoopGeom = new THREE.BoxGeometry(0.32, 0.14, 0.8);
-    const scoop = new THREE.Mesh(scoopGeom, this.carbonMat);
-    scoop.position.set(0, 0.98, -0.35);
-    root.add(scoop);
+    // Carbon roof spine & air induction snorkel
+    const roofSnorkel = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 1.6), this.carbonMat);
+    roofSnorkel.position.set(0, 0.94, -0.3);
+    root.add(roofSnorkel);
 
-    // Sculpted stalk side-view mirrors (Leaf shape)
-    const mirrorL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.12), this.carPaintMaterial);
-    mirrorL.position.set(-1.05, 0.68, 0.6);
-    mirrorL.rotation.y = 0.3;
+    // Pagani Signature Leaf-Stalk Side Mirrors
+    const mirrorL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.14), this.carbonMat);
+    mirrorL.position.set(-1.08, 0.68, 0.55);
+    mirrorL.rotation.y = 0.35;
+    mirrorL.rotation.z = -0.15;
     root.add(mirrorL);
-    const mirrorR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.08, 0.12), this.carPaintMaterial);
-    mirrorR.position.set(1.05, 0.68, 0.6);
-    mirrorR.rotation.y = -0.3;
+    const mirrorR = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.08, 0.14), this.carbonMat);
+    mirrorR.position.set(1.08, 0.68, 0.55);
+    mirrorR.rotation.y = -0.35;
+    mirrorR.rotation.z = 0.15;
     root.add(mirrorR);
 
-    // 4. Rear Engine Deck & Aerodynamic Cowls
-    const rearDeckGeom = new THREE.BoxGeometry(1.98, 0.36, 1.4);
+    // 5. Rear Engine Deck with V12 Glass Louvers
+    const rearDeckGeom = new THREE.BoxGeometry(1.88, 0.34, 1.5);
     const rearDeck = new THREE.Mesh(rearDeckGeom, this.carPaintMaterial);
-    rearDeck.position.set(0, 0.5, -1.55);
+    rearDeck.position.set(0, 0.48, -1.55);
     rearDeck.castShadow = true;
     root.add(rearDeck);
 
-    // Glass engine cover exposing titanium V12 manifold
-    const engineGlass = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.08, 0.8), this.glassMat);
+    // Glass engine cover exposing titanium V12 twin-turbo manifold
+    const engineGlass = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.95), this.glassMat);
     engineGlass.position.set(0, 0.66, -1.35);
     root.add(engineGlass);
-    const v12Manifold = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.7, 8), this.chromeMat);
+    const v12Manifold = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.8, 12), this.chromeMat);
     v12Manifold.rotateZ(Math.PI / 2);
     v12Manifold.position.set(0, 0.62, -1.35);
     root.add(v12Manifold);
 
-    // 5. Pagani Twin Active-Aero Rear Flap Wings (Left & Right)
-    const flapGeom = new THREE.BoxGeometry(0.65, 0.05, 0.35);
-    const flapL = new THREE.Mesh(flapGeom, this.carbonMat);
-    flapL.position.set(-0.55, 0.68, -2.15);
-    root.add(flapL);
-    this.activeAeroFlaps.push(flapL);
+    // 6. Massive Carbon Fiber Elevated GT Wing with Swan-Neck Pylons (Image 4)
+    const wingGeom = new THREE.BoxGeometry(2.14, 0.06, 0.48);
+    const mainWing = new THREE.Mesh(wingGeom, this.carbonMat);
+    mainWing.position.set(0, 1.05, -2.14);
+    mainWing.castShadow = true;
+    root.add(mainWing);
 
-    const flapR = new THREE.Mesh(flapGeom, this.carbonMat);
-    flapR.position.set(0.55, 0.68, -2.15);
-    root.add(flapR);
-    this.activeAeroFlaps.push(flapR);
+    // Wing endplates
+    const endplateGeom = new THREE.BoxGeometry(0.04, 0.32, 0.52);
+    const endplateL = new THREE.Mesh(endplateGeom, this.carbonMat);
+    endplateL.position.set(-1.08, 1.05, -2.14);
+    root.add(endplateL);
+    const endplateR = new THREE.Mesh(endplateGeom, this.carbonMat);
+    endplateR.position.set(1.08, 1.05, -2.14);
+    root.add(endplateR);
 
-    // Massive curved carbon rear diffuser
-    const diffuserGeom = new THREE.BoxGeometry(1.92, 0.22, 0.6);
-    const diffuser = new THREE.Mesh(diffuserGeom, this.carbonMat);
-    diffuser.position.set(0, 0.22, -2.25);
-    root.add(diffuser);
+    // Swan-neck aerodynamic vertical pylons
+    const pylonGeom = new THREE.BoxGeometry(0.05, 0.46, 0.18);
+    const pylonL = new THREE.Mesh(pylonGeom, this.carbonMat);
+    pylonL.position.set(-0.56, 0.82, -2.05);
+    pylonL.rotation.x = -0.2;
+    root.add(pylonL);
+    const pylonR = new THREE.Mesh(pylonGeom, this.carbonMat);
+    pylonR.position.set(0.56, 0.82, -2.05);
+    pylonR.rotation.x = -0.2;
+    root.add(pylonR);
 
-    // Vertical diffuser aero fins
-    for (let f = -0.7; f <= 0.7; f += 0.35) {
-      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.24, 0.5), this.carbonMat);
-      fin.position.set(f, 0.22, -2.25);
-      root.add(fin);
-    }
+    // 7. Full-Width Glowing Red LED Neon Taillight Lightbar (Image 4 Signature)
+    const lightbarGeom = new THREE.BoxGeometry(1.94, 0.06, 0.08);
+    const lightbarMat = new THREE.MeshStandardMaterial({
+      color: 0xff0028,
+      emissive: 0xff0022,
+      emissiveIntensity: 2.8,
+      roughness: 0.1,
+    });
+    const lightbar = new THREE.Mesh(lightbarGeom, lightbarMat);
+    lightbar.position.set(0, 0.62, -2.26);
+    root.add(lightbar);
 
-    // 6. Iconic Pagani QUAD Circular Exhaust Cluster (2x2 Titanium Circle)
+    // Outer circular Pagani LED tail halo rings
+    const haloGeom = new THREE.TorusGeometry(0.08, 0.025, 8, 16);
+    const haloL = new THREE.Mesh(haloGeom, lightbarMat);
+    haloL.position.set(-0.78, 0.62, -2.26);
+    root.add(haloL);
+    const haloR = new THREE.Mesh(haloGeom, lightbarMat);
+    haloR.position.set(0.78, 0.62, -2.26);
+    root.add(haloR);
+
+    // 8. Iconic Pagani QUAD Circular Exhaust Cluster (Centered 2x2 Titanium Circle)
     const clusterRing = new THREE.Mesh(
       new THREE.CylinderGeometry(0.24, 0.24, 0.1, 16),
       this.carbonMat
@@ -299,49 +354,55 @@ export class PlayerCar {
     const pipeGeom = new THREE.CylinderGeometry(0.05, 0.05, 0.18, 12);
     pipeGeom.rotateX(Math.PI / 2);
     const pipeOffsets = [
-      { x: -0.08, y: 0.69 },
-      { x: 0.08, y: 0.69 },
-      { x: -0.08, y: 0.55 },
-      { x: 0.08, y: 0.55 },
+      { x: -0.07, y: 0.68 },
+      { x: 0.07, y: 0.68 },
+      { x: -0.07, y: 0.56 },
+      { x: 0.07, y: 0.56 },
     ];
     for (const po of pipeOffsets) {
       const pipe = new THREE.Mesh(pipeGeom, this.chromeMat);
       pipe.position.set(po.x, po.y, -2.28);
       root.add(pipe);
+
+      // Inner heat-glow ring inside each exhaust tip
+      const innerHeat = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.038, 0.038, 0.05, 8),
+        new THREE.MeshBasicMaterial({ color: 0xff6600 })
+      );
+      innerHeat.rotateX(Math.PI / 2);
+      innerHeat.position.set(po.x, po.y, -2.29);
+      root.add(innerHeat);
     }
 
-    this.leftExhaustLocal.set(-0.08, 0.62, -2.28);
-    this.rightExhaustLocal.set(0.08, 0.62, -2.28);
+    this.leftExhaustLocal.set(-0.07, 0.62, -2.28);
+    this.rightExhaustLocal.set(0.07, 0.62, -2.28);
 
-    // 7. Pagani Quad Circular LED Taillights (2 on left, 2 on right)
-    const tailOffsets = [
-      { x: -0.75, y: 0.58 },
-      { x: -0.62, y: 0.58 },
-      { x: 0.62, y: 0.58 },
-      { x: 0.75, y: 0.58 },
-    ];
-    const tailRingGeom = new THREE.CylinderGeometry(0.06, 0.06, 0.04, 12);
-    tailRingGeom.rotateX(Math.PI / 2);
-    for (const to of tailOffsets) {
-      const tailLight = new THREE.Mesh(tailRingGeom, this.brakeLightMaterial);
-      tailLight.position.set(to.x, to.y, -2.26);
-      root.add(tailLight);
+    // 9. Aggressive Carbon Diffuser with 6 Vertical Fins
+    const diffuserGeom = new THREE.BoxGeometry(2.02, 0.22, 0.65);
+    const diffuser = new THREE.Mesh(diffuserGeom, this.carbonMat);
+    diffuser.position.set(0, 0.22, -2.25);
+    root.add(diffuser);
+
+    for (let f = -0.75; f <= 0.75; f += 0.3) {
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.26, 0.55), this.carbonMat);
+      fin.position.set(f, 0.22, -2.25);
+      root.add(fin);
     }
 
-    // 8. Dual Twin-Pod Teardrop Halo Headlights
-    const headOffsets = [-0.74, 0.74];
+    // 10. Dual Projector Headlights
+    const headOffsets = [-0.78, 0.78];
     for (const hx of headOffsets) {
       const pod1 = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-      pod1.position.set(hx - 0.06, 0.44, 2.22);
+      pod1.position.set(hx - 0.06, 0.42, 2.22);
       root.add(pod1);
       const pod2 = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 8), new THREE.MeshBasicMaterial({ color: 0x99ddff }));
-      pod2.position.set(hx + 0.06, 0.42, 2.25);
+      pod2.position.set(hx + 0.06, 0.4, 2.25);
       root.add(pod2);
 
-      this.createVolumetricBeam(root, hx, 0.44, 2.26);
+      this.createVolumetricBeam(root, hx, 0.42, 2.26);
     }
 
-    // 9. Detailed Wheels with Pagani Multi-Spoke Alloys
+    // 11. Detailed Wide Wheels with Concave Forged Alloys
     this.installWheels(root, 0xd0d8e2, false);
   }
 

@@ -40,42 +40,42 @@ export interface LeaderboardEntry {
 const DEFAULT_CARS: CarConfig[] = [
   {
     id: 'apex_roadster',
-    name: 'Apex Roadster',
+    name: 'Pagani Huayra BC',
     type: 'roadster',
     price: 0,
     unlocked: true,
-    topSpeedKmh: 240,
-    acceleration: 9.2,
+    topSpeedKmh: 260,
+    acceleration: 9.4,
     handling: 9.5,
-    armor: 6.0,
-    color: '#00f3ff', // Cyber Cyan
-    underglowColor: '#00f3ff',
+    armor: 6.5,
+    color: '#e59500', // Liquid Amber-Gold Pearl (Matches Image 4)
+    underglowColor: '#ff7700',
   },
   {
     id: 'veloce_gt',
-    name: 'Veloce GT Supercar',
+    name: 'Bugatti Bolide GT',
     type: 'gt',
     price: 3500,
     unlocked: false,
-    topSpeedKmh: 295,
+    topSpeedKmh: 310,
     acceleration: 9.8,
-    handling: 8.8,
-    armor: 5.5,
-    color: '#ff0055', // Crimson Flare
-    underglowColor: '#ff0055',
+    handling: 8.9,
+    armor: 7.0,
+    color: '#0055ff', // French Racing Blue
+    underglowColor: '#00d4ff',
   },
   {
     id: 'titan_v8',
-    name: 'Titan V8 Muscle',
+    name: 'Titan V8 Supercharged',
     type: 'muscle',
     price: 5000,
     unlocked: false,
-    topSpeedKmh: 260,
-    acceleration: 8.5,
-    handling: 7.5,
+    topSpeedKmh: 275,
+    acceleration: 8.8,
+    handling: 7.8,
     armor: 9.5, // High impact resistance against police rams
-    color: '#e6c300', // Liquid Gold
-    underglowColor: '#ffaa00',
+    color: '#c21807', // Crimson Flame
+    underglowColor: '#ff2200',
   }
 ];
 
@@ -139,7 +139,13 @@ export class StorageManager {
         const parsed = JSON.parse(data);
         return DEFAULT_CARS.map(dc => {
           const found = parsed.find((p: CarConfig) => p.id === dc.id);
-          return found ? { ...dc, ...found } : dc;
+          if (found) {
+            // If the user's cached color was the old prototype cyan, migrate to the authentic Image 4 amber gold
+            const color = (found.color === '#00f3ff' && dc.id === 'apex_roadster') ? dc.color : found.color;
+            const underglowColor = (found.underglowColor === '#00f3ff' && dc.id === 'apex_roadster') ? dc.underglowColor : (found.underglowColor || dc.underglowColor);
+            return { ...dc, ...found, name: dc.name, color, underglowColor };
+          }
+          return dc;
         });
       }
     } catch {
