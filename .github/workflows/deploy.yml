@@ -1,0 +1,118 @@
+name: Deploy VELOCITY X & Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # JOB 1: Build Web App & Deploy to GitHub Pages (For iOS & Android 1-Tap Standalone Install)
+  deploy-web:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # JOB 2: Build Native Android APK in Cloud (100% Offline Standalone Game)
+  build-android-apk:
+    runs-on: ubuntu-latest
+    needs: deploy-web
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NPM Dependencies
+        run: npm install
+
+      - name: Build Production Web Bundle
+        run: npm run build
+
+      - name: Sync Capacitor Android Project
+        run: npx cap sync android
+
+      - name: Make Gradle Wrapper Executable
+        run: chmod +x android/gradlew
+
+      - name: Build Android Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Rename APK for Distribution
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk ./VELOCITY-X.apk
+
+      - name: Upload APK as Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VELOCITY-X-Android-APK
+          path: ./VELOCITY-X.apk
+
+      - name: Create or Update GitHub Release with Downloadable APK
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/heads/main')
+        with:
+          tag_name: v1.0.0
+          name: "VELOCITY X — v1.0.0 Official Release (Android & iOS)"
+          body: |
+            ## 🏎️ VELOCITY X — Cyber Highway Police Pursuit
+            
+            ### 📱 How to Play:
+            - **Android Users**: Download `VELOCITY-X.apk` below and install it directly on your phone!
+            - **iOS & Android Users**: Open the live game link on your phone: [https://${{ github.repository_owner }}.github.io/VELOCITY-X/](https://${{ github.repository_owner }}.github.io/VELOCITY-X/) and tap **"Install App"** / **"Add to Home Screen"** to play 100% offline in Flight Mode!
+          files: |
+            ./VELOCITY-X.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
