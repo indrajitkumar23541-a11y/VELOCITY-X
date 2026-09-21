@@ -4,12 +4,19 @@
 > Engineered with **Three.js (WebGL 2.0)**, PBR Clearcoats, Procedural Web Audio API, and 100% Offline PWA Playability.  
 > Locked **60–120 FPS ("Makhan Ki Tarah")** on All Android & iOS Devices.
 
-[![WebGL 2.0](https://img.shields.io/badge/WebGL-2.0-00f3ff?style=for-the-badge&logo=webgl&logoColor=black)](https://threejs.org/)
-[![Three.js](https://img.shields.io/badge/Three.js-r160-white?style=for-the-badge&logo=three.js&logoColor=black)](https://threejs.org/)
-[![React 18](https://img.shields.io/badge/React-18-61dafb?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Offline PWA](https://img.shields.io/badge/PWA-100%25_Offline-ff0055?style=for-the-badge&logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
-[![FPS](https://img.shields.io/badge/FPS-60--120_Locked-e6c300?style=for-the-badge&logo=speedtest&logoColor=black)]()
+[![Play Live Game](https://img.shields.io/badge/🎮_PLAY_LIVE_GAME-GitHub_Pages-00f3ff?style=for-the-badge&logo=google-chrome&logoColor=black)](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/)
+[![Download Android APK](https://img.shields.io/badge/📱_DOWNLOAD-Android_APK-3ddc84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/indrajitkumar23541-a11y/VELOCITY-X/deploy.yml?branch=main&style=for-the-badge&logo=github)](https://github.com/indrajitkumar23541-a11y/VELOCITY-X/actions)
+
+---
+
+## 📲 Quick Play on Phone (No App Store Needed!)
+
+| Platform | Recommended Method | How to Install |
+| :--- | :--- | :--- |
+| **Android** | **Direct APK (Native App)** | 1. Go to [Releases](https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases)<br>2. Download **`VELOCITY-X.apk`** & tap **Install**<br>3. Open and play like Temple Run / Asphalt offline! |
+| **Android** | **Web Instant Install (PWA)** | 1. Open [Live Game Link](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/) in Chrome<br>2. Tap **"Install App"** / 3 dots $\rightarrow$ **"Install App"** |
+| **iOS (iPhone / iPad)** | **Home Screen App (PWA)** | 1. Open [Live Game Link](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/) in Safari<br>2. Tap Share button (📤) $\rightarrow$ **"Add to Home Screen"**<br>3. Launches as full-screen standalone app with 0 URL bar! |
 
 ---
 
