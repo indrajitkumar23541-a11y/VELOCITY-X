@@ -139,150 +139,431 @@ html, body, #root {
 }
 
 /* -------------------------------------------------------------
-   Title / Menu Screen
+   STEP 1: 8K Hero Splash Screen
    ------------------------------------------------------------- */
-.menu-screen-overlay {
+.splash-screen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.splash-bg-image {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 15;
-  background: radial-gradient(circle at center, rgba(8, 11, 18, 0.25) 0%, rgba(5, 7, 13, 0.88) 100%);
-  padding: max(44px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
-  overflow-y: auto;
+  background: url('/images/splash-hero.jpg') center center / cover no-repeat,
+              radial-gradient(circle at center, #0e1a2d 0%, #05070d 100%);
+  filter: brightness(0.92) contrast(1.08);
+  transform: scale(1.02);
+  animation: slowZoom 20s infinite alternate ease-in-out;
 }
 
-.menu-center-card {
+@keyframes slowZoom {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.06); }
+}
+
+.splash-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, rgba(4, 7, 14, 0.2) 0%, rgba(3, 5, 10, 0.85) 80%, rgba(2, 3, 6, 0.98) 100%);
+}
+
+.splash-content-card {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  max-width: 520px;
-  width: 100%;
+  max-width: 580px;
+  width: 90%;
+  padding: 24px 20px;
 }
 
-.title-glow-wrap {
-  margin-bottom: clamp(6px, 1.8vh, 16px);
-}
-
-.game-title {
-  font-family: var(--font-racing);
-  font-size: clamp(32px, 6.5vw, 54px);
-  font-weight: 900;
-  letter-spacing: 4px;
-  line-height: 1;
-  text-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
-}
-
-.game-title .highlight {
+.splash-badge {
+  background: rgba(0, 243, 255, 0.15);
+  border: 1px solid var(--cyan);
   color: var(--cyan);
-  text-shadow: 0 0 25px var(--cyan);
+  font-family: var(--font-racing);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 0 16px var(--cyan-glow);
 }
 
-.game-subtitle {
+.splash-title {
   font-family: var(--font-racing);
-  font-size: clamp(9px, 2vw, 13px);
+  font-size: clamp(38px, 9vw, 68px);
+  font-weight: 900;
+  letter-spacing: 6px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 30px rgba(0, 243, 255, 0.7);
+}
+
+.splash-title .highlight {
+  color: var(--cyan);
+  text-shadow: 0 0 35px var(--cyan);
+}
+
+.splash-subtitle {
+  font-family: var(--font-racing);
+  font-size: clamp(10px, 2.2vw, 13px);
   letter-spacing: 3px;
   color: #94a3b8;
+  margin-top: 6px;
+  margin-bottom: 24px;
+}
+
+.splash-loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.engine-rev-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-racing);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--gold);
+}
+
+.engine-rev-badge .rev-icon {
+  color: var(--gold);
+  animation: pulseIcon 0.6s infinite alternate;
+}
+
+.splash-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+.splash-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffaa00 0%, #00f3ff 100%);
+  box-shadow: 0 0 12px var(--cyan);
+  transition: width 0.05s linear;
+}
+
+.splash-hint {
+  font-family: var(--font-racing);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #64748b;
   margin-top: 4px;
 }
 
-.menu-car-pill {
-  background: var(--bg-card);
-  border: 1px solid var(--bg-card-border);
-  border-radius: 12px;
-  padding: 8px 20px;
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 440px;
-  margin-bottom: clamp(8px, 1.8vh, 16px);
-  backdrop-filter: blur(12px);
-}
-
-.car-pill-left, .car-pill-right {
+.splash-actions-group {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-}
-
-.car-pill-right {
-  align-items: flex-end;
-}
-
-.pill-sub {
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  color: #64748b;
-  font-family: var(--font-racing);
-}
-
-.pill-name {
-  font-family: var(--font-racing);
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--cyan);
-}
-
-.pill-val {
-  font-family: var(--font-racing);
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--gold);
-  display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+  animation: popIn 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
 
-/* AAA Console Hero Action Stack */
-.menu-actions-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.splash-play-btn {
   width: 100%;
-  max-width: 440px;
-}
-
-.play-btn-hero {
-  width: 100%;
-  height: 48px;
+  height: 52px;
   background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   color: #040810;
   font-family: var(--font-racing);
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 900;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   cursor: pointer;
-  box-shadow: 0 0 24px rgba(0, 243, 255, 0.55);
-  transition: all 0.18s ease;
+  box-shadow: 0 0 30px rgba(0, 243, 255, 0.7);
+  transition: transform 0.15s ease;
+  animation: glowPulse 2s infinite alternate ease-in-out;
 }
 
-.play-btn-hero:active {
-  transform: scale(0.97);
+.splash-play-btn:active {
+  transform: scale(0.96);
 }
 
-.menu-sub-actions-row {
+.splash-install-btn {
+  background: rgba(14, 22, 38, 0.85);
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  border-radius: 12px;
+  color: #fff;
+  font-family: var(--font-racing);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 12px 20px;
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
   width: 100%;
 }
 
-.menu-btn-sub {
+/* -------------------------------------------------------------
+   STEP 2: Track / Highway Selection Screen
+   ------------------------------------------------------------- */
+.track-select-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 50;
+  background: radial-gradient(circle at center, rgba(10, 16, 28, 0.85) 0%, rgba(4, 7, 13, 0.96) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(14px);
+  overflow-y: auto;
+}
+
+.select-modal-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 680px;
+  width: 100%;
+}
+
+.track-super-title {
+  font-family: var(--font-racing);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--cyan);
+  font-weight: 800;
+}
+
+.select-screen-title {
+  font-family: var(--font-racing);
+  font-size: clamp(20px, 4vw, 32px);
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+  margin-top: 2px;
+}
+
+.select-screen-desc {
+  font-family: var(--font-racing);
+  font-size: 11px;
+  color: #94a3b8;
+  letter-spacing: 1px;
+  margin-bottom: 24px;
+}
+
+.track-cards-grid {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 580px) {
+  .track-cards-grid {
+    flex-direction: column;
+  }
+}
+
+.track-card {
   flex: 1;
-  height: 40px;
+  background: rgba(14, 22, 38, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.track-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--cyan);
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.35);
+}
+
+.track-card.night-card {
+  border-color: rgba(0, 243, 255, 0.4);
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.15);
+}
+
+.track-card.night-card:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 0 30px var(--cyan-glow);
+}
+
+.track-card.day-card {
+  border-color: rgba(255, 170, 0, 0.35);
+}
+
+.track-card.day-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 30px rgba(255, 170, 0, 0.4);
+}
+
+.track-card-badge {
+  font-family: var(--font-racing);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--cyan);
+  background: rgba(0, 243, 255, 0.15);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.track-card.day-card .track-card-badge {
+  color: var(--gold);
+  background: rgba(255, 170, 0, 0.15);
+}
+
+.track-icon-wrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.night-icon-wrap {
+  background: radial-gradient(circle, rgba(0, 243, 255, 0.25) 0%, rgba(14, 22, 38, 0) 70%);
+  color: var(--cyan);
+}
+
+.day-icon-wrap {
+  background: radial-gradient(circle, rgba(255, 170, 0, 0.25) 0%, rgba(14, 22, 38, 0) 70%);
+  color: var(--gold);
+}
+
+.track-name {
+  font-family: var(--font-racing);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.track-sub {
+  font-family: var(--font-racing);
+  font-size: 11px;
+  line-height: 1.4;
+  color: #94a3b8;
+  margin-bottom: 16px;
+  flex: 1;
+}
+
+.track-card-select-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-family: var(--font-racing);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #fff;
+  width: 100%;
+}
+
+.track-card:hover .track-card-select-btn {
+  background: var(--cyan);
+  color: #040810;
+  border-color: var(--cyan);
+  box-shadow: 0 0 15px var(--cyan-glow);
+}
+
+.back-step-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-family: var(--font-racing);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.back-step-btn:hover {
+  color: #fff;
+}
+
+/* -------------------------------------------------------------
+   STEP 3: 3D Car Showroom & Garage Dock
+   ------------------------------------------------------------- */
+.car-showroom-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 40;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: max(16px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+}
+
+.showroom-top-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.showroom-back-btn {
   background: rgba(14, 22, 38, 0.85);
   border: 1px solid rgba(0, 243, 255, 0.3);
   border-radius: 10px;
+  padding: 8px 14px;
   color: #fff;
   font-family: var(--font-racing);
   font-size: 11px;
@@ -290,25 +571,283 @@ html, body, #root {
   letter-spacing: 1px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   backdrop-filter: blur(8px);
+}
+
+.coin-display-showroom {
+  background: rgba(14, 22, 38, 0.9);
+  border: 1px solid rgba(255, 170, 0, 0.4);
+  border-radius: 12px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-racing);
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--gold);
+  box-shadow: 0 0 15px rgba(255, 170, 0, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.coin-display-showroom small {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.showroom-nav-controls {
+  pointer-events: auto;
+  position: absolute;
+  top: 45%;
+  left: 0;
+  width: 100%;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: space-between;
+  padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+}
+
+.showroom-arrow-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(12, 18, 30, 0.85);
+  border: 1px solid rgba(0, 243, 255, 0.4);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 16px rgba(0, 243, 255, 0.25);
   transition: all 0.15s ease;
 }
 
-.menu-btn-sub:active {
-  transform: scale(0.96);
-  background: rgba(0, 243, 255, 0.2);
-  border-color: var(--cyan);
+.showroom-arrow-btn:active {
+  transform: scale(0.92);
+  background: var(--cyan);
+  color: #040810;
 }
 
-.menu-tips {
-  margin-top: clamp(8px, 1.8vh, 16px);
-  font-size: 10px;
+.showroom-bottom-dock {
+  pointer-events: auto;
+  background: rgba(10, 16, 28, 0.92);
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  border-radius: 18px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  max-width: 820px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .showroom-bottom-dock {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+}
+
+.showroom-car-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.car-brand-tag {
+  font-family: var(--font-racing);
+  font-size: 9px;
   letter-spacing: 1.5px;
+  color: var(--cyan);
+  font-weight: 800;
+}
+
+.showroom-car-name {
+  font-family: var(--font-racing);
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.showroom-stats-row {
+  display: flex;
+  gap: 14px;
+}
+
+.spec-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-racing);
+  font-size: 9px;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.spec-item strong {
+  color: #fff;
+  font-weight: 800;
+  font-size: 11px;
+}
+
+.spec-item strong small {
+  font-size: 8px;
+  color: var(--cyan);
+}
+
+.showroom-steering-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.steering-sel-label {
+  font-family: var(--font-racing);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.steering-toggle-capsule {
+  display: flex;
+  background: #080c14;
+  border-radius: 8px;
+  padding: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.steer-opt-btn {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
   color: #64748b;
   font-family: var(--font-racing);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.steer-opt-btn.active {
+  background: var(--cyan);
+  color: #040810;
+  box-shadow: 0 0 10px var(--cyan-glow);
+}
+
+.showroom-actions-col {
+  display: flex;
+  align-items: center;
+}
+
+.showroom-action-btn {
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-family: var(--font-racing);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s ease;
+}
+
+.start-race-btn {
+  background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
+  border: none;
+  color: #040810;
+  box-shadow: 0 0 24px rgba(0, 243, 255, 0.6);
+  animation: glowPulse 2s infinite alternate ease-in-out;
+}
+
+.start-race-btn:active {
+  transform: scale(0.96);
+}
+
+.unlock-btn {
+  background: linear-gradient(135deg, #ffaa00 0%, #ff5500 100%);
+  border: none;
+  color: #040810;
+  box-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+}
+
+.unlock-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* -------------------------------------------------------------
+   STEP 4: 3-2-1-GO! Countdown Overlay
+   ------------------------------------------------------------- */
+.countdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.countdown-digits {
+  font-family: var(--font-racing);
+  font-size: clamp(80px, 20vw, 160px);
+  font-weight: 900;
+  color: var(--cyan);
+  text-shadow: 0 0 50px var(--cyan), 0 0 80px rgba(0, 243, 255, 0.8);
+  line-height: 1;
+  animation: countPop 0.85s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+.countdown-digits.go-text {
+  color: #00ff66;
+  text-shadow: 0 0 50px #00ff66, 0 0 90px rgba(0, 255, 102, 0.9);
+}
+
+@keyframes countPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  40% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.95; }
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 16px rgba(0, 243, 255, 0.4); }
+  100% { box-shadow: 0 0 32px rgba(0, 243, 255, 0.8); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulseIcon {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.25); }
 }
 
 /* -------------------------------------------------------------

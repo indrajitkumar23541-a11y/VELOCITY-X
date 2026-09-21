@@ -1,8 +1,8 @@
-// VELOCITY X - Ergonomic Dual-Thumb Touch & Gyro Tilt Controls
-import React, { useCallback, useRef } from 'react';
+// VELOCITY X - Adaptive Device Touch & Gyro Controls (Hidden on PC/Laptop)
+import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { PlayerControls } from '../game/PlayerCar';
 import { HapticsManager } from '../game/HapticsManager';
-import { Zap, RotateCcw, Smartphone, HandMetal } from 'lucide-react';
+import { Zap, RotateCcw, Smartphone } from 'lucide-react';
 
 interface MobileControlsProps {
   onControlsChange: (controls: Partial<PlayerControls>) => void;
@@ -21,11 +21,21 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   isNitroActive,
   tiltSteeringEnabled = false,
   tiltAngle = 0,
-  steerAxis = 0,
   onCalibrateTilt,
-  onToggleTiltMode,
 }) => {
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const activeSteerRef = useRef<'left' | 'right' | null>(null);
+
+  useEffect(() => {
+    const checkTouch = () => {
+      const hasTouch =
+        'ontouchstart' in window ||
+        navigator.maxTouchPoints > 0 ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsTouchDevice(hasTouch);
+    };
+    checkTouch();
+  }, []);
 
   // Left Thumb: Steering Handlers
   const handleSteerStart = useCallback((direction: 'left' | 'right') => {
@@ -75,77 +85,32 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
     onControlsChange({ nitro: false });
   }, [onControlsChange]);
 
-  const handleCalibrate = useCallback((e: React.PointerEvent | React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    HapticsManager.buttonTap();
-    if (onCalibrateTilt) {
-      onCalibrateTilt();
-    }
-  }, [onCalibrateTilt]);
+  // If user is on PC / Laptop with mouse/keyboard, HIDE ALL TOUCH CONTROLS!
+  if (!isTouchDevice) {
+    return null;
+  }
 
   return (
-    <div className={`mobile-controls-container ${tiltSteeringEnabled ? 'tilt-mode' : 'touch-mode'}`}>
-      {/* LEFT ZONE: Dual Touch Steering Buttons OR Gyro Horizon Instrument */}
+    <div className={`mobile-controls-container ${tiltSteeringEnabled ? 'tilt-active' : 'touch-active'}`}>
+      {/* LEFT ZONE: Shown ONLY when Touch Buttons mode is selected.
+          When Phone Tilt mode is selected, buttons completely DISAPPEAR! */}
       <div className="touch-zone left-zone">
         {tiltSteeringEnabled ? (
-          <div className="tilt-steering-zone">
-            <div className="tilt-instrument-card">
-              <div className="tilt-inst-header">
-                <div className="tilt-mode-tag">
-                  <Smartphone size={13} className="tilt-icon-pulse" />
-                  <span>GYRO TILT</span>
-                </div>
-                <span className="tilt-angle-deg">
-                  {tiltAngle > 0 ? `+${tiltAngle}°` : `${tiltAngle}°`}
-                </span>
-              </div>
-
-              {/* Dynamic Artificial Horizon / Steering Lock Arc */}
-              <div className="tilt-horizon-track">
-                <div className="tilt-zone-deadzone" />
-                <div className="tilt-center-tick" />
-                <div
-                  className="tilt-horizon-reticle"
-                  style={{
-                    transform: `translateX(${steerAxis * 40}px)`,
-                  }}
-                >
-                  <div className="reticle-core" />
-                  <div className="reticle-wings" />
-                </div>
-              </div>
-
-              {/* Recenter & Mode Switch Footers */}
-              <div className="tilt-actions-row">
-                <button
-                  type="button"
-                  className="tilt-btn tilt-recenter-btn"
-                  onPointerDown={handleCalibrate}
-                  title="Calibrate Center Angle"
-                >
-                  <RotateCcw size={13} />
-                  <span>CENTER</span>
-                </button>
-
-                {onToggleTiltMode && (
-                  <button
-                    type="button"
-                    className="tilt-btn tilt-switch-btn"
-                    onPointerDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      HapticsManager.buttonTap();
-                      onToggleTiltMode();
-                    }}
-                    title="Switch to Touch Buttons"
-                  >
-                    <HandMetal size={13} />
-                    <span>PADS</span>
-                  </button>
-                )}
-              </div>
-            </div>
+          <div className="tilt-active-hint">
+            <button
+              type="button"
+              className="tilt-calibrate-badge"
+              onClick={(e) => {
+                e.preventDefault();
+                HapticsManager.buttonTap();
+                if (onCalibrateTilt) onCalibrateTilt();
+              }}
+              title="Calibrate Center Angle"
+            >
+              <Smartphone size={13} className="tilt-icon-anim" />
+              <span>TILT {tiltAngle > 0 ? `+${tiltAngle}°` : `${tiltAngle}°`}</span>
+              <RotateCcw size={11} className="recenter-sub" />
+            </button>
           </div>
         ) : (
           <div className="steer-buttons-group">
@@ -156,7 +121,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
               onPointerCancel={(e) => { e.preventDefault(); handleSteerEnd(); }}
               onPointerLeave={(e) => { e.preventDefault(); handleSteerEnd(); }}
             >
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 18-6-6 6-6"/>
               </svg>
               <span className="btn-label">LEFT</span>
@@ -169,7 +134,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
               onPointerCancel={(e) => { e.preventDefault(); handleSteerEnd(); }}
               onPointerLeave={(e) => { e.preventDefault(); handleSteerEnd(); }}
             >
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m9 18 6-6-6-6"/>
               </svg>
               <span className="btn-label">RIGHT</span>
@@ -178,7 +143,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
         )}
       </div>
 
-      {/* RIGHT THUMB ZONE: Gas Pedal, Brake, and Glowing NOS Button */}
+      {/* RIGHT THUMB ZONE: Pedals (NOS, Brake, Gas) with ergonomic bottom clearance */}
       <div className="touch-zone right-zone">
         {/* NOS Rocket Button */}
         <button
@@ -188,7 +153,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           onPointerCancel={(e) => { e.preventDefault(); handleNitroEnd(); }}
           onPointerLeave={(e) => { e.preventDefault(); handleNitroEnd(); }}
         >
-          <Zap className="nos-icon" size={26} />
+          <Zap className="nos-icon" size={24} />
           <span className="nos-label">NOS</span>
           <div className="nos-ring" style={{ opacity: nitroPercent / 100 }} />
         </button>

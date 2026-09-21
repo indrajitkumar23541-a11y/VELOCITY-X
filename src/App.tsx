@@ -1,4 +1,4 @@
-// VELOCITY X - Main Application & Game State Orchestrator
+// VELOCITY X - Complete 4-Step Cinematic Racing Flow & Hardware-Adaptive Engine
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Engine, HUDData, GameSummary } from './game/Engine';
 import { StorageManager, CarConfig, GameStats } from './game/Storage';
@@ -6,20 +6,34 @@ import { PlayerControls } from './game/PlayerCar';
 import { audioManager } from './game/AudioManager';
 import { HapticsManager } from './game/HapticsManager';
 import { tiltManager } from './game/TiltManager';
-import { WeatherType } from './game/WeatherManager';
 import { MobileHUD } from './components/MobileHUD';
 import { MobileControls } from './components/MobileControls';
 import { RearviewMirror } from './components/RearviewMirror';
-import { GarageModal } from './components/GarageModal';
 import { GameOverModal } from './components/GameOverModal';
 import { RotatePhonePrompt } from './components/RotatePhonePrompt';
-import { InstallPrompt, triggerGlobalAppInstall } from './components/InstallPrompt';
+import { triggerGlobalAppInstall } from './components/InstallPrompt';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { RainScreenOverlay } from './components/RainScreenOverlay';
 import { UpdateNotification } from './components/UpdateNotification';
-import { Volume2, VolumeX, Play, Wrench, Trophy, Coins, Smartphone, CloudRain, Moon, Download } from 'lucide-react';
+import {
+  Volume2,
+  VolumeX,
+  Play,
+  Trophy,
+  Coins,
+  Smartphone,
+  Moon,
+  Download,
+  Sun,
+  Lock,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
+  Shield,
+  Gauge
+} from 'lucide-react';
 
-export type GameState = 'MENU' | 'RACING' | 'GARAGE' | 'GAME_OVER';
+export type GameState = 'SPLASH' | 'SELECT_TRACK' | 'SELECT_CAR' | 'COUNTDOWN' | 'RACING' | 'GARAGE' | 'GAME_OVER';
 
 export const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -28,6 +42,7 @@ export const App: React.FC = () => {
   // Persistence State
   const [stats, setStats] = useState<GameStats>(() => StorageManager.getStats());
   const [cars, setCars] = useState<CarConfig[]>(() => StorageManager.getCars());
+  const [activeCarIndex, setActiveCarIndex] = useState(0);
   const [activeCar, setActiveCar] = useState<CarConfig>(() => {
     const saved = StorageManager.getCars();
     const currentStats = StorageManager.getStats();
@@ -35,10 +50,14 @@ export const App: React.FC = () => {
   });
 
   // App & Flow States
-  const [gameState, setGameState] = useState<GameState>('MENU');
+  const [gameState, setGameState] = useState<GameState>('SPLASH');
+  const [selectedTrack, setSelectedTrack] = useState<'NIGHT' | 'DAY'>('NIGHT');
+  const [countdown, setCountdown] = useState<number | string | null>(null);
+  const [splashTimerDone, setSplashTimerDone] = useState(false);
+  const [splashProgress, setSplashProgress] = useState(0);
+
   const [isMuted, setIsMuted] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [weather, setWeather] = useState<WeatherType>('CLEAR');
   const [tiltSteeringEnabled, setTiltSteeringEnabled] = useState<boolean>(() => {
     return StorageManager.getStats().tiltSteeringEnabled ?? false;
   });
@@ -67,7 +86,7 @@ export const App: React.FC = () => {
   const [evadedBonus, setEvadedBonus] = useState<number | null>(null);
   const [summary, setSummary] = useState<GameSummary | null>(null);
 
-  // Initialize Three.js Engine
+  // 1. Initialize Three.js Engine
   useEffect(() => {
     if (!canvasRef.current) return;
 
@@ -100,12 +119,45 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  // Sync Car Configuration to Engine when modified
+  // 2. 8K Splash Screen Intro Timer & "Dhan-Dhan" Engine Audio
+  useEffect(() => {
+    if (gameState === 'SPLASH') {
+      const triggerIntro = () => {
+        audioManager.playCinematicIntroSound();
+        window.removeEventListener('pointerdown', triggerIntro);
+      };
+      window.addEventListener('pointerdown', triggerIntro);
+      audioManager.playCinematicIntroSound();
+
+      const startTime = Date.now();
+      const interval = setInterval(() => {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const progress = Math.min(100, (elapsed / 3.0) * 100);
+        setSplashProgress(progress);
+        if (elapsed >= 3.0) {
+          clearInterval(interval);
+          setSplashTimerDone(true);
+        }
+      }, 50);
+
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('pointerdown', triggerIntro);
+      };
+    }
+  }, [gameState]);
+
+  // 3. Sync Car Configuration and Turntable Showroom Mode
   useEffect(() => {
     if (engineRef.current) {
       engineRef.current.setCarConfig(activeCar);
+      if (gameState === 'SELECT_CAR') {
+        engineRef.current.setTurntableMode(true);
+      } else {
+        engineRef.current.setTurntableMode(false);
+      }
     }
-  }, [activeCar]);
+  }, [activeCar, gameState]);
 
   // Desktop Keyboard Controls (W/A/S/D / Arrows / Shift / Space)
   useEffect(() => {
@@ -137,23 +189,95 @@ export const App: React.FC = () => {
     };
   }, [gameState]);
 
-  // Start Race
-  const startRace = useCallback(() => {
+  // Step 1 -> Step 2: Play from Splash
+  const handlePlayFromSplash = () => {
     HapticsManager.buttonTap();
     audioManager.unlock();
-    setGameState('RACING');
+    document.documentElement.requestFullscreen().catch(() => {});
+    setGameState('SELECT_TRACK');
+  };
 
-    if (tiltSteeringEnabled) {
-      tiltManager.start();
-      tiltManager.calibrate();
-    } else {
-      tiltManager.stop();
-    }
-
+  // Step 2 -> Step 3: Select Track (Night vs Day)
+  const handleSelectTrack = (track: 'NIGHT' | 'DAY') => {
+    HapticsManager.buttonTap();
+    setSelectedTrack(track);
     if (engineRef.current) {
-      engineRef.current.start();
+      engineRef.current.setTrackEnvironment(track);
     }
-  }, [tiltSteeringEnabled]);
+    setGameState('SELECT_CAR');
+  };
+
+  // Step 3: Browse Cars in Showroom
+  const handleNextCar = () => {
+    HapticsManager.buttonTap();
+    const nextIdx = (activeCarIndex + 1) % cars.length;
+    setActiveCarIndex(nextIdx);
+    setActiveCar(cars[nextIdx]);
+  };
+
+  const handlePrevCar = () => {
+    HapticsManager.buttonTap();
+    const prevIdx = (activeCarIndex - 1 + cars.length) % cars.length;
+    setActiveCarIndex(prevIdx);
+    setActiveCar(cars[prevIdx]);
+  };
+
+  // Unlock Locked Car with Coins
+  const handleUnlockCar = (carId: string) => {
+    const success = StorageManager.unlockCar(carId);
+    if (success) {
+      HapticsManager.crash();
+      audioManager.playCoinUnlock();
+      const updatedCars = StorageManager.getCars();
+      const updatedStats = StorageManager.getStats();
+      setCars(updatedCars);
+      setStats(updatedStats);
+      const unlocked = updatedCars.find(c => c.id === carId);
+      if (unlocked) {
+        setActiveCar(unlocked);
+      }
+    }
+  };
+
+  // Step 3 -> Step 4: Launch Race with 3-2-1-GO! Countdown
+  const launchCountdownAndRace = useCallback(() => {
+    HapticsManager.buttonTap();
+    audioManager.unlock();
+    if (engineRef.current) {
+      engineRef.current.setTurntableMode(false);
+      engineRef.current.setTrackEnvironment(selectedTrack);
+    }
+
+    setGameState('COUNTDOWN');
+    setCountdown(3);
+    audioManager.playCountdownBeep(false);
+
+    setTimeout(() => {
+      setCountdown(2);
+      audioManager.playCountdownBeep(false);
+    }, 1000);
+
+    setTimeout(() => {
+      setCountdown(1);
+      audioManager.playCountdownBeep(false);
+    }, 2000);
+
+    setTimeout(() => {
+      setCountdown('GO!');
+      audioManager.playCountdownBeep(true);
+      if (engineRef.current) {
+        engineRef.current.start();
+      }
+      if (tiltSteeringEnabled) {
+        tiltManager.start();
+        tiltManager.calibrate();
+      } else {
+        tiltManager.stop();
+      }
+      setGameState('RACING');
+      setTimeout(() => setCountdown(null), 700);
+    }, 3000);
+  }, [selectedTrack, tiltSteeringEnabled]);
 
   // Sound Toggle
   const toggleAudio = useCallback(() => {
@@ -161,15 +285,6 @@ export const App: React.FC = () => {
     audioManager.unlock();
     const muted = audioManager.toggleMute();
     setIsMuted(muted);
-  }, []);
-
-  // Dynamic Weather Toggle (Clear Night vs Cyber Rainstorm)
-  const toggleWeather = useCallback(() => {
-    HapticsManager.buttonTap();
-    if (engineRef.current) {
-      const next = engineRef.current.weatherManager.toggleWeather();
-      setWeather(next);
-    }
   }, []);
 
   // Gyro Tilt Steering Mode Toggle
@@ -187,7 +302,7 @@ export const App: React.FC = () => {
         setTiltSteeringEnabled(true);
         setStats(StorageManager.saveStats({ tiltSteeringEnabled: true }));
       } else {
-        alert('Device orientation sensors could not be accessed. Keeping touch buttons.');
+        alert('Orientation sensors unavailable. Keeping touch buttons.');
       }
     } else {
       tiltManager.stop();
@@ -213,7 +328,7 @@ export const App: React.FC = () => {
 
       {/* Atmospheric Windshield Water Droplets & Lightning Flash */}
       <RainScreenOverlay
-        isRaining={hud.weather === 'RAIN'}
+        isRaining={hud.weather === 'RAIN' && gameState === 'RACING'}
         isLightningFlashing={hud.isLightningFlashing}
       />
 
@@ -223,194 +338,274 @@ export const App: React.FC = () => {
       {/* Mobile Landscape Orientation Enforcement Overlay */}
       <RotatePhonePrompt />
 
-      {/* TOP HEADER CONTROLS (Mute, Weather, Gyro, Records, Install, Coin Balance) */}
-      <header className="mobile-app-header">
-        <div className="header-left">
-          <button className="icon-btn" onClick={toggleAudio} title="Toggle Audio">
-            {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-          </button>
+      {/* =====================================================================
+          STEP 1: 8K HERO SPLASH SCREEN ("Dhan-Dhan" Engine Roar + 3s Timer)
+          ===================================================================== */}
+      {gameState === 'SPLASH' && (
+        <div className="splash-screen-overlay">
+          <div className="splash-bg-image" />
+          <div className="splash-vignette" />
 
-          {/* Weather Toggle */}
-          <button
-            className={`icon-btn weather-toggle-header ${weather === 'RAIN' ? 'rain-active' : ''}`}
-            onClick={toggleWeather}
-            title={weather === 'RAIN' ? 'Cyber Rain Active (Tap for Clear Night)' : 'Clear Night Active (Tap for Cyber Rain)'}
-          >
-            {weather === 'RAIN' ? <CloudRain size={18} color="#00f3ff" /> : <Moon size={18} />}
-          </button>
+          <div className="splash-content-card">
+            <div className="splash-badge">8K ULTRA REALISTIC RACING</div>
+            <h1 className="splash-title">
+              VELOCITY <span className="highlight">X</span>
+            </h1>
+            <p className="splash-subtitle">HIGH-OCTANE HIGHWAY POLICE PURSUIT</p>
 
-          {/* Gyro Tilt Toggle */}
-          <button
-            className={`icon-btn tilt-toggle-header ${tiltSteeringEnabled ? 'tilt-active' : ''}`}
-            onClick={toggleTiltSteering}
-            title={tiltSteeringEnabled ? 'Gyro Tilt Active (Tap to switch to Touch)' : 'Touch Buttons Active (Tap to switch to Gyro Tilt)'}
-          >
-            <Smartphone size={17} />
-            <span className="tilt-status-pill">{tiltSteeringEnabled ? 'GYRO' : 'TOUCH'}</span>
-          </button>
+            {!splashTimerDone ? (
+              <div className="splash-loading-wrapper">
+                <div className="engine-rev-badge">
+                  <Zap size={15} className="rev-icon" />
+                  <span>STARTING V8 ENGINES...</span>
+                </div>
+                <div className="splash-progress-track">
+                  <div className="splash-progress-fill" style={{ width: `${splashProgress}%` }} />
+                </div>
+                <span className="splash-hint">TAP SCREEN FOR ENGINE SOUND</span>
+              </div>
+            ) : (
+              <div className="splash-actions-group">
+                <button className="splash-play-btn" onClick={handlePlayFromSplash}>
+                  <Play size={26} fill="currentColor" />
+                  <span>PLAY GAME</span>
+                </button>
 
-          {/* Global Leaderboard Button */}
-          <button
-            className="icon-btn leaderboard-header-btn"
-            onClick={() => { HapticsManager.buttonTap(); setShowLeaderboard(true); }}
-            title="Global Leaderboard & World Records"
-          >
-            <Trophy size={18} />
-          </button>
-
-          <InstallPrompt />
-        </div>
-
-        <div className="header-right">
-          <div className="coin-display">
-            <Coins size={16} className="coin-icon" />
-            <span>{stats.coins.toLocaleString()}</span>
+                <button
+                  type="button"
+                  className="splash-install-btn"
+                  onClick={() => triggerGlobalAppInstall()}
+                  title="Install Directly on Phone (Offline Flight Mode)"
+                >
+                  <Download size={18} />
+                  <span>INSTALL STANDALONE APP</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      </header>
+      )}
 
-      {/* 1. TITLE / MENU SCREEN */}
-      {gameState === 'MENU' && (
-        <div className="menu-screen-overlay">
-          <div className="menu-center-card">
-            <div className="title-glow-wrap">
-              <h1 className="game-title">
-                VELOCITY <span className="highlight">X</span>
-              </h1>
-              <p className="game-subtitle">CYBER HIGHWAY POLICE PURSUIT</p>
+      {/* =====================================================================
+          STEP 2: TRACK SELECTION SCREEN (Tokyo Cyber Night vs Golden Daylight)
+          ===================================================================== */}
+      {gameState === 'SELECT_TRACK' && (
+        <div className="track-select-overlay">
+          <div className="select-modal-container">
+            <span className="track-super-title">STEP 1 OF 2</span>
+            <h2 className="select-screen-title">CHOOSE HIGHWAY ATMOSPHERE</h2>
+            <p className="select-screen-desc">Select your high-speed expressway environment</p>
+
+            <div className="track-cards-grid">
+              {/* Card 1: Tokyo Cyber Night */}
+              <div
+                className={`track-card night-card ${selectedTrack === 'NIGHT' ? 'active' : ''}`}
+                onClick={() => handleSelectTrack('NIGHT')}
+              >
+                <div className="track-card-badge">RECOMMENDED • AAA VIEW</div>
+                <div className="track-icon-wrap night-icon-wrap">
+                  <Moon size={36} />
+                </div>
+                <h3 className="track-name">TOKYO CYBER NIGHT</h3>
+                <p className="track-sub">
+                  Wet reflective expressway, glowing streetlights, Japanese neon billboards & midnight rain atmosphere.
+                </p>
+                <div className="track-card-select-btn">
+                  <span>SELECT NIGHT EXP-9</span>
+                </div>
+              </div>
+
+              {/* Card 2: Golden Daylight Highway */}
+              <div
+                className={`track-card day-card ${selectedTrack === 'DAY' ? 'active' : ''}`}
+                onClick={() => handleSelectTrack('DAY')}
+              >
+                <div className="track-card-badge">GOLDEN HOUR</div>
+                <div className="track-icon-wrap day-icon-wrap">
+                  <Sun size={36} />
+                </div>
+                <h3 className="track-name">GOLDEN DAYLIGHT</h3>
+                <p className="track-sub">
+                  Bright sunlit expressway, crisp long shadows, clear city skyline & high daytime visibility.
+                </p>
+                <div className="track-card-select-btn">
+                  <span>SELECT SUNNY CRUISE</span>
+                </div>
+              </div>
             </div>
 
-            {/* High Score & Selected Car Card */}
-            <div className="menu-car-pill">
-              <div className="car-pill-left">
-                <span className="pill-sub">SELECTED VEHICLE</span>
-                <span className="pill-name">{activeCar.name}</span>
-              </div>
-              <div className="car-pill-right">
-                <span className="pill-sub">TOP RECORD</span>
-                <span className="pill-val">
-                  <Trophy size={14} className="trophy-icon" />
-                  {stats.highScore.toLocaleString()}
-                </span>
+            <button
+              className="back-step-btn"
+              onClick={() => { HapticsManager.buttonTap(); setGameState('SPLASH'); }}
+            >
+              <ChevronLeft size={16} />
+              <span>BACK TO TITLE</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          STEP 3: 3D CAR SHOWROOM & GARAGE (1 Free, Others Locked with Coins)
+          ===================================================================== */}
+      {gameState === 'SELECT_CAR' && (
+        <div className="car-showroom-overlay">
+          {/* Top Bar: Coin Balance & Back Button */}
+          <div className="showroom-top-bar">
+            <button
+              className="showroom-back-btn"
+              onClick={() => { HapticsManager.buttonTap(); setGameState('SELECT_TRACK'); }}
+            >
+              <ChevronLeft size={16} />
+              <span>TRACKS</span>
+            </button>
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="showroom-back-btn"
+                style={{ padding: '8px 12px' }}
+                onClick={toggleAudio}
+                title={isMuted ? "Unmute Sound" : "Mute Sound"}
+              >
+                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              </button>
+
+              <button
+                type="button"
+                className="showroom-back-btn"
+                style={{ padding: '8px 12px' }}
+                onClick={() => setShowLeaderboard(true)}
+                title="Leaderboard"
+              >
+                <Trophy size={16} />
+              </button>
+
+              <div className="coin-display-showroom">
+                <Coins size={17} className="coin-icon" />
+                <span>{stats.coins.toLocaleString()} <small>COINS</small></span>
               </div>
             </div>
+          </div>
 
-            {/* Steering Mode & Weather Selectors */}
-            <div className="menu-selectors-row">
-              {/* Steering Mode Selector */}
-              <div className="control-mode-selector">
-                <span className="selector-label">STEERING SYSTEM</span>
-                <div className="mode-toggle-pill">
+          {/* Center Carousel Navigation Arrows */}
+          <div className="showroom-nav-controls">
+            <button className="showroom-arrow-btn prev" onClick={handlePrevCar}>
+              <ChevronLeft size={28} />
+            </button>
+            <button className="showroom-arrow-btn next" onClick={handleNextCar}>
+              <ChevronRight size={28} />
+            </button>
+          </div>
+
+          {/* Bottom Card: Car Details, Stats, Steering Toggle & START RACE */}
+          <div className="showroom-bottom-dock">
+            <div className="showroom-car-meta">
+              <div className="car-name-row">
+                <span className="car-brand-tag">HYPERCAR SHOWROOM</span>
+                <h3 className="showroom-car-name">{activeCar.name}</h3>
+              </div>
+
+              {/* Performance Stats */}
+              <div className="showroom-stats-row">
+                <div className="spec-item">
+                  <Gauge size={13} />
+                  <span>TOP SPEED</span>
+                  <strong>{activeCar.topSpeedKmh} <small>KM/H</small></strong>
+                </div>
+                <div className="spec-item">
+                  <Zap size={13} />
+                  <span>ACCELERATION</span>
+                  <strong>{activeCar.acceleration} <small>/10</small></strong>
+                </div>
+                <div className="spec-item">
+                  <Shield size={13} />
+                  <span>ARMOR</span>
+                  <strong>{activeCar.armor} <small>/10</small></strong>
+                </div>
+              </div>
+
+              {/* Mobile Steering Preference Selector (Phone Tilt vs Touch Pads) */}
+              <div className="showroom-steering-selector">
+                <span className="steering-sel-label">STEERING MODE:</span>
+                <div className="steering-toggle-capsule">
                   <button
                     type="button"
-                    className={`mode-pill-btn ${!tiltSteeringEnabled ? 'selected' : ''}`}
+                    className={`steer-opt-btn ${!tiltSteeringEnabled ? 'active' : ''}`}
                     onClick={() => {
                       if (tiltSteeringEnabled) toggleTiltSteering();
                     }}
                   >
-                    <span>TOUCH PADS</span>
+                    <span>TOUCH BUTTONS</span>
                   </button>
+
                   <button
                     type="button"
-                    className={`mode-pill-btn ${tiltSteeringEnabled ? 'selected' : ''}`}
+                    className={`steer-opt-btn ${tiltSteeringEnabled ? 'active' : ''}`}
                     onClick={() => {
                       if (!tiltSteeringEnabled) toggleTiltSteering();
                     }}
                   >
                     <Smartphone size={13} />
-                    <span>GYRO TILT</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Weather Selector */}
-              <div className="control-mode-selector weather-selector">
-                <span className="selector-label">ATMOSPHERE</span>
-                <div className="mode-toggle-pill">
-                  <button
-                    type="button"
-                    className={`mode-pill-btn ${weather === 'CLEAR' ? 'selected' : ''}`}
-                    onClick={() => {
-                      if (weather !== 'CLEAR') toggleWeather();
-                    }}
-                  >
-                    <Moon size={13} />
-                    <span>CLEAR</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`mode-pill-btn ${weather === 'RAIN' ? 'selected' : ''}`}
-                    onClick={() => {
-                      if (weather !== 'RAIN') toggleWeather();
-                    }}
-                  >
-                    <CloudRain size={13} />
-                    <span>RAIN</span>
+                    <span>PHONE TILT (BUTTONS GAYAB)</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Main Action Buttons */}
-            <div className="menu-actions-stack">
-              <button className="menu-btn play-btn-hero" onClick={startRace}>
-                <Play size={24} fill="currentColor" />
-                <span>START RACE</span>
-              </button>
-
-              <div className="menu-sub-actions-row">
+            {/* Action Button: UNLOCK or START RACE */}
+            <div className="showroom-actions-col">
+              {!activeCar.unlocked ? (
                 <button
-                  className="menu-btn-sub garage-btn"
-                  onClick={() => { HapticsManager.buttonTap(); setGameState('GARAGE'); }}
+                  className={`showroom-action-btn unlock-btn ${stats.coins >= activeCar.price ? 'can-afford' : 'disabled'}`}
+                  disabled={stats.coins < activeCar.price}
+                  onClick={() => handleUnlockCar(activeCar.id)}
                 >
-                  <Wrench size={16} />
-                  <span>GARAGE</span>
+                  <Lock size={20} />
+                  <span>UNLOCK FOR {activeCar.price.toLocaleString()} COINS</span>
                 </button>
-
-                <button
-                  className="menu-btn-sub leaderboard-btn"
-                  onClick={() => { HapticsManager.buttonTap(); setShowLeaderboard(true); }}
-                >
-                  <Trophy size={16} />
-                  <span>RECORDS</span>
+              ) : (
+                <button className="showroom-action-btn start-race-btn" onClick={launchCountdownAndRace}>
+                  <Play size={24} fill="currentColor" />
+                  <span>START RACE</span>
                 </button>
-
-                <button
-                  className="menu-btn-sub install-menu-btn"
-                  onClick={() => { HapticsManager.buttonTap(); triggerGlobalAppInstall(); }}
-                  title="Install VELOCITY X on Phone (Offline / Standalone)"
-                >
-                  <Download size={16} />
-                  <span>INSTALL</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="menu-tips">
-              <span>{tiltSteeringEnabled ? 'PHYSICALLY TILT PHONE TO CARVE THROUGH HIGHWAY LANES' : 'TAP & HOLD LEFT / RIGHT TO WEAVE THROUGH TRAFFIC'}</span>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* 2. RACING HUD & CONTROLS */}
+      {/* =====================================================================
+          STEP 4: 3-2-1-GO! COUNTDOWN OVERLAY
+          ===================================================================== */}
+      {gameState === 'COUNTDOWN' && countdown !== null && (
+        <div className="countdown-overlay">
+          <div className={`countdown-digits ${countdown === 'GO!' ? 'go-text' : ''}`}>
+            {countdown}
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          STEP 5: RACING HUD & ERGONOMIC CONTROLS (Zero-Overlap, Head-Hidden)
+          ===================================================================== */}
       {gameState === 'RACING' && (
         <>
-          {/* Tactical Rearview Mirror */}
+          {/* Tactical Rearview Mirror (Isolated at Top-Center) */}
           <RearviewMirror
             pursuitActive={hud.pursuitActive}
             policeDistance={hud.policeDistance}
             alertIntensity={hud.pursuitAlertIntensity}
           />
 
-          {/* Speedometer, Nitro, Combo & Stats HUD */}
+          {/* Symmetrical Left/Right Top Stats & Bottom Corner Speedometer */}
           <MobileHUD
             hud={hud}
             nearMissAlert={nearMissAlert}
             evadedBonus={evadedBonus}
           />
 
-          {/* Dual-Thumb Ergonomic Mobile Touch Pedals / Gyro Instrument */}
+          {/* Smart Device Adaptive Touch Controls (Hidden on PC/Laptop, Left/Right Buttons Hidden on Tilt) */}
           <MobileControls
             onControlsChange={handleTouchControls}
             nitroPercent={hud.nitroPercent}
@@ -424,30 +619,21 @@ export const App: React.FC = () => {
         </>
       )}
 
-      {/* 3. GARAGE CUSTOMIZER MODAL */}
-      {gameState === 'GARAGE' && (
-        <GarageModal
-          cars={cars}
-          selectedCarId={activeCar.id}
-          coins={stats.coins}
-          onSelectCar={(newCar) => setActiveCar(newCar)}
-          onClose={() => setGameState('MENU')}
-          onUpdateCars={(updated) => setCars(updated)}
-          onUpdateCoins={(c) => setStats(prev => ({ ...prev, coins: c }))}
-        />
-      )}
-
-      {/* 4. GAME OVER / BUSTED MODAL */}
+      {/* =====================================================================
+          GAME OVER / BUSTED MODAL
+          ===================================================================== */}
       {gameState === 'GAME_OVER' && summary && (
         <GameOverModal
           summary={summary}
-          onRestart={startRace}
-          onOpenGarage={() => setGameState('GARAGE')}
+          onRestart={() => {
+            setGameState('SELECT_TRACK');
+          }}
+          onOpenGarage={() => setGameState('SELECT_CAR')}
           onOpenLeaderboard={() => setShowLeaderboard(true)}
         />
       )}
 
-      {/* 5. GLOBAL LEADERBOARD MODAL */}
+      {/* Global Leaderboard Modal */}
       {showLeaderboard && (
         <LeaderboardModal onClose={() => setShowLeaderboard(false)} />
       )}

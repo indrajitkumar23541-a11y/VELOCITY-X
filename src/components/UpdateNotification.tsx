@@ -22,9 +22,9 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ gameStat
     return unsubscribe;
   }, []);
 
-  // Auto-reload timer if user is idling on the Menu screen
+  // Auto-reload timer if user is idling on any menu screen (not during RACING)
   useEffect(() => {
-    if (!updateReady || isDismissed || gameState !== 'MENU') return;
+    if (!updateReady || isDismissed || gameState === 'RACING') return;
 
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -55,7 +55,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ gameStat
             <span className="update-version-tag">NEW</span>
           </div>
           <p className="update-desc">
-            New features & fixes downloaded from GitHub! {gameState === 'MENU' ? `Restarting in ${countdown}s...` : 'Will update after current run.'}
+            New features & fixes downloaded from GitHub! {gameState !== 'RACING' ? `Restarting in ${countdown}s...` : 'Will update after current run.'}
           </p>
         </div>
 

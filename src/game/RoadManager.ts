@@ -426,16 +426,38 @@ export class RoadManager {
     }
   }
 
+  public reset(startZ: number = 0): void {
+    for (let i = 0; i < this.roadSegments.length; i++) {
+      const zPos = startZ + (i * this.segmentLength - 40);
+      this.roadSegments[i].position.set(0, 0, zPos);
+    }
+  }
+
   public update(playerZ: number): void {
-    // Seamlessly recycle road segments ahead as player drives along +Z
+    // Continuous seamless wrapping: segments behind the player wrap forward
+    const totalRoadSpan = this.totalSegments * this.segmentLength;
     for (const segment of this.roadSegments) {
-      if (segment.position.z < playerZ - 80) {
-        let maxZ = -Infinity;
-        for (const s of this.roadSegments) {
-          if (s.position.z > maxZ) maxZ = s.position.z;
-        }
-        segment.position.z = maxZ + this.segmentLength;
+      while (segment.position.z < playerZ - this.segmentLength * 1.5) {
+        segment.position.z += totalRoadSpan;
       }
+    }
+  }
+
+  public setTrackEnvironment(mode: 'NIGHT' | 'DAY'): void {
+    if (mode === 'NIGHT') {
+      this.asphaltMaterial.color.setHex(0x161a22);
+      this.asphaltMaterial.roughness = 0.12; // sleek wet asphalt with night city reflections
+      this.asphaltMaterial.metalness = 0.45;
+      this.buildingMaterial.emissiveIntensity = 0.95;
+      this.lineMaterial.emissiveIntensity = 0.7;
+      this.yellowLineMaterial.emissiveIntensity = 0.75;
+    } else {
+      this.asphaltMaterial.color.setHex(0x383e4a);
+      this.asphaltMaterial.roughness = 0.45; // bright daylight highway tarmac
+      this.asphaltMaterial.metalness = 0.15;
+      this.buildingMaterial.emissiveIntensity = 0.15;
+      this.lineMaterial.emissiveIntensity = 0.2;
+      this.yellowLineMaterial.emissiveIntensity = 0.25;
     }
   }
 
@@ -446,11 +468,11 @@ export class RoadManager {
 
   public setWetness(isWet: boolean): void {
     if (isWet) {
-      this.asphaltMaterial.roughness = 0.08; // mirror slick puddles with city reflections
-      this.asphaltMaterial.metalness = 0.45;
+      this.asphaltMaterial.roughness = 0.06; // mirror slick puddles with city reflections
+      this.asphaltMaterial.metalness = 0.55;
     } else {
-      this.asphaltMaterial.roughness = 0.22;
-      this.asphaltMaterial.metalness = 0.25;
+      this.asphaltMaterial.roughness = 0.14;
+      this.asphaltMaterial.metalness = 0.35;
     }
   }
 }

@@ -52,8 +52,12 @@ export class Engine {
   public particleSystem: ParticleSystem;
   public weatherManager: WeatherManager;
   public isLightningFlashing = false;
+  public trackMode: 'NIGHT' | 'DAY' = 'NIGHT';
+  public isTurntableMode = false;
+  private turntableAngle = 0;
 
   private dirLight: THREE.DirectionalLight;
+  private ambientLight: THREE.AmbientLight;
   private clock = new THREE.Clock();
   private isRunning = false;
   private animFrameId: number | null = null;
@@ -99,36 +103,36 @@ export class Engine {
 
     // Photorealistic ACES Filmic Tone Mapping
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.2;
+    this.renderer.toneMappingExposure = 1.25;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // 2. Scene & Deep Night Cyberpunk Fog
+    // 2. Scene & High-Visibility Cyber City Linear Fog (extends out to 280m)
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x060913);
-    this.scene.fog = new THREE.FogExp2(0x070c18, 0.0028);
+    this.scene.fog = new THREE.Fog(0x060913, 25, 280);
 
     // 3. Procedural Cyberpunk HDR Environment Map for 4K Supercar Reflections
     this.setupCyberpunkEnvironment();
 
     // 4. Dynamic Directional Moonlight with tight shadow frustum
-    this.dirLight = new THREE.DirectionalLight(0x99ccff, 2.2);
+    this.dirLight = new THREE.DirectionalLight(0xb0d8ff, 2.6);
     this.dirLight.position.set(25, 45, 20);
     this.dirLight.castShadow = true;
     this.dirLight.shadow.mapSize.width = 1024;
     this.dirLight.shadow.mapSize.height = 1024;
     this.dirLight.shadow.camera.near = 0.5;
-    this.dirLight.shadow.camera.far = 120;
-    this.dirLight.shadow.camera.left = -18;
-    this.dirLight.shadow.camera.right = 18;
-    this.dirLight.shadow.camera.top = 22;
-    this.dirLight.shadow.camera.bottom = -22;
-    this.dirLight.shadow.bias = -0.0008;
+    this.dirLight.shadow.camera.far = 140;
+    this.dirLight.shadow.camera.left = -22;
+    this.dirLight.shadow.camera.right = 22;
+    this.dirLight.shadow.camera.top = 25;
+    this.dirLight.shadow.camera.bottom = -25;
+    this.dirLight.shadow.bias = -0.0006;
     this.scene.add(this.dirLight);
 
     // Ambient Night Road Fill Light with Cyber City Hue
-    const ambientLight = new THREE.AmbientLight(0x283854, 1.8);
-    this.scene.add(ambientLight);
+    this.ambientLight = new THREE.AmbientLight(0x384a68, 2.2);
+    this.scene.add(this.ambientLight);
 
     // 4. Subsystems
     this.cameraManager = new CameraManager();
@@ -137,7 +141,7 @@ export class Engine {
     this.trafficManager = new TrafficManager(this.scene);
     this.policeChase = new PoliceChase(this.scene);
     this.particleSystem = new ParticleSystem(this.scene);
-    this.weatherManager = new WeatherManager(this.scene, this.dirLight, ambientLight, this.roadManager);
+    this.weatherManager = new WeatherManager(this.scene, this.dirLight, this.ambientLight, this.roadManager);
     this.weatherManager.onLightningFlash = () => {
       this.isLightningFlashing = true;
       setTimeout(() => { this.isLightningFlashing = false; }, 160);
@@ -175,8 +179,39 @@ export class Engine {
     this.nextPursuitDistance = 650;
 
     this.playerCar.reset(1);
+    this.roadManager.reset(this.playerCar.mesh.position.z);
     this.trafficManager.reset(this.playerCar.mesh.position.z);
     this.policeChase.reset();
+  }
+
+  public setTrackEnvironment(mode: 'NIGHT' | 'DAY'): void {
+    this.trackMode = mode;
+    this.roadManager.setTrackEnvironment(mode);
+    if (mode === 'NIGHT') {
+      this.scene.background = new THREE.Color(0x060913);
+      this.scene.fog = new THREE.Fog(0x060913, 25, 280);
+      this.dirLight.color.setHex(0xb0d8ff);
+      this.dirLight.intensity = 2.6;
+      this.ambientLight.color.setHex(0x384a68);
+      this.ambientLight.intensity = 2.2;
+    } else {
+      this.scene.background = new THREE.Color(0x527799);
+      this.scene.fog = new THREE.Fog(0x6b8fae, 35, 300);
+      this.dirLight.color.setHex(0xfffaea);
+      this.dirLight.intensity = 3.6;
+      this.ambientLight.color.setHex(0x8da3b8);
+      this.ambientLight.intensity = 2.4;
+    }
+  }
+
+  public setTurntableMode(active: boolean): void {
+    this.isTurntableMode = active;
+    if (active) {
+      this.turntableAngle = 0;
+      this.playerCar.mesh.position.set(0, 0, 0);
+      this.playerCar.mesh.rotation.set(0, 0, 0);
+      this.roadManager.reset(0);
+    }
   }
 
   private onResize = (): void => {
@@ -301,6 +336,20 @@ export class Engine {
 
     // Delta time clamped to avoid physics glitches on mobile lag
     const delta = Math.min(this.clock.getDelta(), 0.08);
+
+    // Turntable 3D Showroom rotation mode
+    if (this.isTurntableMode) {
+      this.turntableAngle += delta * 0.55;
+      const dist = 5.2;
+      this.cameraManager.camera.position.set(
+        Math.sin(this.turntableAngle) * dist,
+        1.6 + Math.sin(this.turntableAngle * 0.5) * 0.2,
+        Math.cos(this.turntableAngle) * dist
+      );
+      this.cameraManager.camera.lookAt(0, 0.55, 0);
+      this.renderer.render(this.scene, this.cameraManager.camera);
+      return;
+    }
 
     // 0. Update Gyro Tilt Steering if enabled
     if (tiltManager.enabled) {

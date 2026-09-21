@@ -547,6 +547,172 @@ export class AudioManager {
       // ignore
     }
   }
+
+  // 1. High-Octane 8K Cinematic V8 Engine Roar Intro ("Dhan-Dhan" Rev + Turbo BOV)
+  public playCinematicIntroSound(): void {
+    this.init();
+    if (!this.ctx || !this.masterGain) return;
+
+    try {
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      const t = this.ctx.currentTime;
+
+      // Pulse 1: First heavy engine rev ("Dhan...")
+      const rev1 = this.ctx.createOscillator();
+      const rev1Gain = this.ctx.createGain();
+      rev1.type = 'sawtooth';
+      rev1.frequency.setValueAtTime(65, t);
+      rev1.frequency.exponentialRampToValueAtTime(220, t + 0.35);
+      rev1.frequency.exponentialRampToValueAtTime(80, t + 0.85);
+
+      rev1Gain.gain.setValueAtTime(0.6, t);
+      rev1Gain.gain.exponentialRampToValueAtTime(0.001, t + 0.95);
+
+      rev1.connect(rev1Gain);
+      rev1Gain.connect(this.masterGain);
+      rev1.start(t);
+      rev1.stop(t + 1.0);
+
+      // Pulse 2: Second deep thunderous throttle surge ("...Dhan!")
+      const rev2 = this.ctx.createOscillator();
+      const rev2Gain = this.ctx.createGain();
+      rev2.type = 'triangle';
+      rev2.frequency.setValueAtTime(55, t + 0.9);
+      rev2.frequency.exponentialRampToValueAtTime(260, t + 1.3);
+      rev2.frequency.exponentialRampToValueAtTime(90, t + 1.9);
+
+      rev2Gain.gain.setValueAtTime(0.001, t);
+      rev2Gain.gain.setValueAtTime(0.7, t + 0.9);
+      rev2Gain.gain.exponentialRampToValueAtTime(0.001, t + 2.1);
+
+      rev2.connect(rev2Gain);
+      rev2Gain.connect(this.masterGain);
+      rev2.start(t + 0.9);
+      rev2.stop(t + 2.2);
+
+      // Sub-Bass 40Hz Chest Thump
+      const sub = this.ctx.createOscillator();
+      const subGain = this.ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(45, t);
+      sub.frequency.exponentialRampToValueAtTime(32, t + 1.8);
+      subGain.gain.setValueAtTime(0.8, t);
+      subGain.gain.exponentialRampToValueAtTime(0.001, t + 1.9);
+      sub.connect(subGain);
+      subGain.connect(this.masterGain);
+      sub.start(t);
+      sub.stop(t + 2.0);
+
+      // Turbo Blow-Off Valve (Tssssshhh whoosh)
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.9);
+      const bovBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = bovBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const bovSource = this.ctx.createBufferSource();
+      bovSource.buffer = bovBuffer;
+      const bovFilter = this.ctx.createBiquadFilter();
+      bovFilter.type = 'bandpass';
+      bovFilter.frequency.setValueAtTime(1800, t + 1.2);
+      bovFilter.frequency.exponentialRampToValueAtTime(600, t + 2.1);
+
+      const bovGain = this.ctx.createGain();
+      bovGain.gain.setValueAtTime(0.001, t);
+      bovGain.gain.setValueAtTime(0.5, t + 1.2);
+      bovGain.gain.exponentialRampToValueAtTime(0.001, t + 2.2);
+
+      bovSource.connect(bovFilter);
+      bovFilter.connect(bovGain);
+      bovGain.connect(this.masterGain);
+
+      bovSource.start(t + 1.2);
+      bovSource.stop(t + 2.3);
+    } catch {
+      // ignore
+    }
+  }
+
+  // 2. High-Tech Countdown Beep (3, 2, 1, GO!)
+  public playCountdownBeep(isFinal: boolean): void {
+    this.init();
+    if (!this.ctx || !this.masterGain) return;
+
+    try {
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      const t = this.ctx.currentTime;
+
+      if (!isFinal) {
+        // High-pitched warning beep (880 Hz)
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, t);
+        gain.gain.setValueAtTime(0.45, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      } else {
+        // Grand "GO!" Launch Chord + Sub-bass drop
+        [523.25, 659.25, 783.99, 1046.5].forEach((freq) => {
+          const chordOsc = this.ctx!.createOscillator();
+          const chordGain = this.ctx!.createGain();
+          chordOsc.type = 'triangle';
+          chordOsc.frequency.setValueAtTime(freq, t);
+          chordGain.gain.setValueAtTime(0.35, t);
+          chordGain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
+          chordOsc.connect(chordGain);
+          chordGain.connect(this.masterGain!);
+          chordOsc.start(t);
+          chordOsc.stop(t + 0.7);
+        });
+
+        const sub = this.ctx.createOscillator();
+        const subGain = this.ctx.createGain();
+        sub.type = 'sine';
+        sub.frequency.setValueAtTime(80, t);
+        sub.frequency.exponentialRampToValueAtTime(35, t + 0.5);
+        subGain.gain.setValueAtTime(0.7, t);
+        subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+        sub.connect(subGain);
+        subGain.connect(this.masterGain);
+        sub.start(t);
+        sub.stop(t + 0.65);
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // 3. Metallic Coin Purchase / Unlock Chime
+  public playCoinUnlock(): void {
+    this.init();
+    if (!this.ctx || !this.masterGain) return;
+
+    try {
+      const t = this.ctx.currentTime;
+      [1046.5, 1318.51, 1567.98, 2093].forEach((freq, idx) => {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, t + idx * 0.06);
+        gain.gain.setValueAtTime(0.4, t + idx * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.06 + 0.35);
+        osc.connect(gain);
+        gain.connect(this.masterGain!);
+        osc.start(t + idx * 0.06);
+        osc.stop(t + idx * 0.06 + 0.4);
+      });
+    } catch {
+      // ignore
+    }
+  }
 }
 
 export const audioManager = new AudioManager();
