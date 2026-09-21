@@ -9,6 +9,7 @@ export interface PlayerControls {
   throttle: boolean;
   brake: boolean;
   nitro: boolean;
+  steerAxis?: number; // Analog steering: -1.0 (full left) to +1.0 (full right)
 }
 
 export class PlayerCar {
@@ -339,13 +340,20 @@ export class PlayerCar {
     const speedFactor = Math.min(1, Math.max(0.2, this.speedKmh / 140));
     const steerSensitivity = 14.5 * speedFactor;
 
-    if (controls.steerLeft) {
-      this.steeringInertia = THREE.MathUtils.lerp(this.steeringInertia, -1, delta * 12);
+    let targetSteer = 0;
+    if (controls.steerAxis !== undefined && Math.abs(controls.steerAxis) > 0.01) {
+      targetSteer = THREE.MathUtils.clamp(controls.steerAxis, -1, 1);
+    } else if (controls.steerLeft) {
+      targetSteer = -1;
     } else if (controls.steerRight) {
-      this.steeringInertia = THREE.MathUtils.lerp(this.steeringInertia, 1, delta * 12);
-    } else {
-      this.steeringInertia = THREE.MathUtils.lerp(this.steeringInertia, 0, delta * 10);
+      targetSteer = 1;
     }
+
+    this.steeringInertia = THREE.MathUtils.lerp(
+      this.steeringInertia,
+      targetSteer,
+      delta * (targetSteer !== 0 ? 12 : 10)
+    );
 
     this.lateralVelocity = this.steeringInertia * steerSensitivity;
     this.mesh.position.x += this.lateralVelocity * delta;

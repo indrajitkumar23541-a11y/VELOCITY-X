@@ -224,4 +224,14 @@ export class RoadManager {
     const idx = Math.max(0, Math.min(3, laneIndex));
     return RoadManager.LANES[idx];
   }
+
+  public setWetness(isWet: boolean): void {
+    if (isWet) {
+      this.asphaltMaterial.roughness = 0.10; // mirror slick puddles
+      this.asphaltMaterial.metalness = 0.35;
+    } else {
+      this.asphaltMaterial.roughness = 0.35;
+      this.asphaltMaterial.metalness = 0.15;
+    }
+  }
 }

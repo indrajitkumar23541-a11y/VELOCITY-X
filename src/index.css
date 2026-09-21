@@ -1343,3 +1343,975 @@ html, body, #root {
   padding: 6px 16px;
   border-radius: 20px;
 }
+
+/* -------------------------------------------------------------
+   Gyroscope & Tilt Steering Mode (Phase 10.3)
+   ------------------------------------------------------------- */
+.tilt-toggle-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  padding: 0 12px;
+  border-radius: 8px;
+}
+
+.tilt-toggle-header.tilt-active {
+  border-color: var(--cyan);
+  background: rgba(0, 243, 255, 0.18);
+  box-shadow: 0 0 14px var(--cyan-glow);
+  color: var(--cyan);
+}
+
+.tilt-status-pill {
+  font-family: var(--font-racing);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+/* Menu Screen Steering Mode Toggle */
+.control-mode-selector {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.selector-label {
+  font-family: var(--font-racing);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.mode-toggle-pill {
+  display: flex;
+  background: rgba(12, 18, 30, 0.85);
+  border: 1px solid rgba(0, 243, 255, 0.25);
+  border-radius: 12px;
+  padding: 4px;
+  width: 100%;
+  gap: 4px;
+  backdrop-filter: blur(10px);
+}
+
+.mode-pill-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #94a3b8;
+  padding: 10px 14px;
+  font-family: var(--font-racing);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  touch-action: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mode-pill-btn.selected {
+  background: linear-gradient(135deg, rgba(0, 243, 255, 0.3) 0%, rgba(0, 100, 255, 0.3) 100%);
+  border: 1px solid var(--cyan);
+  color: #fff;
+  box-shadow: 0 0 16px var(--cyan-glow);
+  text-shadow: 0 0 10px var(--cyan);
+}
+
+/* Mobile Controls Gyro Instrument Card */
+.steer-buttons-group {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.tilt-steering-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  pointer-events: auto;
+}
+
+.tilt-instrument-card {
+  background: rgba(12, 18, 30, 0.92);
+  border: 1.5px solid rgba(0, 243, 255, 0.45);
+  border-radius: 16px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 175px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), inset 0 0 16px rgba(0, 243, 255, 0.12);
+}
+
+.tilt-inst-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-racing);
+}
+
+.tilt-mode-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--cyan);
+}
+
+.tilt-icon-pulse {
+  animation: gyroPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes gyroPulse {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
+}
+
+.tilt-angle-deg {
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  background: rgba(0, 243, 255, 0.15);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 243, 255, 0.3);
+}
+
+/* Artificial Horizon Gauge Track */
+.tilt-horizon-track {
+  width: 100%;
+  height: 22px;
+  background: rgba(6, 10, 18, 0.95);
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  border-radius: 11px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tilt-zone-deadzone {
+  position: absolute;
+  width: 20px;
+  height: 100%;
+  background: rgba(0, 243, 255, 0.08);
+  border-left: 1px dashed rgba(0, 243, 255, 0.35);
+  border-right: 1px dashed rgba(0, 243, 255, 0.35);
+}
+
+.tilt-center-tick {
+  position: absolute;
+  width: 2px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.tilt-horizon-reticle {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.04s ease-out;
+  pointer-events: none;
+}
+
+.reticle-core {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan);
+}
+
+.reticle-wings {
+  position: absolute;
+  width: 28px;
+  height: 2px;
+  background: var(--cyan);
+  opacity: 0.8;
+}
+
+.tilt-actions-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.tilt-btn {
+  flex: 1;
+  background: rgba(20, 30, 48, 0.85);
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  border-radius: 8px;
+  color: #fff;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-family: var(--font-racing);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  touch-action: none;
+  transition: all 0.12s ease;
+}
+
+.tilt-btn:active {
+  transform: scale(0.94);
+  background: rgba(0, 243, 255, 0.25);
+  border-color: var(--cyan);
+}
+
+.tilt-recenter-btn {
+  color: var(--cyan);
+}
+
+.tilt-switch-btn {
+  color: #94a3b8;
+}
+
+/* Mini Cockpit HUD Gyro Status Chip */
+.hud-gyro-chip {
+  margin-top: 5px;
+  background: rgba(0, 243, 255, 0.12);
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  border-radius: 6px;
+  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-racing);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 243, 255, 0.2);
+}
+
+.hud-gyro-icon {
+  animation: gyroPulse 2s infinite ease-in-out;
+}
+
+/* -------------------------------------------------------------
+   Install Guide Modal
+   ------------------------------------------------------------- */
+.install-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 7, 13, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.install-modal-card {
+  background: rgba(12, 18, 30, 0.96);
+  border: 1.5px solid var(--cyan);
+  border-radius: 20px;
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 243, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.install-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-header-icon {
+  color: var(--cyan);
+}
+
+.modal-title-group h3 {
+  font-family: var(--font-racing);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #fff;
+}
+
+.modal-close-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #94a3b8;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modal-close-btn:hover, .modal-close-btn:active {
+  color: #fff;
+  border-color: var(--cyan);
+}
+
+.install-modal-sub {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.install-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.install-step-item {
+  background: rgba(18, 26, 42, 0.7);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.install-step-item.highlight-step {
+  border-color: rgba(255, 170, 0, 0.5);
+  background: rgba(26, 22, 16, 0.75);
+}
+
+.step-badge {
+  background: var(--cyan);
+  color: #080b12;
+  font-family: var(--font-racing);
+  font-weight: 900;
+  font-size: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.highlight-step .step-badge {
+  background: var(--amber);
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h4 {
+  font-family: var(--font-racing);
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.step-content p {
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.mini-steps-list {
+  margin: 6px 0 8px 18px;
+  font-size: 11px;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mini-steps-list code, .step-content code {
+  background: #0d1320;
+  border: 1px solid rgba(0, 243, 255, 0.3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--cyan);
+}
+
+.copy-url-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #080c14;
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  padding: 6px 10px;
+  border-radius: 8px;
+  margin: 6px 0;
+}
+
+.copy-url-row code {
+  flex: 1;
+  color: var(--cyan);
+  font-size: 11px;
+  word-break: break-all;
+}
+
+.copy-btn {
+  background: rgba(0, 243, 255, 0.15);
+  border: 1px solid var(--cyan);
+  border-radius: 6px;
+  color: #fff;
+  font-family: var(--font-racing);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.copy-btn:active {
+  transform: scale(0.95);
+  background: rgba(0, 243, 255, 0.3);
+}
+
+.step-note {
+  font-size: 10px !important;
+  color: var(--amber) !important;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.install-modal-done-btn {
+  background: linear-gradient(135deg, #00f3ff 0%, #0077ff 100%);
+  border: none;
+  border-radius: 12px;
+  color: #05070a;
+  font-family: var(--font-racing);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 12px;
+  cursor: pointer;
+  box-shadow: 0 0 20px var(--cyan-glow);
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.install-modal-done-btn:active {
+  transform: scale(0.98);
+}
+
+/* -------------------------------------------------------------
+   Phase 10.4: Dynamic Weather & Cyber Rainstorm Styles
+   ------------------------------------------------------------- */
+.weather-toggle-header {
+  color: #94a3b8;
+}
+
+.weather-toggle-header.rain-active {
+  border-color: var(--cyan);
+  background: rgba(0, 243, 255, 0.18);
+  box-shadow: 0 0 14px var(--cyan-glow);
+  color: var(--cyan);
+}
+
+.weather-hud-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(14, 20, 32, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.weather-hud-chip.rain-active {
+  border-color: var(--cyan);
+  background: rgba(0, 243, 255, 0.15);
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.25);
+}
+
+.weather-hud-icon.rain {
+  color: var(--cyan);
+  animation: rainIconBounce 1.2s infinite ease-in-out;
+}
+
+.weather-hud-icon.moon {
+  color: #ffea00;
+}
+
+.weather-hud-text {
+  font-family: var(--font-racing);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+@keyframes rainIconBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Screen Water Droplets & Lightning Flash */
+.rain-screen-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.lightning-flash-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(220, 240, 255, 0.55);
+  animation: lightningBurst 0.16s ease-out forwards;
+}
+
+@keyframes lightningBurst {
+  0% { opacity: 0.9; }
+  40% { opacity: 0.2; }
+  60% { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+.water-droplets-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.75;
+}
+
+.droplets-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.sliding-drop-1 {
+  animation: slideDrop 4s infinite linear;
+}
+
+.sliding-drop-2 {
+  animation: slideDrop 5.5s infinite linear;
+  animation-delay: 1.5s;
+}
+
+.sliding-drop-3 {
+  animation: slideDrop 6.5s infinite linear;
+  animation-delay: 2.8s;
+}
+
+@keyframes slideDrop {
+  0% { transform: translateY(-5px); opacity: 0; }
+  10% { opacity: 0.9; }
+  90% { opacity: 0.9; }
+  100% { transform: translateY(25px); opacity: 0; }
+}
+
+/* Menu Selectors Dual Row */
+.menu-selectors-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 18px;
+}
+
+.menu-selectors-row .control-mode-selector {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* -------------------------------------------------------------
+   Phase 10.5: Global Leaderboard & Hall of Fame Styles
+   ------------------------------------------------------------- */
+.leaderboard-btn, .leaderboard-action-btn {
+  background: rgba(18, 26, 42, 0.88);
+  border: 1px solid rgba(255, 170, 0, 0.45);
+  color: var(--gold);
+}
+
+.leaderboard-btn:active, .leaderboard-action-btn:active {
+  background: rgba(255, 170, 0, 0.25);
+  box-shadow: 0 0 16px rgba(255, 170, 0, 0.4);
+}
+
+.leaderboard-header-btn {
+  color: var(--gold);
+  border-color: rgba(255, 170, 0, 0.4);
+}
+
+.leaderboard-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 7, 13, 0.88);
+  backdrop-filter: blur(14px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.leaderboard-card {
+  background: rgba(12, 18, 30, 0.96);
+  border: 1.5px solid rgba(255, 170, 0, 0.5);
+  border-radius: 20px;
+  max-width: 620px;
+  width: 100%;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), 0 0 35px rgba(255, 170, 0, 0.25);
+  overflow: hidden;
+}
+
+.leaderboard-header {
+  padding: 18px 22px 14px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 170, 0, 0.2);
+}
+
+.leaderboard-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trophy-gold {
+  color: var(--gold);
+  filter: drop-shadow(0 0 10px rgba(255, 170, 0, 0.6));
+}
+
+.leaderboard-title-group h2 {
+  font-family: var(--font-racing);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+}
+
+.leaderboard-title-group .subtitle {
+  font-family: var(--font-racing);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+
+/* Driver Profile Callsign Bar */
+.player-callsign-bar {
+  background: rgba(18, 26, 42, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.callsign-left, .callsign-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.callsign-icon {
+  color: var(--cyan);
+}
+
+.callsign-label, .personal-best-label {
+  font-family: var(--font-racing);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #64748b;
+}
+
+.player-name-badge {
+  font-family: var(--font-racing);
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--cyan);
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  text-decoration: underline;
+  text-decoration-style: dashed;
+}
+
+.edit-hint {
+  font-size: 8px;
+  color: #94a3b8;
+}
+
+.callsign-form {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.callsign-input {
+  background: #080c14;
+  border: 1px solid var(--cyan);
+  border-radius: 6px;
+  color: var(--cyan);
+  font-family: var(--font-racing);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 8px;
+  width: 120px;
+  outline: none;
+}
+
+.save-callsign-btn {
+  background: var(--cyan);
+  border: none;
+  border-radius: 6px;
+  color: #080b12;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.personal-best-val {
+  font-family: var(--font-racing);
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--gold);
+}
+
+/* Leaderboard Table */
+.leaderboard-table-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-racing);
+  font-size: 11px;
+}
+
+.leaderboard-table th {
+  padding: 10px 8px;
+  text-align: left;
+  color: #64748b;
+  font-size: 9px;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.leaderboard-table .score-th {
+  text-align: right;
+}
+
+.leaderboard-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.1s ease;
+}
+
+.leaderboard-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.leaderboard-row td {
+  padding: 9px 8px;
+  vertical-align: middle;
+}
+
+.rank-td {
+  width: 40px;
+}
+
+.rank-badge {
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.rank-badge.gold {
+  background: var(--gold);
+  color: #080b12;
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+}
+
+.rank-badge.silver {
+  background: #cbd5e1;
+  color: #080b12;
+}
+
+.rank-badge.bronze {
+  background: #d97706;
+  color: #fff;
+}
+
+.rank-num {
+  color: #64748b;
+  font-weight: 800;
+}
+
+.driver-td {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.driver-name {
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+
+.you-pill {
+  background: var(--cyan);
+  color: #080b12;
+  font-size: 8px;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.player-row {
+  background: rgba(0, 243, 255, 0.12) !important;
+}
+
+.player-row .driver-name {
+  color: var(--cyan);
+}
+
+.vehicle-td {
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.distance-td {
+  color: #cbd5e1;
+  font-variant-numeric: tabular-nums;
+}
+
+.evaded-td {
+  text-align: center;
+}
+
+.evaded-count {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #ff0055;
+  font-weight: 800;
+}
+
+.zero-evaded {
+  color: #475569;
+}
+
+.score-td {
+  text-align: right;
+}
+
+.score-digits {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 10px rgba(255, 170, 0, 0.3);
+}
+
+/* Leaderboard Footer */
+.leaderboard-footer {
+  padding: 14px 22px;
+  background: rgba(8, 12, 20, 0.9);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-racing);
+  font-size: 9px;
+  color: #94a3b8;
+  letter-spacing: 1px;
+}
+
+.flame-tip-icon {
+  color: #ffaa00;
+}
+
+.leaderboard-race-btn {
+  background: linear-gradient(135deg, #00f3ff 0%, #0077ff 100%);
+  border: none;
+  border-radius: 10px;
+  color: #080b12;
+  font-family: var(--font-racing);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 10px 20px;
+  cursor: pointer;
+  box-shadow: 0 0 18px var(--cyan-glow);
+  transition: all 0.15s ease;
+}
+
+.leaderboard-race-btn:active {
+  transform: scale(0.96);
+}

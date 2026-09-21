@@ -1,7 +1,7 @@
 // VELOCITY X - Mobile High-Octane HUD & Speedometer
 import React, { useEffect, useState } from 'react';
 import { HUDData } from '../game/Engine';
-import { Zap, Flame, ShieldAlert, Award } from 'lucide-react';
+import { Zap, Flame, ShieldAlert, Award, Smartphone, CloudRain, Moon } from 'lucide-react';
 
 interface MobileHUDProps {
   hud: HUDData;
@@ -100,6 +100,16 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
           <span className="stat-label">SCORE</span>
           <span className="stat-value">{hud.score.toLocaleString()}</span>
         </div>
+
+        {/* Dynamic Weather Badge */}
+        <div className={`stat-card weather-hud-chip ${hud.weather === 'RAIN' ? 'rain-active' : ''}`}>
+          {hud.weather === 'RAIN' ? (
+            <CloudRain size={12} className="weather-hud-icon rain" />
+          ) : (
+            <Moon size={12} className="weather-hud-icon moon" />
+          )}
+          <span className="weather-hud-text">{hud.weather}</span>
+        </div>
       </div>
 
       {/* 5. BOTTOM COCKPIT CLUSTER: Speedometer, Gear, RPM, NOS */}
@@ -162,6 +172,14 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
               />
             </div>
           </div>
+
+          {/* Gyro Tilt Sensor Status Chip */}
+          {hud.tiltActive && (
+            <div className="hud-gyro-chip">
+              <Smartphone size={9} className="hud-gyro-icon" />
+              <span>TILT {hud.tiltAngle > 0 ? `+${hud.tiltAngle}°` : `${hud.tiltAngle}°`}</span>
+            </div>
+          )}
         </div>
 
         {/* NOS Nitrogen Canister Level */}

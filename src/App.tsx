@@ -5,6 +5,8 @@ import { StorageManager, CarConfig, GameStats } from './game/Storage';
 import { PlayerControls } from './game/PlayerCar';
 import { audioManager } from './game/AudioManager';
 import { HapticsManager } from './game/HapticsManager';
+import { tiltManager } from './game/TiltManager';
+import { WeatherType } from './game/WeatherManager';
 import { MobileHUD } from './components/MobileHUD';
 import { MobileControls } from './components/MobileControls';
 import { RearviewMirror } from './components/RearviewMirror';
@@ -12,7 +14,9 @@ import { GarageModal } from './components/GarageModal';
 import { GameOverModal } from './components/GameOverModal';
 import { RotatePhonePrompt } from './components/RotatePhonePrompt';
 import { InstallPrompt } from './components/InstallPrompt';
-import { Volume2, VolumeX, Play, Wrench, Trophy, Coins } from 'lucide-react';
+import { LeaderboardModal } from './components/LeaderboardModal';
+import { RainScreenOverlay } from './components/RainScreenOverlay';
+import { Volume2, VolumeX, Play, Wrench, Trophy, Coins, Smartphone, CloudRain, Moon } from 'lucide-react';
 
 export type GameState = 'MENU' | 'RACING' | 'GARAGE' | 'GAME_OVER';
 
@@ -32,6 +36,11 @@ export const App: React.FC = () => {
   // App & Flow States
   const [gameState, setGameState] = useState<GameState>('MENU');
   const [isMuted, setIsMuted] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [weather, setWeather] = useState<WeatherType>('CLEAR');
+  const [tiltSteeringEnabled, setTiltSteeringEnabled] = useState<boolean>(() => {
+    return StorageManager.getStats().tiltSteeringEnabled ?? false;
+  });
 
   // Live In-Game HUD State
   const [hud, setHud] = useState<HUDData>({
@@ -46,6 +55,11 @@ export const App: React.FC = () => {
     pursuitActive: false,
     pursuitAlertIntensity: 0,
     policeDistance: 999,
+    steerAxis: 0,
+    tiltAngle: 0,
+    tiltActive: false,
+    weather: 'CLEAR',
+    isLightningFlashing: false,
   });
 
   const [nearMissAlert, setNearMissAlert] = useState<{ text: string; combo: number; id: number } | null>(null);
@@ -73,12 +87,14 @@ export const App: React.FC = () => {
     };
 
     engine.onGameOver = (runSummary) => {
+      tiltManager.stop();
       setSummary(runSummary);
       setGameState('GAME_OVER');
       setStats(StorageManager.getStats());
     };
 
     return () => {
+      tiltManager.stop();
       engine.destroy();
     };
   }, []);
@@ -125,10 +141,18 @@ export const App: React.FC = () => {
     HapticsManager.buttonTap();
     audioManager.unlock();
     setGameState('RACING');
+
+    if (tiltSteeringEnabled) {
+      tiltManager.start();
+      tiltManager.calibrate();
+    } else {
+      tiltManager.stop();
+    }
+
     if (engineRef.current) {
       engineRef.current.start();
     }
-  }, []);
+  }, [tiltSteeringEnabled]);
 
   // Sound Toggle
   const toggleAudio = useCallback(() => {
@@ -137,6 +161,42 @@ export const App: React.FC = () => {
     const muted = audioManager.toggleMute();
     setIsMuted(muted);
   }, []);
+
+  // Dynamic Weather Toggle (Clear Night vs Cyber Rainstorm)
+  const toggleWeather = useCallback(() => {
+    HapticsManager.buttonTap();
+    if (engineRef.current) {
+      const next = engineRef.current.weatherManager.toggleWeather();
+      setWeather(next);
+    }
+  }, []);
+
+  // Gyro Tilt Steering Mode Toggle
+  const toggleTiltSteering = useCallback(async () => {
+    HapticsManager.buttonTap();
+    const nextState = !tiltSteeringEnabled;
+
+    if (nextState) {
+      const granted = await tiltManager.requestPermission();
+      if (granted) {
+        if (gameState === 'RACING') {
+          tiltManager.start();
+          tiltManager.calibrate();
+        }
+        setTiltSteeringEnabled(true);
+        setStats(StorageManager.saveStats({ tiltSteeringEnabled: true }));
+      } else {
+        alert('Device orientation sensors could not be accessed. Keeping touch buttons.');
+      }
+    } else {
+      tiltManager.stop();
+      if (engineRef.current) {
+        engineRef.current.controls.steerAxis = 0;
+      }
+      setTiltSteeringEnabled(false);
+      setStats(StorageManager.saveStats({ tiltSteeringEnabled: false }));
+    }
+  }, [tiltSteeringEnabled, gameState]);
 
   // Mobile Touch Controls Dispatcher
   const handleTouchControls = useCallback((changes: Partial<PlayerControls>) => {
@@ -150,15 +210,50 @@ export const App: React.FC = () => {
       {/* 3D WebGL Canvas */}
       <canvas ref={canvasRef} className="webgl-canvas" />
 
+      {/* Atmospheric Windshield Water Droplets & Lightning Flash */}
+      <RainScreenOverlay
+        isRaining={hud.weather === 'RAIN'}
+        isLightningFlashing={hud.isLightningFlashing}
+      />
+
       {/* Mobile Portrait Detection Overlay */}
       <RotatePhonePrompt />
 
-      {/* TOP HEADER CONTROLS (Mute, Install, Coin Balance) */}
+      {/* TOP HEADER CONTROLS (Mute, Weather, Gyro, Records, Install, Coin Balance) */}
       <header className="mobile-app-header">
         <div className="header-left">
           <button className="icon-btn" onClick={toggleAudio} title="Toggle Audio">
             {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
+
+          {/* Weather Toggle */}
+          <button
+            className={`icon-btn weather-toggle-header ${weather === 'RAIN' ? 'rain-active' : ''}`}
+            onClick={toggleWeather}
+            title={weather === 'RAIN' ? 'Cyber Rain Active (Tap for Clear Night)' : 'Clear Night Active (Tap for Cyber Rain)'}
+          >
+            {weather === 'RAIN' ? <CloudRain size={18} color="#00f3ff" /> : <Moon size={18} />}
+          </button>
+
+          {/* Gyro Tilt Toggle */}
+          <button
+            className={`icon-btn tilt-toggle-header ${tiltSteeringEnabled ? 'tilt-active' : ''}`}
+            onClick={toggleTiltSteering}
+            title={tiltSteeringEnabled ? 'Gyro Tilt Active (Tap to switch to Touch)' : 'Touch Buttons Active (Tap to switch to Gyro Tilt)'}
+          >
+            <Smartphone size={17} />
+            <span className="tilt-status-pill">{tiltSteeringEnabled ? 'GYRO' : 'TOUCH'}</span>
+          </button>
+
+          {/* Global Leaderboard Button */}
+          <button
+            className="icon-btn leaderboard-header-btn"
+            onClick={() => { HapticsManager.buttonTap(); setShowLeaderboard(true); }}
+            title="Global Leaderboard & World Records"
+          >
+            <Trophy size={18} />
+          </button>
+
           <InstallPrompt />
         </div>
 
@@ -196,9 +291,76 @@ export const App: React.FC = () => {
               </div>
             </div>
 
+            {/* Steering Mode & Weather Selectors */}
+            <div className="menu-selectors-row">
+              {/* Steering Mode Selector */}
+              <div className="control-mode-selector">
+                <span className="selector-label">STEERING SYSTEM</span>
+                <div className="mode-toggle-pill">
+                  <button
+                    type="button"
+                    className={`mode-pill-btn ${!tiltSteeringEnabled ? 'selected' : ''}`}
+                    onClick={() => {
+                      if (tiltSteeringEnabled) toggleTiltSteering();
+                    }}
+                  >
+                    <span>TOUCH PADS</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`mode-pill-btn ${tiltSteeringEnabled ? 'selected' : ''}`}
+                    onClick={() => {
+                      if (!tiltSteeringEnabled) toggleTiltSteering();
+                    }}
+                  >
+                    <Smartphone size={13} />
+                    <span>GYRO TILT</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Weather Selector */}
+              <div className="control-mode-selector weather-selector">
+                <span className="selector-label">ATMOSPHERE</span>
+                <div className="mode-toggle-pill">
+                  <button
+                    type="button"
+                    className={`mode-pill-btn ${weather === 'CLEAR' ? 'selected' : ''}`}
+                    onClick={() => {
+                      if (weather !== 'CLEAR') toggleWeather();
+                    }}
+                  >
+                    <Moon size={13} />
+                    <span>CLEAR</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`mode-pill-btn ${weather === 'RAIN' ? 'selected' : ''}`}
+                    onClick={() => {
+                      if (weather !== 'RAIN') toggleWeather();
+                    }}
+                  >
+                    <CloudRain size={13} />
+                    <span>RAIN</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Main Action Buttons */}
             <div className="menu-buttons-row">
-              <button className="menu-btn garage-btn" onClick={() => { HapticsManager.buttonTap(); setGameState('GARAGE'); }}>
+              <button
+                className="menu-btn leaderboard-btn"
+                onClick={() => { HapticsManager.buttonTap(); setShowLeaderboard(true); }}
+              >
+                <Trophy size={20} />
+                <span>RECORDS</span>
+              </button>
+
+              <button
+                className="menu-btn garage-btn"
+                onClick={() => { HapticsManager.buttonTap(); setGameState('GARAGE'); }}
+              >
                 <Wrench size={20} />
                 <span>GARAGE</span>
               </button>
@@ -210,7 +372,7 @@ export const App: React.FC = () => {
             </div>
 
             <div className="menu-tips">
-              <span>WEAVE BETWEEN TRAFFIC INCHES AWAY FOR NEAR-MISS COMBOS</span>
+              <span>{tiltSteeringEnabled ? 'PHYSICALLY TILT PHONE TO CARVE THROUGH HIGHWAY LANES' : 'TAP & HOLD LEFT / RIGHT TO WEAVE THROUGH TRAFFIC'}</span>
             </div>
           </div>
         </div>
@@ -233,11 +395,16 @@ export const App: React.FC = () => {
             evadedBonus={evadedBonus}
           />
 
-          {/* Dual-Thumb Ergonomic Mobile Touch Pedals */}
+          {/* Dual-Thumb Ergonomic Mobile Touch Pedals / Gyro Instrument */}
           <MobileControls
             onControlsChange={handleTouchControls}
             nitroPercent={hud.nitroPercent}
             isNitroActive={engineRef.current?.playerCar.isNitroActive || false}
+            tiltSteeringEnabled={tiltSteeringEnabled}
+            tiltAngle={hud.tiltAngle}
+            steerAxis={hud.steerAxis}
+            onCalibrateTilt={() => tiltManager.calibrate()}
+            onToggleTiltMode={toggleTiltSteering}
           />
         </>
       )}
@@ -261,7 +428,13 @@ export const App: React.FC = () => {
           summary={summary}
           onRestart={startRace}
           onOpenGarage={() => setGameState('GARAGE')}
+          onOpenLeaderboard={() => setShowLeaderboard(true)}
         />
+      )}
+
+      {/* 5. GLOBAL LEADERBOARD MODAL */}
+      {showLeaderboard && (
+        <LeaderboardModal onClose={() => setShowLeaderboard(false)} />
       )}
     </div>
   );

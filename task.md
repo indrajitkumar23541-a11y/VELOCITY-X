@@ -120,6 +120,25 @@
 
 - [x] **10.1 Production Build Optimization**: Compiled clean bundle (< 186 KB gzip) with zero TypeScript errors.
 - [x] **10.2 Dev Server Verification**: Verified HTTP 200 OK on localhost:3000 and network IP.
-- [ ] **10.3 Gyroscope / Tilt Steering Mode**: Optional device accelerometer steering toggle.
-- [ ] **10.4 Dynamic Weather System**: Procedural rain shader with animated droplets on camera lens.
-- [ ] **10.5 Global Online Leaderboards**: Firebase/Supabase lightweight backend for world records.
+- [x] **10.3 Gyroscope / Tilt Steering Mode**:
+  - Implemented `TiltManager.ts` with auto-detection of Landscape 90° vs 270° angles.
+  - Added iOS `DeviceOrientationEvent.requestPermission()` handling.
+  - Added baseline angle re-centering / calibration and ±2.0° deadzone filter.
+  - Added analog `steerAxis` support in `PlayerCar.ts` and `Engine.ts`.
+  - Added Cyberpunk Artificial Horizon Gauge in `MobileControls.tsx` and status chip in `MobileHUD.tsx`.
+  - Added quick control mode toggle in Menu screen and top header bar.
+- [x] **10.4 Dynamic Weather System**:
+  - Implemented `RainSystem.ts` with 900 GPU-instanced vertical falling rain streaks.
+  - Implemented `WeatherManager.ts` managing Clear Night vs Cyber Rainstorm modes.
+  - Added procedural lightning flashes that surge scene lighting to 3.6x.
+  - Synthesized procedural rain hiss and rolling thunder in `AudioManager.ts` (Web Audio API).
+  - Implemented `RainScreenOverlay.tsx` with animated windshield condensation droplets.
+  - Added wet asphalt mirror reflections in `RoadManager.ts`.
+- [x] **10.5 Global Online Leaderboards & Hall of Fame**:
+  - Implemented `LeaderboardModal.tsx` displaying Top 10 world records with Gold/Silver/Bronze badges.
+  - Integrated driver callsign profile customization with real-time editing.
+  - Connected race finish recording in `Engine.ts` and `Storage.ts`.
+- [x] **10.6 Production Deployment & Hosting Setup**:
+  - Created `vercel.json` with SPA routing and immutable PWA cache-control headers.
+  - Created `netlify.toml` with build commands and redirect rules.
+  - Generated high-res PNG icons (`icon-192.png`, `icon-512.png`) for official Chrome WebAPK PWA installation.

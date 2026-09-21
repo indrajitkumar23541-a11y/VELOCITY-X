@@ -31,6 +31,12 @@ export class AudioManager {
   private skidGain: GainNode | null = null;
   private isSkidPlaying: boolean = false;
 
+  // Rain Sound Nodes
+  private rainNoiseNode: AudioBufferSourceNode | null = null;
+  private rainFilter: BiquadFilterNode | null = null;
+  private rainGain: GainNode | null = null;
+  private isRainPlaying: boolean = false;
+
   constructor() {
     // AudioContext will be initialized on first touch interaction
   }
@@ -50,6 +56,7 @@ export class AudioManager {
       this.setupNitroSound();
       this.setupSirenSound();
       this.setupSkidSound();
+      this.setupRainSound();
     } catch (e) {
       console.warn('Web Audio API not supported:', e);
     }
@@ -436,6 +443,106 @@ export class AudioManager {
 
       osc.start(t);
       osc.stop(t + 0.26);
+    } catch {
+      // ignore
+    }
+  }
+
+  // -------------------------------------------------------------
+  // Procedural Rain Hiss & Rolling Thunder Sound Synthesis
+  // -------------------------------------------------------------
+  private setupRainSound(): void {
+    if (!this.ctx || !this.masterGain || this.isRainPlaying) return;
+    try {
+      const bufferSize = this.ctx.sampleRate * 2;
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = (Math.random() * 2 - 1) * 0.4;
+      }
+
+      this.rainNoiseNode = this.ctx.createBufferSource();
+      this.rainNoiseNode.buffer = noiseBuffer;
+      this.rainNoiseNode.loop = true;
+
+      this.rainFilter = this.ctx.createBiquadFilter();
+      this.rainFilter.type = 'bandpass';
+      this.rainFilter.frequency.setValueAtTime(1400, this.ctx.currentTime);
+      this.rainFilter.Q.setValueAtTime(1.2, this.ctx.currentTime);
+
+      this.rainGain = this.ctx.createGain();
+      this.rainGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+      this.rainNoiseNode.connect(this.rainFilter);
+      this.rainFilter.connect(this.rainGain);
+      this.rainGain.connect(this.masterGain);
+
+      this.rainNoiseNode.start();
+      this.isRainPlaying = true;
+    } catch (e) {
+      console.warn('Rain sound init failed:', e);
+    }
+  }
+
+  public startRain(): void {
+    if (!this.ctx || !this.rainGain) {
+      this.setupRainSound();
+    }
+    if (this.ctx && this.rainGain) {
+      this.rainGain.gain.setTargetAtTime(0.32, this.ctx.currentTime, 0.4);
+    }
+  }
+
+  public stopRain(): void {
+    if (this.ctx && this.rainGain) {
+      this.rainGain.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.4);
+    }
+  }
+
+  public playThunder(): void {
+    if (!this.ctx || !this.masterGain) return;
+    try {
+      const t = this.ctx.currentTime;
+      // Sub-bass rumble
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(110, t);
+      osc.frequency.exponentialRampToValueAtTime(28, t + 2.2);
+
+      gain.gain.setValueAtTime(0.65, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 2.4);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(t);
+      osc.stop(t + 2.5);
+
+      // Noise crackle burst
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.8);
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = noiseBuffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(320, t);
+
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.4, t);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.masterGain);
+
+      noise.start(t);
+      noise.stop(t + 1.2);
     } catch {
       // ignore
     }

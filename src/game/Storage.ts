@@ -1,5 +1,4 @@
-// VELOCITY X - Offline Local Storage & Save System
-
+// VELOCITY X - Offline Local Storage, Save System & Global Leaderboard
 export interface CarConfig {
   id: string;
   name: string;
@@ -23,6 +22,19 @@ export interface GameStats {
   audioVolume: number;
   hapticsEnabled: boolean;
   tiltSteeringEnabled: boolean;
+  playerCallsign: string;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  rank?: number;
+  callsign: string;
+  score: number;
+  distanceMeters: number;
+  policeEvaded: number;
+  carName: string;
+  date: string;
+  isPlayer?: boolean;
 }
 
 const DEFAULT_CARS: CarConfig[] = [
@@ -76,10 +88,25 @@ const DEFAULT_STATS: GameStats = {
   audioVolume: 0.8,
   hapticsEnabled: true,
   tiltSteeringEnabled: false,
+  playerCallsign: 'VIPER_01',
 };
+
+const DEFAULT_LEADERBOARD: LeaderboardEntry[] = [
+  { id: 'lb_1', callsign: 'CYBER_GHOST', score: 98450, distanceMeters: 12400, policeEvaded: 8, carName: 'Veloce GT', date: 'SEP 20' },
+  { id: 'lb_2', callsign: 'NEO_VIPER', score: 84200, distanceMeters: 9850, policeEvaded: 6, carName: 'Apex Roadster', date: 'SEP 19' },
+  { id: 'lb_3', callsign: 'TITAN_WARLORD', score: 71900, distanceMeters: 8200, policeEvaded: 5, carName: 'Titan V8', date: 'SEP 18' },
+  { id: 'lb_4', callsign: 'NIGHT_STALKER', score: 58600, distanceMeters: 6900, policeEvaded: 4, carName: 'Veloce GT', date: 'SEP 17' },
+  { id: 'lb_5', callsign: 'INDRAJIT_X', score: 48500, distanceMeters: 5600, policeEvaded: 3, carName: 'Apex Roadster', date: 'SEP 16' },
+  { id: 'lb_6', callsign: 'SYNTH_PULSE', score: 38200, distanceMeters: 4400, policeEvaded: 2, carName: 'Veloce GT', date: 'SEP 15' },
+  { id: 'lb_7', callsign: 'DRIFT_SPECTRE', score: 29400, distanceMeters: 3300, policeEvaded: 2, carName: 'Titan V8', date: 'SEP 14' },
+  { id: 'lb_8', callsign: 'BLADE_RUNNER', score: 21600, distanceMeters: 2500, policeEvaded: 1, carName: 'Apex Roadster', date: 'SEP 12' },
+  { id: 'lb_9', callsign: 'ZERO_COOL', score: 15300, distanceMeters: 1800, policeEvaded: 1, carName: 'Apex Roadster', date: 'SEP 10' },
+  { id: 'lb_10', callsign: 'HIGHWAY_COP', score: 9200, distanceMeters: 1200, policeEvaded: 0, carName: 'Titan V8', date: 'SEP 08' },
+];
 
 const STATS_KEY = 'velocity_x_stats';
 const CARS_KEY = 'velocity_x_cars';
+const LEADERBOARD_KEY = 'velocity_x_leaderboard';
 
 export class StorageManager {
   static getStats(): GameStats {
@@ -152,5 +179,39 @@ export class StorageManager {
       car.underglowColor = underglowColor;
       this.saveCars(cars);
     }
+  }
+
+  // Leaderboard Persistence
+  static getLeaderboard(): LeaderboardEntry[] {
+    try {
+      const data = localStorage.getItem(LEADERBOARD_KEY);
+      if (data) {
+        const list: LeaderboardEntry[] = JSON.parse(data);
+        return list.sort((a, b) => b.score - a.score).slice(0, 10);
+      }
+    } catch {
+      // ignore
+    }
+    return [...DEFAULT_LEADERBOARD];
+  }
+
+  static addLeaderboardScore(entry: Omit<LeaderboardEntry, 'id'>): LeaderboardEntry[] {
+    const current = this.getLeaderboard();
+    const newEntry: LeaderboardEntry = {
+      ...entry,
+      id: 'lb_' + Date.now(),
+      isPlayer: true,
+    };
+
+    const combined = [...current, newEntry];
+    const sorted = combined.sort((a, b) => b.score - a.score).slice(0, 10);
+
+    try {
+      localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(sorted));
+    } catch {
+      // ignore
+    }
+
+    return sorted;
   }
 }

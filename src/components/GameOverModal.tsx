@@ -8,12 +8,14 @@ interface GameOverModalProps {
   summary: GameSummary;
   onRestart: () => void;
   onOpenGarage: () => void;
+  onOpenLeaderboard?: () => void;
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({
   summary,
   onRestart,
   onOpenGarage,
+  onOpenLeaderboard,
 }) => {
   return (
     <div className="game-over-overlay">
@@ -86,6 +88,19 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             <Wrench size={18} />
             <span>GARAGE</span>
           </button>
+
+          {onOpenLeaderboard && (
+            <button
+              className="action-btn leaderboard-action-btn"
+              onClick={() => {
+                HapticsManager.buttonTap();
+                onOpenLeaderboard();
+              }}
+            >
+              <Trophy size={18} />
+              <span>RECORDS</span>
+            </button>
+          )}
 
           <button
             className="action-btn restart-btn"

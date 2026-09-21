@@ -1,19 +1,29 @@
-// VELOCITY X - Ergonomic Dual-Thumb Touch Controls for All Mobile Devices
+// VELOCITY X - Ergonomic Dual-Thumb Touch & Gyro Tilt Controls
 import React, { useCallback, useRef } from 'react';
 import { PlayerControls } from '../game/PlayerCar';
 import { HapticsManager } from '../game/HapticsManager';
-import { Zap } from 'lucide-react';
+import { Zap, RotateCcw, Smartphone, HandMetal } from 'lucide-react';
 
 interface MobileControlsProps {
   onControlsChange: (controls: Partial<PlayerControls>) => void;
   nitroPercent: number;
   isNitroActive: boolean;
+  tiltSteeringEnabled?: boolean;
+  tiltAngle?: number;
+  steerAxis?: number;
+  onCalibrateTilt?: () => void;
+  onToggleTiltMode?: () => void;
 }
 
 export const MobileControls: React.FC<MobileControlsProps> = ({
   onControlsChange,
   nitroPercent,
   isNitroActive,
+  tiltSteeringEnabled = false,
+  tiltAngle = 0,
+  steerAxis = 0,
+  onCalibrateTilt,
+  onToggleTiltMode,
 }) => {
   const activeSteerRef = useRef<'left' | 'right' | null>(null);
 
@@ -65,35 +75,107 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
     onControlsChange({ nitro: false });
   }, [onControlsChange]);
 
+  const handleCalibrate = useCallback((e: React.PointerEvent | React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    HapticsManager.buttonTap();
+    if (onCalibrateTilt) {
+      onCalibrateTilt();
+    }
+  }, [onCalibrateTilt]);
+
   return (
     <div className="mobile-controls-container">
-      {/* LEFT THUMB ZONE: Dual Steering Pads */}
+      {/* LEFT ZONE: Dual Touch Steering Buttons OR Gyro Horizon Instrument */}
       <div className="touch-zone left-zone">
-        <button
-          className="touch-btn steer-btn left-steer"
-          onPointerDown={(e) => { e.preventDefault(); handleSteerStart('left'); }}
-          onPointerUp={(e) => { e.preventDefault(); handleSteerEnd(); }}
-          onPointerCancel={(e) => { e.preventDefault(); handleSteerEnd(); }}
-          onPointerLeave={(e) => { e.preventDefault(); handleSteerEnd(); }}
-        >
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-          <span className="btn-label">LEFT</span>
-        </button>
+        {tiltSteeringEnabled ? (
+          <div className="tilt-steering-zone">
+            <div className="tilt-instrument-card">
+              <div className="tilt-inst-header">
+                <div className="tilt-mode-tag">
+                  <Smartphone size={13} className="tilt-icon-pulse" />
+                  <span>GYRO TILT</span>
+                </div>
+                <span className="tilt-angle-deg">
+                  {tiltAngle > 0 ? `+${tiltAngle}°` : `${tiltAngle}°`}
+                </span>
+              </div>
 
-        <button
-          className="touch-btn steer-btn right-steer"
-          onPointerDown={(e) => { e.preventDefault(); handleSteerStart('right'); }}
-          onPointerUp={(e) => { e.preventDefault(); handleSteerEnd(); }}
-          onPointerCancel={(e) => { e.preventDefault(); handleSteerEnd(); }}
-          onPointerLeave={(e) => { e.preventDefault(); handleSteerEnd(); }}
-        >
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m9 18 6-6-6-6"/>
-          </svg>
-          <span className="btn-label">RIGHT</span>
-        </button>
+              {/* Dynamic Artificial Horizon / Steering Lock Arc */}
+              <div className="tilt-horizon-track">
+                <div className="tilt-zone-deadzone" />
+                <div className="tilt-center-tick" />
+                <div
+                  className="tilt-horizon-reticle"
+                  style={{
+                    transform: `translateX(${steerAxis * 40}px)`,
+                  }}
+                >
+                  <div className="reticle-core" />
+                  <div className="reticle-wings" />
+                </div>
+              </div>
+
+              {/* Recenter & Mode Switch Footers */}
+              <div className="tilt-actions-row">
+                <button
+                  type="button"
+                  className="tilt-btn tilt-recenter-btn"
+                  onPointerDown={handleCalibrate}
+                  title="Calibrate Center Angle"
+                >
+                  <RotateCcw size={13} />
+                  <span>CENTER</span>
+                </button>
+
+                {onToggleTiltMode && (
+                  <button
+                    type="button"
+                    className="tilt-btn tilt-switch-btn"
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      HapticsManager.buttonTap();
+                      onToggleTiltMode();
+                    }}
+                    title="Switch to Touch Buttons"
+                  >
+                    <HandMetal size={13} />
+                    <span>PADS</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="steer-buttons-group">
+            <button
+              className="touch-btn steer-btn left-steer"
+              onPointerDown={(e) => { e.preventDefault(); handleSteerStart('left'); }}
+              onPointerUp={(e) => { e.preventDefault(); handleSteerEnd(); }}
+              onPointerCancel={(e) => { e.preventDefault(); handleSteerEnd(); }}
+              onPointerLeave={(e) => { e.preventDefault(); handleSteerEnd(); }}
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m15 18-6-6 6-6"/>
+              </svg>
+              <span className="btn-label">LEFT</span>
+            </button>
+
+            <button
+              className="touch-btn steer-btn right-steer"
+              onPointerDown={(e) => { e.preventDefault(); handleSteerStart('right'); }}
+              onPointerUp={(e) => { e.preventDefault(); handleSteerEnd(); }}
+              onPointerCancel={(e) => { e.preventDefault(); handleSteerEnd(); }}
+              onPointerLeave={(e) => { e.preventDefault(); handleSteerEnd(); }}
+            >
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m9 18 6-6-6-6"/>
+              </svg>
+              <span className="btn-label">RIGHT</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* RIGHT THUMB ZONE: Gas Pedal, Brake, and Glowing NOS Button */}

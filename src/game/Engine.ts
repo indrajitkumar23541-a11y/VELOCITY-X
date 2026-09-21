@@ -9,6 +9,8 @@ import { ParticleSystem } from './ParticleSystem';
 import { audioManager } from './AudioManager';
 import { HapticsManager } from './HapticsManager';
 import { CarConfig, StorageManager } from './Storage';
+import { tiltManager } from './TiltManager';
+import { WeatherManager, WeatherType } from './WeatherManager';
 
 export interface HUDData {
   speedKmh: number;
@@ -22,6 +24,11 @@ export interface HUDData {
   pursuitActive: boolean;
   pursuitAlertIntensity: number;
   policeDistance: number;
+  steerAxis: number;
+  tiltAngle: number;
+  tiltActive: boolean;
+  weather: WeatherType;
+  isLightningFlashing: boolean;
 }
 
 export interface GameSummary {
@@ -43,6 +50,8 @@ export class Engine {
   public trafficManager: TrafficManager;
   public policeChase: PoliceChase;
   public particleSystem: ParticleSystem;
+  public weatherManager: WeatherManager;
+  public isLightningFlashing = false;
 
   private dirLight: THREE.DirectionalLight;
   private clock = new THREE.Clock();
@@ -71,6 +80,7 @@ export class Engine {
     throttle: false,
     brake: false,
     nitro: false,
+    steerAxis: 0,
   };
 
   constructor(canvas: HTMLCanvasElement, activeCarConfig: CarConfig) {
@@ -124,6 +134,11 @@ export class Engine {
     this.trafficManager = new TrafficManager(this.scene);
     this.policeChase = new PoliceChase(this.scene);
     this.particleSystem = new ParticleSystem(this.scene);
+    this.weatherManager = new WeatherManager(this.scene, this.dirLight, ambientLight, this.roadManager);
+    this.weatherManager.onLightningFlash = () => {
+      this.isLightningFlashing = true;
+      setTimeout(() => { this.isLightningFlashing = false; }, 160);
+    };
 
     window.addEventListener('resize', this.onResize);
   }
@@ -254,6 +269,18 @@ export class Engine {
       totalPoliceEvaded: stats.totalPoliceEvaded + this.policeEvadedCount,
     });
 
+    // Save score to Global Leaderboard
+    if (this.score > 200) {
+      StorageManager.addLeaderboardScore({
+        callsign: stats.playerCallsign || 'VIPER_01',
+        score: this.score,
+        distanceMeters: Math.floor(this.distanceMeters),
+        policeEvaded: this.policeEvadedCount,
+        carName: this.playerCar.config.name,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase(),
+      });
+    }
+
     if (this.onGameOver) {
       this.onGameOver({
         score: this.score,
@@ -274,6 +301,11 @@ export class Engine {
 
     // Delta time clamped to avoid physics glitches on mobile lag
     const delta = Math.min(this.clock.getDelta(), 0.08);
+
+    // 0. Update Gyro Tilt Steering if enabled
+    if (tiltManager.enabled) {
+      this.controls.steerAxis = tiltManager.update(delta);
+    }
 
     // 1. Update Player Car
     this.playerCar.update(delta, this.controls);
@@ -336,8 +368,14 @@ export class Engine {
       this.handlePursuitEvaded
     );
 
-    // 5. Update Particle System & Camera
+    // 5. Update Particle System, Weather & Camera
     this.particleSystem.update(delta);
+    this.weatherManager.update(
+      delta,
+      this.playerCar.mesh.position.z,
+      this.playerCar.mesh.position.x,
+      this.playerCar.speedKmh
+    );
     this.cameraManager.update(
       delta,
       this.playerCar.mesh.position,
@@ -375,6 +413,11 @@ export class Engine {
         pursuitActive: this.policeChase.state === 'PURSUIT',
         pursuitAlertIntensity: this.policeChase.redBlueFlashIntensity,
         policeDistance: Math.floor(this.policeChase.distanceToClosest),
+        steerAxis: this.playerCar.steeringInertia,
+        tiltAngle: Math.round(tiltManager.calibratedAngle),
+        tiltActive: tiltManager.enabled,
+        weather: this.weatherManager.currentWeather,
+        isLightningFlashing: this.isLightningFlashing,
       });
     }
   };
@@ -382,6 +425,7 @@ export class Engine {
   public destroy(): void {
     this.stop();
     window.removeEventListener('resize', this.onResize);
+    this.weatherManager.dispose();
     this.particleSystem.dispose();
     this.renderer.dispose();
   }
