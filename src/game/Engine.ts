@@ -103,13 +103,16 @@ export class Engine {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // 2. Scene & Moody Cyberpunk Fog
+    // 2. Scene & Deep Night Cyberpunk Fog
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x080b12);
-    this.scene.fog = new THREE.FogExp2(0x080b12, 0.0035);
+    this.scene.background = new THREE.Color(0x060913);
+    this.scene.fog = new THREE.FogExp2(0x070c18, 0.0028);
 
-    // 3. Dynamic Directional Moonlight with tight shadow frustum
-    this.dirLight = new THREE.DirectionalLight(0x88bbff, 1.8);
+    // 3. Procedural Cyberpunk HDR Environment Map for 4K Supercar Reflections
+    this.setupCyberpunkEnvironment();
+
+    // 4. Dynamic Directional Moonlight with tight shadow frustum
+    this.dirLight = new THREE.DirectionalLight(0x99ccff, 2.2);
     this.dirLight.position.set(25, 45, 20);
     this.dirLight.castShadow = true;
     this.dirLight.shadow.mapSize.width = 1024;
@@ -123,8 +126,8 @@ export class Engine {
     this.dirLight.shadow.bias = -0.0008;
     this.scene.add(this.dirLight);
 
-    // Ambient Night Road Fill Light
-    const ambientLight = new THREE.AmbientLight(0x1a2638, 1.4);
+    // Ambient Night Road Fill Light with Cyber City Hue
+    const ambientLight = new THREE.AmbientLight(0x283854, 1.8);
     this.scene.add(ambientLight);
 
     // 4. Subsystems
@@ -144,10 +147,7 @@ export class Engine {
   }
 
   public setCarConfig(config: CarConfig): void {
-    this.playerCar.config = config;
-    this.playerCar.setCustomization(config.color, config.underglowColor);
-    this.playerCar.maxSpeedKmh = config.topSpeedKmh;
-    this.playerCar.nitroMaxSpeedKmh = config.topSpeedKmh * 1.22;
+    this.playerCar.setCarConfig(config);
   }
 
   public start(): void {
@@ -421,6 +421,60 @@ export class Engine {
       });
     }
   };
+
+  private setupCyberpunkEnvironment(): void {
+    if (typeof document === 'undefined') return;
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // 1. Midnight Sky Gradient with glowing horizon
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, 256);
+    skyGrad.addColorStop(0, '#02050c');
+    skyGrad.addColorStop(0.35, '#071022');
+    skyGrad.addColorStop(0.48, '#0a2345');
+    skyGrad.addColorStop(0.5, '#00f3ff');  // Electric cyan horizon line
+    skyGrad.addColorStop(0.53, '#ff007f'); // Neon magenta city reflection
+    skyGrad.addColorStop(0.65, '#0d1322');
+    skyGrad.addColorStop(1, '#03060d');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, 512, 256);
+
+    // 2. Horizon Neon Skyline Reflection Silhouettes
+    for (let i = 0; i < 32; i++) {
+      const x = (i / 32) * 512 + (Math.sin(i * 4) * 6);
+      const w = 10 + (i % 4) * 6;
+      const h = 20 + ((i * 11) % 45);
+      const y = 128 - h;
+
+      // Dark skyscraper body
+      ctx.fillStyle = '#060b17';
+      ctx.fillRect(x, y, w, h);
+
+      // Neon window strips
+      ctx.fillStyle = i % 2 === 0 ? '#00f3ff' : (i % 3 === 0 ? '#ff007f' : '#ffaa00');
+      ctx.fillRect(x + 2, y + 4, w - 4, 3);
+      ctx.fillRect(x + 2, y + 12, w - 4, 2);
+      ctx.fillRect(x + 2, y + 20, w - 4, 2);
+
+      // Rooftop warning beacon
+      ctx.fillStyle = i % 2 === 0 ? '#ff3366' : '#00f3ff';
+      ctx.fillRect(x + w / 2 - 1, y - 5, 2, 5);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+
+    const pmremGenerator = new THREE.PMREMGenerator(this.renderer);
+    pmremGenerator.compileEquirectangularShader();
+    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+
+    this.scene.environment = envMap;
+    pmremGenerator.dispose();
+    texture.dispose();
+  }
 
   public destroy(): void {
     this.stop();

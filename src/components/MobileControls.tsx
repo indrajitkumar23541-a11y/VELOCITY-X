@@ -85,7 +85,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
   }, [onCalibrateTilt]);
 
   return (
-    <div className="mobile-controls-container">
+    <div className={`mobile-controls-container ${tiltSteeringEnabled ? 'tilt-mode' : 'touch-mode'}`}>
       {/* LEFT ZONE: Dual Touch Steering Buttons OR Gyro Horizon Instrument */}
       <div className="touch-zone left-zone">
         {tiltSteeringEnabled ? (

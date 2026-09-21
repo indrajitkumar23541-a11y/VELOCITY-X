@@ -1,4 +1,4 @@
-// VELOCITY X - Mobile High-Octane HUD & Speedometer
+// VELOCITY X - Premium AAA Esports Racing Cockpit HUD
 import React, { useEffect, useState } from 'react';
 import { HUDData } from '../game/Engine';
 import { Zap, Flame, ShieldAlert, Award, Smartphone, CloudRain, Moon } from 'lucide-react';
@@ -30,7 +30,7 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
 
   return (
     <div className="mobile-hud-root">
-      {/* 1. POLICE PURSUIT RED & BLUE FLASHING SCREEN VIGNETTE */}
+      {/* 1. POLICE PURSUIT SCREEN VIGNETTE & BANNER */}
       {hud.pursuitActive && (
         <div
           className="police-strobe-vignette"
@@ -42,9 +42,9 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
           }}
         >
           <div className="pursuit-banner">
-            <ShieldAlert size={18} className="strobe-icon" />
-            <span>POLICE PURSUIT — OUTRUN OR WEAVE TRAFFIC!</span>
-            <ShieldAlert size={18} className="strobe-icon" />
+            <ShieldAlert size={16} className="strobe-icon" />
+            <span>POLICE PURSUIT — WEAVE TRAFFIC TO EVADE!</span>
+            <ShieldAlert size={16} className="strobe-icon" />
           </div>
         </div>
       )}
@@ -53,10 +53,10 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
       {evadedBonus !== null && (
         <div className="evaded-popup">
           <div className="evaded-badge">
-            <Award size={28} className="gold-icon" />
+            <Award size={26} className="gold-icon" />
             <div className="evaded-text">
               <h3>POLICE EVADED!</h3>
-              <p>+{evadedBonus} BONUS REWARD</p>
+              <p>+{evadedBonus} REWARD BONUS</p>
             </div>
           </div>
         </div>
@@ -66,7 +66,7 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
       {nearMissAlert && pulseNearMiss && (
         <div className="near-miss-alert">
           <div className="near-miss-pill">
-            <Flame size={20} className="flame-icon" />
+            <Flame size={18} className="flame-icon" />
             <span className="text">{nearMissAlert.text}</span>
             {nearMissAlert.combo > 1 && (
               <span className="combo-tag">x{nearMissAlert.combo}</span>
@@ -75,14 +75,15 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
         </div>
       )}
 
-      {/* 4. TOP STATS BAR: Distance & Score */}
-      <div className="top-stats-bar">
+      {/* 4. TOP-LEFT STATS CLUSTER (Flanking Rearview Mirror) */}
+      <div className="top-hud-left">
         <div className="stat-card distance-card">
           <span className="stat-label">DISTANCE</span>
-          <span className="stat-value">{hud.distanceMeters.toLocaleString()} <small>M</small></span>
+          <span className="stat-value">
+            {hud.distanceMeters.toLocaleString()} <small>M</small>
+          </span>
         </div>
 
-        {/* Combo Multiplier Badge */}
         {hud.combo > 1 && (
           <div className="combo-meter-card">
             <div className="combo-val">x{hud.combo}</div>
@@ -92,29 +93,30 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
                 style={{ width: `${hud.comboTimerProgress * 100}%` }}
               />
             </div>
-            <span className="combo-sub">COMBO STREAK</span>
+            <span className="combo-sub">COMBO</span>
           </div>
         )}
+      </div>
 
+      {/* 5. TOP-RIGHT STATS CLUSTER (Flanking Rearview Mirror) */}
+      <div className="top-hud-right">
         <div className="stat-card score-card">
           <span className="stat-label">SCORE</span>
           <span className="stat-value">{hud.score.toLocaleString()}</span>
         </div>
 
-        {/* Dynamic Weather Badge */}
         <div className={`stat-card weather-hud-chip ${hud.weather === 'RAIN' ? 'rain-active' : ''}`}>
           {hud.weather === 'RAIN' ? (
-            <CloudRain size={12} className="weather-hud-icon rain" />
+            <CloudRain size={13} className="weather-hud-icon rain" />
           ) : (
-            <Moon size={12} className="weather-hud-icon moon" />
+            <Moon size={13} className="weather-hud-icon moon" />
           )}
           <span className="weather-hud-text">{hud.weather}</span>
         </div>
       </div>
 
-      {/* 5. BOTTOM COCKPIT CLUSTER: Speedometer, Gear, RPM, NOS */}
-      <div className="bottom-cluster">
-        {/* Analog + Digital Speedometer */}
+      {/* 6. BOTTOM-LEFT SPEEDOMETER & TACHOMETER INSTRUMENT WIDGET */}
+      <div className="hud-bottom-left">
         <div className="speedometer-widget">
           <div className="radial-speed-track">
             <svg viewBox="0 0 100 100" className="radial-svg">
@@ -124,8 +126,8 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
                 cy="50"
                 r="42"
                 fill="none"
-                stroke="#171e2e"
-                strokeWidth="8"
+                stroke="#131b2a"
+                strokeWidth="7"
                 strokeDasharray="198"
                 strokeDashoffset="33"
                 strokeLinecap="round"
@@ -137,7 +139,7 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
                 r="42"
                 fill="none"
                 stroke="url(#speedGrad)"
-                strokeWidth="8"
+                strokeWidth="7"
                 strokeDasharray="198"
                 strokeDashoffset={198 - speedRatio * 165}
                 strokeLinecap="round"
@@ -176,16 +178,18 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
           {/* Gyro Tilt Sensor Status Chip */}
           {hud.tiltActive && (
             <div className="hud-gyro-chip">
-              <Smartphone size={9} className="hud-gyro-icon" />
+              <Smartphone size={10} className="hud-gyro-icon" />
               <span>TILT {hud.tiltAngle > 0 ? `+${hud.tiltAngle}°` : `${hud.tiltAngle}°`}</span>
             </div>
           )}
         </div>
+      </div>
 
-        {/* NOS Nitrogen Canister Level */}
+      {/* 7. BOTTOM-RIGHT NITROUS CANISTER WIDGET */}
+      <div className="hud-bottom-right">
         <div className="nos-widget">
           <div className="nos-header">
-            <Zap size={14} className="nos-icon" />
+            <Zap size={13} className="nos-icon" />
             <span>NITROUS</span>
             <span className="nos-val">{hud.nitroPercent}%</span>
           </div>

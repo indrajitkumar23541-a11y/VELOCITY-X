@@ -151,8 +151,9 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   z-index: 15;
-  background: radial-gradient(circle at center, rgba(8, 11, 18, 0.3) 0%, rgba(5, 7, 13, 0.85) 100%);
-  padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
+  background: radial-gradient(circle at center, rgba(8, 11, 18, 0.25) 0%, rgba(5, 7, 13, 0.88) 100%);
+  padding: max(44px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  overflow-y: auto;
 }
 
 .menu-center-card {
@@ -160,19 +161,19 @@ html, body, #root {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  max-width: 580px;
+  max-width: 520px;
   width: 100%;
 }
 
 .title-glow-wrap {
-  margin-bottom: 20px;
+  margin-bottom: clamp(6px, 1.8vh, 16px);
 }
 
 .game-title {
   font-family: var(--font-racing);
-  font-size: clamp(38px, 8vw, 64px);
+  font-size: clamp(32px, 6.5vw, 54px);
   font-weight: 900;
-  letter-spacing: 6px;
+  letter-spacing: 4px;
   line-height: 1;
   text-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
 }
@@ -184,22 +185,22 @@ html, body, #root {
 
 .game-subtitle {
   font-family: var(--font-racing);
-  font-size: clamp(11px, 2.5vw, 15px);
-  letter-spacing: 4px;
+  font-size: clamp(9px, 2vw, 13px);
+  letter-spacing: 3px;
   color: #94a3b8;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .menu-car-pill {
   background: var(--bg-card);
   border: 1px solid var(--bg-card-border);
   border-radius: 12px;
-  padding: 10px 24px;
+  padding: 8px 20px;
   display: flex;
   justify-content: space-between;
   width: 100%;
-  max-width: 420px;
-  margin-bottom: 22px;
+  max-width: 440px;
+  margin-bottom: clamp(8px, 1.8vh, 16px);
   backdrop-filter: blur(12px);
 }
 
@@ -214,7 +215,7 @@ html, body, #root {
 }
 
 .pill-sub {
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 1.5px;
   color: #64748b;
   font-family: var(--font-racing);
@@ -222,14 +223,14 @@ html, body, #root {
 
 .pill-name {
   font-family: var(--font-racing);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--cyan);
 }
 
 .pill-val {
   font-family: var(--font-racing);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--gold);
   display: flex;
@@ -237,51 +238,75 @@ html, body, #root {
   gap: 4px;
 }
 
-.menu-buttons-row {
+/* AAA Console Hero Action Stack */
+.menu-actions-stack {
   display: flex;
-  gap: 16px;
+  flex-direction: column;
+  gap: 10px;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
 }
 
-.menu-btn {
-  flex: 1;
-  padding: 16px;
+.play-btn-hero {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
+  border: none;
   border-radius: 12px;
+  color: #040810;
   font-family: var(--font-racing);
   font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
+  font-weight: 900;
+  letter-spacing: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  box-shadow: 0 0 24px rgba(0, 243, 255, 0.55);
+  transition: all 0.18s ease;
 }
 
-.menu-btn:active {
-  transform: scale(0.96);
+.play-btn-hero:active {
+  transform: scale(0.97);
 }
 
-.play-btn {
-  background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
-  border: none;
-  color: #000;
-  box-shadow: 0 0 24px rgba(0, 243, 255, 0.5);
+.menu-sub-actions-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
 }
 
-.garage-btn {
-  background: rgba(15, 23, 42, 0.85);
+.menu-btn-sub {
+  flex: 1;
+  height: 40px;
+  background: rgba(14, 22, 38, 0.85);
   border: 1px solid rgba(0, 243, 255, 0.3);
+  border-radius: 10px;
   color: #fff;
+  font-family: var(--font-racing);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
   backdrop-filter: blur(8px);
+  transition: all 0.15s ease;
+}
+
+.menu-btn-sub:active {
+  transform: scale(0.96);
+  background: rgba(0, 243, 255, 0.2);
+  border-color: var(--cyan);
 }
 
 .menu-tips {
-  margin-top: 20px;
-  font-size: 11px;
-  letter-spacing: 2px;
+  margin-top: clamp(8px, 1.8vh, 16px);
+  font-size: 10px;
+  letter-spacing: 1.5px;
   color: #64748b;
   font-family: var(--font-racing);
 }
@@ -441,15 +466,24 @@ html, body, #root {
   100% { transform: translateX(-50%) scale(1.05); }
 }
 
-/* Top Stats Bar */
-.top-stats-bar {
+/* Top Symmetrical HUD Flanking Rearview Mirror */
+.top-hud-left {
   position: absolute;
-  top: max(14px, env(safe-area-inset-top));
-  left: 50%;
-  transform: translateX(-50%);
+  top: max(8px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  z-index: 10;
+}
+
+.top-hud-right {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  gap: 12px;
   z-index: 10;
 }
 
@@ -602,15 +636,34 @@ html, body, #root {
   color: var(--gold);
 }
 
-/* Bottom Cockpit Cluster */
-.bottom-cluster {
+/* Bottom-Left Cockpit Cluster: Speedometer + Gear + RPM */
+.hud-bottom-left {
   position: absolute;
   bottom: max(14px, env(safe-area-inset-bottom));
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
+  left: max(16px, env(safe-area-inset-left));
+  z-index: 12;
+  pointer-events: none;
+}
+
+@media (max-width: 960px) and (orientation: landscape), (pointer: coarse) {
+  .hud-bottom-left {
+    bottom: 96px;
+  }
+}
+
+/* Bottom-Right Cockpit Cluster: Nitrous Canister */
+.hud-bottom-right {
+  position: absolute;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 12;
+  pointer-events: none;
+}
+
+@media (max-width: 960px) and (orientation: landscape), (pointer: coarse) {
+  .hud-bottom-right {
+    bottom: 108px;
+  }
 }
 
 /* Speedometer Widget */
@@ -2666,4 +2719,170 @@ html, body, #root {
 
 .leaderboard-race-btn:active {
   transform: scale(0.96);
+}
+
+/* -------------------------------------------------------------
+   Virtual Auto-Landscape Rotation Engine
+   Allows landscape gameplay even if phone is physically locked in portrait!
+   ------------------------------------------------------------- */
+body.force-virtual-landscape {
+  overflow: hidden !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+body.force-virtual-landscape #root {
+  position: fixed !important;
+  top: 0 !important;
+  left: 100vw !important;
+  width: 100vh !important;
+  height: 100vw !important;
+  transform: rotate(90deg) !important;
+  transform-origin: top left !important;
+  overflow: hidden !important;
+  z-index: 1000 !important;
+}
+
+/* -------------------------------------------------------------
+   Rotate Phone Prompt Modal
+   ------------------------------------------------------------- */
+.rotate-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: radial-gradient(circle at center, rgba(10, 16, 28, 0.96) 0%, rgba(4, 7, 13, 0.99) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(16px);
+}
+
+.rotate-card {
+  background: rgba(14, 22, 38, 0.94);
+  border: 2px solid var(--cyan);
+  border-radius: 22px;
+  padding: 32px 24px;
+  max-width: 360px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 0 35px var(--cyan-glow), inset 0 0 20px rgba(0, 243, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.phone-rotate-anim {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.phone-icon {
+  color: var(--cyan);
+  animation: rotatePhoneAnim 2.4s infinite ease-in-out;
+}
+
+@keyframes rotatePhoneAnim {
+  0%, 20% { transform: rotate(0deg); }
+  60%, 90% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.rotate-spinner-icon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--gold);
+  animation: spinSpinner 3s linear infinite;
+}
+
+@keyframes spinSpinner {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.rotate-title {
+  font-family: var(--font-racing);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #fff;
+  margin-bottom: 10px;
+  text-shadow: 0 0 16px rgba(0, 243, 255, 0.6);
+}
+
+.rotate-desc {
+  font-family: var(--font-racing);
+  font-size: 12px;
+  line-height: 1.5;
+  color: #94a3b8;
+  margin-bottom: 22px;
+}
+
+.rotate-actions-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.auto-landscape-btn {
+  background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
+  border: none;
+  border-radius: 12px;
+  color: #060910;
+  font-family: var(--font-racing);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
+  transition: transform 0.15s ease;
+}
+
+.auto-landscape-btn:active {
+  transform: scale(0.96);
+}
+
+.portrait-install-action-btn {
+  background: rgba(18, 28, 48, 0.85);
+  border: 1px solid rgba(0, 243, 255, 0.35);
+  border-radius: 12px;
+  color: #fff;
+  font-family: var(--font-racing);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.portrait-install-action-btn:active {
+  transform: scale(0.96);
+}
+
+.rotate-pill {
+  font-family: var(--font-racing);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: #64748b;
+  margin-top: 6px;
 }

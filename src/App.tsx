@@ -352,36 +352,38 @@ export const App: React.FC = () => {
             </div>
 
             {/* Main Action Buttons */}
-            <div className="menu-buttons-row">
-              <button
-                className="menu-btn install-menu-btn"
-                onClick={() => { HapticsManager.buttonTap(); triggerGlobalAppInstall(); }}
-                title="Install VELOCITY X on Phone (Offline / Standalone)"
-              >
-                <Download size={20} />
-                <span>INSTALL APP</span>
-              </button>
-
-              <button
-                className="menu-btn leaderboard-btn"
-                onClick={() => { HapticsManager.buttonTap(); setShowLeaderboard(true); }}
-              >
-                <Trophy size={20} />
-                <span>RECORDS</span>
-              </button>
-
-              <button
-                className="menu-btn garage-btn"
-                onClick={() => { HapticsManager.buttonTap(); setGameState('GARAGE'); }}
-              >
-                <Wrench size={20} />
-                <span>GARAGE</span>
-              </button>
-
-              <button className="menu-btn play-btn" onClick={startRace}>
+            <div className="menu-actions-stack">
+              <button className="menu-btn play-btn-hero" onClick={startRace}>
                 <Play size={24} fill="currentColor" />
                 <span>START RACE</span>
               </button>
+
+              <div className="menu-sub-actions-row">
+                <button
+                  className="menu-btn-sub garage-btn"
+                  onClick={() => { HapticsManager.buttonTap(); setGameState('GARAGE'); }}
+                >
+                  <Wrench size={16} />
+                  <span>GARAGE</span>
+                </button>
+
+                <button
+                  className="menu-btn-sub leaderboard-btn"
+                  onClick={() => { HapticsManager.buttonTap(); setShowLeaderboard(true); }}
+                >
+                  <Trophy size={16} />
+                  <span>RECORDS</span>
+                </button>
+
+                <button
+                  className="menu-btn-sub install-menu-btn"
+                  onClick={() => { HapticsManager.buttonTap(); triggerGlobalAppInstall(); }}
+                  title="Install VELOCITY X on Phone (Offline / Standalone)"
+                >
+                  <Download size={16} />
+                  <span>INSTALL</span>
+                </button>
+              </div>
             </div>
 
             <div className="menu-tips">
