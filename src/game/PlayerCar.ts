@@ -344,9 +344,9 @@ export class PlayerCar {
     if (controls.steerAxis !== undefined && Math.abs(controls.steerAxis) > 0.01) {
       targetSteer = THREE.MathUtils.clamp(controls.steerAxis, -1, 1);
     } else if (controls.steerLeft) {
-      targetSteer = -1;
+      targetSteer = 1; // Left steering moves to screen Left (+X)
     } else if (controls.steerRight) {
-      targetSteer = 1;
+      targetSteer = -1; // Right steering moves to screen Right (-X)
     }
 
     this.steeringInertia = THREE.MathUtils.lerp(
@@ -372,12 +372,12 @@ export class PlayerCar {
     this.mesh.position.z += forwardMetersPerSec * delta;
 
     // 3. Chassis Roll, Pitch, & Wheel Rotation
-    const rollAngle = -this.steeringInertia * 0.08; // dynamic body roll in turns
+    const rollAngle = this.steeringInertia * 0.08; // dynamic body roll in turns
     const pitchAngle = controls.brake ? 0.04 : (this.isNitroActive ? -0.05 : 0); // dive/squat
 
     this.mesh.rotation.z = THREE.MathUtils.lerp(this.mesh.rotation.z, rollAngle, delta * 10);
     this.mesh.rotation.x = THREE.MathUtils.lerp(this.mesh.rotation.x, pitchAngle, delta * 8);
-    this.mesh.rotation.y = THREE.MathUtils.lerp(this.mesh.rotation.y, -this.steeringInertia * 0.06, delta * 10);
+    this.mesh.rotation.y = THREE.MathUtils.lerp(this.mesh.rotation.y, this.steeringInertia * 0.06, delta * 10);
 
     // Rotate front wheels with steering angle
     const steerAngle = this.steeringInertia * 0.35;

@@ -1,6 +1,7 @@
 // VELOCITY X - Mobile Landscape Orientation Enforcement Overlay
 import React, { useState, useEffect } from 'react';
 import { Smartphone } from 'lucide-react';
+import { triggerGlobalAppInstall } from './InstallPrompt';
 
 export const RotatePhonePrompt: React.FC = () => {
   const [isPortrait, setIsPortrait] = useState(false);
@@ -33,6 +34,16 @@ export const RotatePhonePrompt: React.FC = () => {
           VELOCITY X is engineered for high-octane widescreen landscape mobile racing.
         </p>
         <div className="rotate-pill">LANDSCAPE MODE ONLY</div>
+
+        {/* Quick Install Button for Portrait Mobile */}
+        <button
+          type="button"
+          className="portrait-install-action-btn"
+          onClick={() => triggerGlobalAppInstall()}
+        >
+          <Smartphone size={16} />
+          <span>📲 INSTALL APP FIRST</span>
+        </button>
       </div>
     </div>
   );

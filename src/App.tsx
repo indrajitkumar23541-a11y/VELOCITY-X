@@ -13,10 +13,10 @@ import { RearviewMirror } from './components/RearviewMirror';
 import { GarageModal } from './components/GarageModal';
 import { GameOverModal } from './components/GameOverModal';
 import { RotatePhonePrompt } from './components/RotatePhonePrompt';
-import { InstallPrompt } from './components/InstallPrompt';
+import { InstallPrompt, triggerGlobalAppInstall } from './components/InstallPrompt';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { RainScreenOverlay } from './components/RainScreenOverlay';
-import { Volume2, VolumeX, Play, Wrench, Trophy, Coins, Smartphone, CloudRain, Moon } from 'lucide-react';
+import { Volume2, VolumeX, Play, Wrench, Trophy, Coins, Smartphone, CloudRain, Moon, Download } from 'lucide-react';
 
 export type GameState = 'MENU' | 'RACING' | 'GARAGE' | 'GAME_OVER';
 
@@ -349,6 +349,15 @@ export const App: React.FC = () => {
 
             {/* Main Action Buttons */}
             <div className="menu-buttons-row">
+              <button
+                className="menu-btn install-menu-btn"
+                onClick={() => { HapticsManager.buttonTap(); triggerGlobalAppInstall(); }}
+                title="Install VELOCITY X on Phone (Offline / Standalone)"
+              >
+                <Download size={20} />
+                <span>INSTALL APP</span>
+              </button>
+
               <button
                 className="menu-btn leaderboard-btn"
                 onClick={() => { HapticsManager.buttonTap(); setShowLeaderboard(true); }}

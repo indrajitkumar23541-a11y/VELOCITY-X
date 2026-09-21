@@ -1,6 +1,6 @@
 // VELOCITY X - PWA Offline App Install Prompt & Guide
-import React, { useState, useEffect } from 'react';
-import { Download, X, Smartphone, Check, Copy } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Download, X, Smartphone, Check, Copy, Sparkles, ExternalLink } from 'lucide-react';
 import { HapticsManager } from '../game/HapticsManager';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -8,9 +8,16 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+export const triggerGlobalAppInstall = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('velocity-x-install-requested'));
+  }
+};
+
 export const InstallPrompt: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [showBanner, setShowBanner] = useState(true);
   const [showGuideModal, setShowGuideModal] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState(false);
 
@@ -26,13 +33,23 @@ export const InstallPrompt: React.FC = () => {
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      setShowBanner(true);
+    };
+
+    const handleGlobalInstall = () => {
+      handleInstallClick();
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('velocity-x-install-requested', handleGlobalInstall);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('velocity-x-install-requested', handleGlobalInstall);
+    };
   }, []);
 
-  const handleInstallClick = async () => {
+  const handleInstallClick = useCallback(async () => {
     HapticsManager.buttonTap();
     if (deferredPrompt) {
       try {
@@ -40,6 +57,9 @@ export const InstallPrompt: React.FC = () => {
         const choice = await deferredPrompt.userChoice;
         if (choice.outcome === 'accepted') {
           setIsInstalled(true);
+          setShowBanner(false);
+        } else {
+          setShowGuideModal(true);
         }
         setDeferredPrompt(null);
       } catch (err) {
@@ -49,9 +69,9 @@ export const InstallPrompt: React.FC = () => {
     } else {
       setShowGuideModal(true);
     }
-  };
+  }, [deferredPrompt]);
 
-  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://172.16.4.169:3000';
+  const currentOrigin = typeof window !== 'undefined' ? window.location.href : 'https://indrajitkumar23541-a11y.github.io/VELOCITY-X/';
 
   const handleCopyOrigin = () => {
     HapticsManager.buttonTap();
@@ -64,6 +84,7 @@ export const InstallPrompt: React.FC = () => {
 
   return (
     <>
+      {/* Top Header Quick Install Button */}
       <button
         type="button"
         className="install-pwa-btn"
@@ -73,6 +94,40 @@ export const InstallPrompt: React.FC = () => {
         <Download size={14} className="install-icon" />
         <span>INSTALL APP</span>
       </button>
+
+      {/* Persistent Floating Install Banner at the Bottom */}
+      {showBanner && (
+        <div className="install-floating-banner">
+          <div className="banner-left">
+            <div className="banner-icon-glow">
+              <Sparkles size={18} className="banner-sparkle" />
+            </div>
+            <div className="banner-text">
+              <div className="banner-title">INSTALL VELOCITY X</div>
+              <div className="banner-desc">Play offline in Flight Mode • 120 FPS • Temple Run Style</div>
+            </div>
+          </div>
+
+          <div className="banner-actions">
+            <button
+              type="button"
+              className="banner-install-btn"
+              onClick={handleInstallClick}
+            >
+              <Download size={15} />
+              <span>INSTALL NOW</span>
+            </button>
+            <button
+              type="button"
+              className="banner-dismiss-btn"
+              onClick={() => { HapticsManager.buttonTap(); setShowBanner(false); }}
+              title="Dismiss for now"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Interactive Install Guide Modal */}
       {showGuideModal && (
@@ -93,16 +148,16 @@ export const InstallPrompt: React.FC = () => {
             </div>
 
             <p className="install-modal-sub">
-              Install VELOCITY X as a standalone fullscreen game with offline cache & zero browser address bar!
+              VELOCITY X ko proper game app ki tarah open karein — bina browser URL bar ke, aur 100% offline Flight Mode me khele!
             </p>
 
             <div className="install-steps-list">
               {/* Method 1: Chrome Menu */}
-              <div className="install-step-item">
+              <div className="install-step-item highlight-step">
                 <div className="step-badge">1</div>
                 <div className="step-content">
-                  <h4>Via Chrome Menu (Android)</h4>
-                  <p>Phone me upar right corner me <strong>3 dots (⋮)</strong> par tap karein, fir <strong>"Add to Home screen"</strong> ya <strong>"Install app"</strong> chunein.</p>
+                  <h4>Android Phone (Chrome)</h4>
+                  <p>Chrome me upar right side me <strong>3 dots (⋮)</strong> dabayein, fir <strong>"Install app"</strong> ya <strong>"Add to Home screen"</strong> par tap karein.</p>
                 </div>
               </div>
 
@@ -110,22 +165,35 @@ export const InstallPrompt: React.FC = () => {
               <div className="install-step-item">
                 <div className="step-badge">2</div>
                 <div className="step-content">
-                  <h4>Via Safari (iPhone / iOS)</h4>
-                  <p>Safari ke bottom me <strong>Share Button (⎋)</strong> dabayein, fir scroll karke <strong>"Add to Home Screen"</strong> par tap karein.</p>
+                  <h4>iPhone / iPad (Safari)</h4>
+                  <p>Safari ke bottom me <strong>Share button (📤)</strong> dabayein, fir scroll karke <strong>"Add to Home Screen"</strong> chunein.</p>
                 </div>
               </div>
 
-              {/* Method 3: Localhost Insecure Origin Bypass */}
-              <div className="install-step-item highlight-step">
-                <div className="step-badge">⚡</div>
+              {/* Method 3: Direct APK Download */}
+              <div className="install-step-item">
+                <div className="step-badge">APK</div>
                 <div className="step-content">
-                  <h4>Agar Chrome me "Install App" button na dikhe:</h4>
-                  <p>Android Chrome LAN IP ko security reason se block karta hai. Use unlock karne ke liye:</p>
-                  <ol className="mini-steps-list">
-                    <li>Phone Chrome me open karein: <code>chrome://flags</code></li>
-                    <li>Search karein: <code>unsafely-treat-insecure-origin-as-secure</code></li>
-                    <li>Enable karke ye URL paste karein:</li>
-                  </ol>
+                  <h4>Direct Android .APK File</h4>
+                  <p>Agar aap direct file download karna chahte hain:</p>
+                  <a
+                    href="https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="apk-download-link-btn"
+                  >
+                    <Download size={14} />
+                    <span>Download VELOCITY-X.apk</span>
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
+              </div>
+
+              {/* Share / Copy Link */}
+              <div className="install-step-item">
+                <div className="step-badge">🔗</div>
+                <div className="step-content">
+                  <h4>Phone Link Share</h4>
                   <div className="copy-url-row">
                     <code>{currentOrigin}</code>
                     <button type="button" className="copy-btn" onClick={handleCopyOrigin}>
@@ -133,7 +201,6 @@ export const InstallPrompt: React.FC = () => {
                       <span>{copiedUrl ? 'COPIED!' : 'COPY'}</span>
                     </button>
                   </div>
-                  <p className="step-note">Relaunch dabate hi phone par direct 1-tap "Install App" prompt aa jayega!</p>
                 </div>
               </div>
             </div>

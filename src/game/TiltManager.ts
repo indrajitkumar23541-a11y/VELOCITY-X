@@ -157,9 +157,9 @@ export class TiltManager {
       const activeSpan = this.maxSteerDeg - this.deadzoneDeg;
       const progress = Math.min(1.0, (absRel - this.deadzoneDeg) / activeSpan);
 
-      // Smooth progressive sensitivity curve: linear with subtle cubic curvature
       const curved = 0.7 * progress + 0.3 * Math.pow(progress, 2);
-      targetSteer = Math.sign(relative) * curved;
+      // In landscape (90 deg), tilting left lowers top of phone (relative < 0), which steers LEFT (+1)
+      targetSteer = -Math.sign(relative) * curved;
     }
 
     // Direct assignment; smoothing is applied in update(delta)
