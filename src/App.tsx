@@ -11,7 +11,7 @@ import { MobileControls } from './components/MobileControls';
 import { RearviewMirror } from './components/RearviewMirror';
 import { GameOverModal } from './components/GameOverModal';
 import { RotatePhonePrompt } from './components/RotatePhonePrompt';
-import { triggerGlobalAppInstall } from './components/InstallPrompt';
+import { InstallPrompt, triggerGlobalAppInstall } from './components/InstallPrompt';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { RainScreenOverlay } from './components/RainScreenOverlay';
 import { UpdateNotification } from './components/UpdateNotification';
@@ -342,6 +342,9 @@ export const App: React.FC = () => {
 
       {/* Over-The-Air Real-time Cloud Update Banner */}
       <UpdateNotification gameState={gameState} />
+
+      {/* PWA 1-Tap Offline Standalone Game Installer */}
+      <InstallPrompt />
 
       {/* Mobile Landscape Orientation Enforcement Overlay */}
       <RotatePhonePrompt />

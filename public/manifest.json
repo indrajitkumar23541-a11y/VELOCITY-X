@@ -1,39 +1,47 @@
 {
   "name": "VELOCITY X — Cyber Highway Racer",
   "short_name": "VELOCITY X",
-  "id": "./?source=pwa",
-  "start_url": "./",
+  "id": "velocity-x-app",
+  "start_url": "./?source=pwa",
   "scope": "./",
-  "description": "High-octane 3D highway pursuit racing game for Android and iOS",
-  "display": "standalone",
+  "description": "High-octane 3D highway pursuit racing game for Android and iOS. 100% offline standalone game.",
+  "display": "fullscreen",
+  "display_override": [
+    "fullscreen",
+    "standalone"
+  ],
   "orientation": "landscape",
-  "background_color": "#080b12",
-  "theme_color": "#080b12",
+  "background_color": "#060913",
+  "theme_color": "#060913",
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "icons/icon-192.png?v=2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "icons/icon-512.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icons/icon-192.svg",
+      "src": "icons/icon-192.svg?v=2",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512.svg",
+      "src": "icons/icon-512.svg?v=2",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
     }
   ],
-  "categories": ["games", "action", "racing"]
+  "categories": [
+    "games",
+    "action",
+    "racing"
+  ]
 }
