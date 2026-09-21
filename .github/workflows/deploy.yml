@@ -70,21 +70,16 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Install NPM Dependencies
-        run: npm install
-
-      - name: Build Production Web Bundle
-        run: npm run build
-
-      - name: Sync Capacitor Android Project
-        run: npx cap sync android
-
-      - name: Make Gradle Wrapper Executable
-        run: chmod +x android/gradlew
+      - name: Install Dependencies & Build Web Bundle
+        run: |
+          npm install
+          npm run build
+          cp -r dist/* android/app/src/main/assets/public/
 
       - name: Build Android Debug APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
       - name: Rename APK for Distribution
