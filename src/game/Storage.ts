@@ -40,42 +40,42 @@ export interface LeaderboardEntry {
 const DEFAULT_CARS: CarConfig[] = [
   {
     id: 'apex_roadster',
-    name: 'Pagani Huayra BC',
+    name: 'Porsche 911 Carrera 4S',
     type: 'roadster',
     price: 0,
     unlocked: true,
-    topSpeedKmh: 260,
-    acceleration: 9.4,
-    handling: 9.5,
-    armor: 6.5,
-    color: '#e59500', // Liquid Amber-Gold Pearl (Matches Image 4)
-    underglowColor: '#ff7700',
+    topSpeedKmh: 290,
+    acceleration: 9.6,
+    handling: 9.7,
+    armor: 7.2,
+    color: '#d61a1a', // Guards Red (Matches User's Reference Image 2!)
+    underglowColor: '#ff2200',
   },
   {
     id: 'veloce_gt',
-    name: 'Bugatti Bolide GT',
+    name: 'Lamborghini Aventador LP700',
     type: 'gt',
     price: 3500,
     unlocked: false,
-    topSpeedKmh: 310,
-    acceleration: 9.8,
-    handling: 8.9,
-    armor: 7.0,
-    color: '#0055ff', // French Racing Blue
-    underglowColor: '#00d4ff',
+    topSpeedKmh: 335,
+    acceleration: 9.9,
+    handling: 9.2,
+    armor: 7.8,
+    color: '#e59500', // Arancio Atlas Hypercar Gold-Amber
+    underglowColor: '#ff8800',
   },
   {
     id: 'titan_v8',
-    name: 'Titan V8 Supercharged',
+    name: 'Ferrari F8 Tributo',
     type: 'muscle',
     price: 5000,
     unlocked: false,
-    topSpeedKmh: 275,
-    acceleration: 8.8,
-    handling: 7.8,
-    armor: 9.5, // High impact resistance against police rams
-    color: '#c21807', // Crimson Flame
-    underglowColor: '#ff2200',
+    topSpeedKmh: 325,
+    acceleration: 9.8,
+    handling: 9.0,
+    armor: 8.5,
+    color: '#0055ff', // French Racing Blue / Modena
+    underglowColor: '#00d4ff',
   }
 ];
 
@@ -140,9 +140,9 @@ export class StorageManager {
         return DEFAULT_CARS.map(dc => {
           const found = parsed.find((p: CarConfig) => p.id === dc.id);
           if (found) {
-            // If the user's cached color was the old prototype cyan, migrate to the authentic Image 4 amber gold
-            const color = (found.color === '#00f3ff' && dc.id === 'apex_roadster') ? dc.color : found.color;
-            const underglowColor = (found.underglowColor === '#00f3ff' && dc.id === 'apex_roadster') ? dc.underglowColor : (found.underglowColor || dc.underglowColor);
+            // Migrate to authentic Image 2 Guards Red if user was on old default colors
+            const color = (found.color === '#00f3ff' || found.color === '#e59500') && dc.id === 'apex_roadster' ? dc.color : found.color;
+            const underglowColor = (found.underglowColor === '#00f3ff' || found.underglowColor === '#ff7700') && dc.id === 'apex_roadster' ? dc.underglowColor : (found.underglowColor || dc.underglowColor);
             return { ...dc, ...found, name: dc.name, color, underglowColor };
           }
           return dc;

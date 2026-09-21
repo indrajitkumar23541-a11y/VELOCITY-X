@@ -1,7 +1,17 @@
 // VELOCITY X - 4K Photorealistic PBR Supercars (Pagani Huayra, Bugatti Chiron, Cyber Muscle) & Physics
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { CarConfig } from './Storage';
 import { RoadManager } from './RoadManager';
+
+// Setup shared Draco and GLTF Loaders for 60fps instant 3D model streaming
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('./draco/');
+dracoLoader.setDecoderConfig({ type: 'js' });
+
+const gltfLoader = new GLTFLoader();
+gltfLoader.setDRACOLoader(dracoLoader);
 
 export interface PlayerControls {
   steerLeft: boolean;
@@ -44,6 +54,7 @@ export class PlayerCar {
   private frontWheels: THREE.Group[] = [];
   private allWheels: THREE.Group[] = [];
   private headlightCones: THREE.Mesh[] = [];
+  private gltfWheels: { obj: THREE.Object3D; initialEuler: THREE.Euler; isFront: boolean }[] = [];
 
   // Active Aero flaps for Pagani
   private activeAeroFlaps: THREE.Mesh[] = [];
@@ -165,26 +176,180 @@ export class PlayerCar {
     this.carRoot = new THREE.Group();
     this.frontWheels = [];
     this.allWheels = [];
+    this.gltfWheels = [];
     this.headlightCones = [];
     this.activeAeroFlaps = [];
 
-    // Dispatch to distinct supercar architecture
+    const targetGroup = this.carRoot;
+    this.mesh.add(this.carRoot);
+
+    // Initial instant fallback procedural architecture
+    let modelPath = './models/porsche.glb';
+    let targetLength = 4.7;
+    let rotY = 0;
+
     switch (this.config.type) {
       case 'roadster':
-        this.buildPaganiRoadster(this.carRoot);
+        this.buildPaganiRoadster(targetGroup);
+        modelPath = './models/porsche.glb';
+        targetLength = 4.7;
+        rotY = 0;
         break;
       case 'gt':
-        this.buildBugattiGT(this.carRoot);
+        this.buildBugattiGT(targetGroup);
+        modelPath = './models/lamborghini.glb';
+        targetLength = 4.85;
+        rotY = Math.PI / 2;
         break;
       case 'muscle':
-        this.buildTitanMuscle(this.carRoot);
+        this.buildTitanMuscle(targetGroup);
+        modelPath = './models/supercar_1.glb';
+        targetLength = 4.65;
+        rotY = Math.PI;
         break;
       default:
-        this.buildBugattiGT(this.carRoot);
+        this.buildPaganiRoadster(targetGroup);
+        modelPath = './models/porsche.glb';
+        targetLength = 4.7;
+        rotY = 0;
         break;
     }
 
-    this.mesh.add(this.carRoot);
+    // Asynchronously stream authentic 3D GLB supercar model with local Draco WASM decoding
+    this.loadRealSupercarGLB(modelPath, rotY, targetLength, targetGroup);
+  }
+
+  private loadRealSupercarGLB(modelPath: string, rotY: number, targetLength: number, targetGroup: THREE.Group): void {
+    gltfLoader.load(
+      modelPath,
+      (gltf) => {
+        if (targetGroup !== this.carRoot) return;
+
+        // Clean up procedural placeholder children
+        while (targetGroup.children.length > 0) {
+          const c = targetGroup.children[0];
+          targetGroup.remove(c);
+          c.traverse?.((child) => {
+            if (child instanceof THREE.Mesh && child.geometry) {
+              child.geometry.dispose();
+            }
+          });
+        }
+        this.frontWheels = [];
+        this.allWheels = [];
+        this.gltfWheels = [];
+        this.activeAeroFlaps = [];
+        this.headlightCones = [];
+
+        const scene = gltf.scene;
+
+        // Apply rotation to align front with +Z
+        scene.rotation.y = rotY;
+        scene.updateMatrixWorld(true);
+
+        // Normalize scale to realistic car length in meters
+        const initialBbox = new THREE.Box3().setFromObject(scene);
+        const initialSize = new THREE.Vector3();
+        initialBbox.getSize(initialSize);
+
+        const currentLength = initialSize.z > 0.1 ? initialSize.z : Math.max(initialSize.x, initialSize.y);
+        const scaleFactor = targetLength / currentLength;
+        scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
+        scene.updateMatrixWorld(true);
+
+        // Ground the tires flush with asphalt (y = 0) and center on X & Z
+        const finalBbox = new THREE.Box3().setFromObject(scene);
+        const center = new THREE.Vector3();
+        finalBbox.getCenter(center);
+
+        scene.position.x = -center.x;
+        scene.position.z = -center.z;
+        scene.position.y = -finalBbox.min.y;
+
+        // Traverse hierarchy to assign metallic paint, PBR clearcoat, and identify wheels
+        scene.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+
+            const name = (child.name || '').toLowerCase();
+            const matName = child.material && 'name' in child.material ? ((child.material as THREE.Material).name || '').toLowerCase() : '';
+
+            // Apply player custom paint to exterior body panels
+            const isBodyPaint =
+              name.includes('body') ||
+              name.includes('carrosserie') ||
+              name.includes('paint') ||
+              matName.includes('body') ||
+              matName.includes('paint') ||
+              matName === 'mt_body' ||
+              matName === 'body_color';
+
+            if (isBodyPaint) {
+              child.material = this.carPaintMaterial;
+            } else if (child.material instanceof THREE.MeshStandardMaterial || child.material instanceof THREE.MeshPhysicalMaterial) {
+              child.material.envMapIntensity = 2.4;
+              child.material.roughness = Math.min(child.material.roughness, 0.35);
+              child.material.needsUpdate = true;
+            }
+
+            // Identify wheels for dynamic steering
+            if (name.includes('wheel') || name.includes('tyre') || name.includes('tire') || name.includes('roue')) {
+              const worldPos = new THREE.Vector3();
+              child.getWorldPosition(worldPos);
+              this.gltfWheels.push({
+                obj: child,
+                initialEuler: child.rotation.clone(),
+                isFront: worldPos.z > 0.1,
+              });
+            }
+          }
+        });
+
+        // Add Realistic Xenon Projector Headlights
+        this.addRealisticHeadlights(targetGroup, targetLength);
+
+        targetGroup.add(scene);
+      },
+      undefined,
+      (err) => {
+        console.warn(`[GLTFLoader] Failed to load ${modelPath}, kept procedural fallback:`, err);
+      }
+    );
+  }
+
+  private addRealisticHeadlights(parent: THREE.Group, carLength: number): void {
+    const halfLen = carLength * 0.46;
+    const beamLength = 32;
+    const beamGeom = new THREE.ConeGeometry(3.2, beamLength, 16, 1, true);
+    beamGeom.rotateX(Math.PI / 2);
+    beamGeom.translate(0, 0, beamLength / 2);
+
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0x99ddff,
+      transparent: true,
+      opacity: 0.16,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+
+    const leftBeam = new THREE.Mesh(beamGeom, beamMat);
+    leftBeam.position.set(-0.72, 0.45, halfLen);
+    parent.add(leftBeam);
+
+    const rightBeam = new THREE.Mesh(beamGeom, beamMat);
+    rightBeam.position.set(0.72, 0.45, halfLen);
+    parent.add(rightBeam);
+
+    const lensGeom = new THREE.SphereGeometry(0.08, 12, 12);
+    const lensMat = new THREE.MeshBasicMaterial({ color: 0xccf0ff });
+    const lensL = new THREE.Mesh(lensGeom, lensMat);
+    lensL.position.set(-0.72, 0.45, halfLen);
+    parent.add(lensL);
+    const lensR = new THREE.Mesh(lensGeom, lensMat);
+    lensR.position.set(0.72, 0.45, halfLen);
+    parent.add(lensR);
   }
 
   // =========================================================================
@@ -846,6 +1011,13 @@ export class PlayerCar {
     const wheelSpin = forwardMetersPerSec * delta * 4;
     for (const w of this.allWheels) {
       w.rotation.x += wheelSpin;
+    }
+
+    // Steer GLTF front wheels smoothly
+    for (const gw of this.gltfWheels) {
+      if (gw.isFront) {
+        gw.obj.rotation.y = gw.initialEuler.y + steerAngle;
+      }
     }
 
     // Pagani Active Aero Air-Braking Flaps
