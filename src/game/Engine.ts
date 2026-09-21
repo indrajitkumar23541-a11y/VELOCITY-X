@@ -478,43 +478,63 @@ export class Engine {
   private setupCyberpunkEnvironment(): void {
     if (typeof document === 'undefined') return;
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 256;
+    canvas.width = 1024;
+    canvas.height = 512;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // 1. Midnight Sky Gradient with glowing horizon
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, 256);
-    skyGrad.addColorStop(0, '#02050c');
-    skyGrad.addColorStop(0.35, '#071022');
-    skyGrad.addColorStop(0.48, '#0a2345');
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, 512);
+    skyGrad.addColorStop(0, '#010309');
+    skyGrad.addColorStop(0.32, '#050c1b');
+    skyGrad.addColorStop(0.46, '#081c38');
     skyGrad.addColorStop(0.5, '#00f3ff');  // Electric cyan horizon line
-    skyGrad.addColorStop(0.53, '#ff007f'); // Neon magenta city reflection
-    skyGrad.addColorStop(0.65, '#0d1322');
-    skyGrad.addColorStop(1, '#03060d');
+    skyGrad.addColorStop(0.52, '#ff007f'); // Neon magenta city reflection
+    skyGrad.addColorStop(0.62, '#0c1220');
+    skyGrad.addColorStop(1, '#020409');
     ctx.fillStyle = skyGrad;
-    ctx.fillRect(0, 0, 512, 256);
+    ctx.fillRect(0, 0, 1024, 512);
 
-    // 2. Horizon Neon Skyline Reflection Silhouettes
-    for (let i = 0; i < 32; i++) {
-      const x = (i / 32) * 512 + (Math.sin(i * 4) * 6);
-      const w = 10 + (i % 4) * 6;
-      const h = 20 + ((i * 11) % 45);
-      const y = 128 - h;
+    // 2. Distant sweeping searchlight beams (Skybeams)
+    ctx.save();
+    for (let b = 0; b < 4; b++) {
+      const bx = 180 + b * 240;
+      const grad = ctx.createLinearGradient(bx, 256, bx + (b % 2 === 0 ? 80 : -80), 30);
+      grad.addColorStop(0, 'rgba(0, 243, 255, 0.28)');
+      grad.addColorStop(0.6, 'rgba(0, 243, 255, 0.08)');
+      grad.addColorStop(1, 'rgba(0, 243, 255, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(bx - 12, 256);
+      ctx.lineTo(bx + 12, 256);
+      ctx.lineTo(bx + (b % 2 === 0 ? 120 : -120), 20);
+      ctx.lineTo(bx + (b % 2 === 0 ? 80 : -80), 20);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
 
-      // Dark skyscraper body
-      ctx.fillStyle = '#060b17';
+    // 3. Multi-Tier Horizon Neon Skyline Reflection Silhouettes
+    for (let i = 0; i < 64; i++) {
+      const x = (i / 64) * 1024 + (Math.sin(i * 3.5) * 8);
+      const w = 12 + (i % 5) * 6;
+      const h = 35 + ((i * 19) % 85);
+      const y = 256 - h;
+
+      // Skyscraper body
+      ctx.fillStyle = '#050914';
       ctx.fillRect(x, y, w, h);
 
-      // Neon window strips
-      ctx.fillStyle = i % 2 === 0 ? '#00f3ff' : (i % 3 === 0 ? '#ff007f' : '#ffaa00');
-      ctx.fillRect(x + 2, y + 4, w - 4, 3);
-      ctx.fillRect(x + 2, y + 12, w - 4, 2);
-      ctx.fillRect(x + 2, y + 20, w - 4, 2);
+      // Windows grid
+      const winColor = i % 2 === 0 ? '#00f3ff' : (i % 3 === 0 ? '#ff007f' : '#ffd700');
+      ctx.fillStyle = winColor;
+      for (let wy = y + 6; wy < 250; wy += 8) {
+        ctx.fillRect(x + 2, wy, w - 4, 3);
+      }
 
       // Rooftop warning beacon
       ctx.fillStyle = i % 2 === 0 ? '#ff3366' : '#00f3ff';
-      ctx.fillRect(x + w / 2 - 1, y - 5, 2, 5);
+      ctx.fillRect(x + w / 2 - 1, y - 8, 2, 8);
     }
 
     const texture = new THREE.CanvasTexture(canvas);
