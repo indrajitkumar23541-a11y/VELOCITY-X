@@ -2035,6 +2035,159 @@ html, body, #root {
   background: rgba(61, 220, 132, 0.4);
 }
 
+/* -------------------------------------------------------------
+   Over-The-Air Real-time Update Toast
+   ------------------------------------------------------------- */
+.update-toast-overlay {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(94%, 540px);
+  z-index: 100000;
+  animation: slideToastDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideToastDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -30px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.update-toast-card {
+  background: rgba(10, 16, 28, 0.96);
+  border: 1.5px solid #00f3ff;
+  border-radius: 14px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 243, 255, 0.3);
+}
+
+.update-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(0, 243, 255, 0.25), rgba(0, 119, 255, 0.3));
+  border: 1px solid var(--cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 10px var(--cyan-glow);
+}
+
+.update-sparkle-icon {
+  color: var(--cyan);
+  animation: pulseIcon 1.5s infinite ease-in-out;
+}
+
+.update-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.update-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.update-title-row h4 {
+  font-family: var(--font-racing);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #fff;
+  margin: 0;
+  text-shadow: 0 0 6px var(--cyan-glow);
+}
+
+.update-version-tag {
+  background: var(--cyan);
+  color: #05070a;
+  font-family: var(--font-racing);
+  font-size: 9px;
+  font-weight: 900;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.update-desc {
+  font-size: 10px;
+  color: #94a3b8;
+  margin: 2px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.update-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.update-reload-btn {
+  background: linear-gradient(135deg, #00f3ff 0%, #0077ff 100%);
+  border: none;
+  border-radius: 8px;
+  color: #05070a;
+  font-family: var(--font-racing);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 0 14px var(--cyan-glow);
+  transition: transform 0.15s ease;
+}
+
+.update-reload-btn:active {
+  transform: scale(0.95);
+}
+
+.update-dismiss-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.update-dismiss-btn:active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.spin-slow {
+  animation: spinSlow 3s linear infinite;
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
 
 /* -------------------------------------------------------------
    Phase 10.4: Dynamic Weather & Cyber Rainstorm Styles

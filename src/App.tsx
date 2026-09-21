@@ -16,6 +16,7 @@ import { RotatePhonePrompt } from './components/RotatePhonePrompt';
 import { InstallPrompt, triggerGlobalAppInstall } from './components/InstallPrompt';
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { RainScreenOverlay } from './components/RainScreenOverlay';
+import { UpdateNotification } from './components/UpdateNotification';
 import { Volume2, VolumeX, Play, Wrench, Trophy, Coins, Smartphone, CloudRain, Moon, Download } from 'lucide-react';
 
 export type GameState = 'MENU' | 'RACING' | 'GARAGE' | 'GAME_OVER';
@@ -216,7 +217,10 @@ export const App: React.FC = () => {
         isLightningFlashing={hud.isLightningFlashing}
       />
 
-      {/* Mobile Portrait Detection Overlay */}
+      {/* Over-The-Air Real-time Cloud Update Banner */}
+      <UpdateNotification gameState={gameState} />
+
+      {/* Mobile Landscape Orientation Enforcement Overlay */}
       <RotatePhonePrompt />
 
       {/* TOP HEADER CONTROLS (Mute, Weather, Gyro, Records, Install, Coin Balance) */}
