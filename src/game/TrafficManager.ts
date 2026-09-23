@@ -8,7 +8,14 @@ export interface TrafficVehicle {
   mesh: THREE.Group;
   type: TrafficType;
   speedKmh: number;
+  targetSpeedKmh: number;
   laneIndex: number;
+  targetLaneIndex: number;
+  isChangingLane: boolean;
+  laneChangeProgress: number;
+  startX: number;
+  targetX: number;
+  laneChangeCooldown: number;
   bounds: THREE.Box3;
   size: THREE.Vector3;
   active: boolean;
@@ -17,14 +24,15 @@ export interface TrafficVehicle {
 
 export class TrafficManager {
   private scene: THREE.Scene;
-  private poolSize = 14;
+  private poolSize = 16;
   public vehicles: TrafficVehicle[] = [];
 
-  // High-Visibility Shared Materials (Draw-call optimized)
-  private vanMaterial: THREE.MeshStandardMaterial;
-  private sedanMaterial: THREE.MeshStandardMaterial;
-  private suvMaterial: THREE.MeshStandardMaterial;
-  private truckCabMaterial: THREE.MeshStandardMaterial;
+  // Multi-color Fleet Materials for Rich Highway Variety
+  private vanMaterials: THREE.MeshStandardMaterial[] = [];
+  private sedanMaterials: THREE.MeshStandardMaterial[] = [];
+  private suvMaterials: THREE.MeshStandardMaterial[] = [];
+  private truckCabMaterials: THREE.MeshStandardMaterial[] = [];
+
   private truckBoxMaterial: THREE.MeshStandardMaterial;
   private trimMaterial: THREE.MeshStandardMaterial;
   private chromeMaterial: THREE.MeshStandardMaterial;
@@ -40,31 +48,74 @@ export class TrafficManager {
   constructor(scene: THREE.Scene) {
     this.scene = scene;
 
-    // Authentic automotive & commercial fleet materials
-    this.vanMaterial = new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.45, roughness: 0.38 }); // Crisp Polar Fleet White
-    this.sedanMaterial = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.25 }); // Metallic Slate Silver
-    this.suvMaterial = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, metalness: 0.78, roughness: 0.28 }); // Deep Royal Sapphire
-    this.truckCabMaterial = new THREE.MeshStandardMaterial({ color: 0xb91c1c, metalness: 0.65, roughness: 0.32 }); // Highway Crimson Red
-    this.truckBoxMaterial = new THREE.MeshStandardMaterial({ color: 0xd6d3d1, metalness: 0.35, roughness: 0.55 }); // Commercial Freight Alloy Box
-    this.trimMaterial = new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.2, roughness: 0.85 }); // Matte dark composite trim
-    this.chromeMaterial = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.96, roughness: 0.14 }); // Polished chrome accents
+    // 1. Diverse Delivery Van Fleet Materials (Real Highway Logistics Diversity)
+    this.vanMaterials = [
+      new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.45, roughness: 0.38 }), // Polar Fleet White
+      new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.52, roughness: 0.35 }), // Express Courier Amber/Yellow
+      new THREE.MeshStandardMaterial({ color: 0x1d4ed8, metalness: 0.62, roughness: 0.32 }), // Deep Logistics Navy Blue
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.82, roughness: 0.26 }), // Executive Metallic Silver Van
+    ];
+
+    // 2. Sedan Color Variants
+    this.sedanMaterials = [
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.25 }), // Metallic Slate Silver
+      new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.9, roughness: 0.2 }),   // Obsidian Midnight Black
+      new THREE.MeshStandardMaterial({ color: 0xdc2626, metalness: 0.82, roughness: 0.25 }), // Crimson Sport Red
+      new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.88, roughness: 0.22 }), // Pearl White
+    ];
+
+    // 3. SUV Color Variants
+    this.suvMaterials = [
+      new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.78, roughness: 0.28 }), // Royal Blue
+      new THREE.MeshStandardMaterial({ color: 0x065f46, metalness: 0.72, roughness: 0.3 }),  // Forest Emerald
+      new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.26 }),  // Charcoal Graphite
+    ];
+
+    // 4. Truck Cab Materials
+    this.truckCabMaterials = [
+      new THREE.MeshStandardMaterial({ color: 0xb91c1c, metalness: 0.65, roughness: 0.32 }), // Highway Crimson Red
+      new THREE.MeshStandardMaterial({ color: 0x1e3a8a, metalness: 0.65, roughness: 0.32 }), // Freight Navy Blue
+    ];
+
+    // Shared Components
+    this.truckBoxMaterial = new THREE.MeshStandardMaterial({ color: 0xd6d3d1, metalness: 0.35, roughness: 0.55 });
+    this.trimMaterial = new THREE.MeshStandardMaterial({ color: 0x18181b, metalness: 0.2, roughness: 0.85 });
+    this.chromeMaterial = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.96, roughness: 0.14 });
     this.glassMaterial = new THREE.MeshPhysicalMaterial({ color: 0x0f172a, roughness: 0.08, metalness: 0.85, opacity: 0.88, transparent: true });
     this.tireMaterial = new THREE.MeshStandardMaterial({ color: 0x111114, roughness: 0.85, metalness: 0.08 });
     this.rimMaterial = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.9, roughness: 0.22 });
     
     // Safety & Navigation Lights
-    this.headlightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // Bright White LED Headlights
-    this.taillightMaterial = new THREE.MeshBasicMaterial({ color: 0xff002b }); // Vivid Glowing Red LED Taillights
+    this.headlightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    this.taillightMaterial = new THREE.MeshBasicMaterial({ color: 0xff002b });
 
     this.initPool();
   }
 
   private initPool(): void {
-    const types: TrafficType[] = ['van', 'sedan', 'suv', 'truck'];
+    // 16 vehicles: 6 vans, 4 sedans, 3 suvs, 3 trucks with varying liveries
+    const plan: { type: TrafficType; variant: number }[] = [
+      { type: 'van', variant: 0 },    // Polar White Fleet Van
+      { type: 'sedan', variant: 0 },  // Slate Silver Sedan
+      { type: 'suv', variant: 0 },    // Royal Blue SUV
+      { type: 'van', variant: 1 },    // Express Courier Yellow Van (DHL style)
+      { type: 'truck', variant: 0 },  // Crimson Semi Truck
+      { type: 'sedan', variant: 1 },  // Obsidian Black Sedan
+      { type: 'van', variant: 2 },    // Logistics Navy Blue Van (Prime style)
+      { type: 'suv', variant: 1 },    // Emerald Green SUV
+      { type: 'sedan', variant: 2 },  // Crimson Red Sedan
+      { type: 'van', variant: 3 },    // Executive Metallic Silver Van
+      { type: 'truck', variant: 1 },  // Navy Semi Truck
+      { type: 'suv', variant: 2 },    // Charcoal Pearl SUV
+      { type: 'van', variant: 0 },    // Polar White Fleet Van
+      { type: 'sedan', variant: 3 },  // Pearl White Sedan
+      { type: 'van', variant: 1 },    // Express Courier Yellow Van
+      { type: 'truck', variant: 0 },  // Crimson Semi Truck
+    ];
 
     for (let i = 0; i < this.poolSize; i++) {
-      const type = types[i % types.length];
-      const vehicle = this.createVehicleModel(type);
+      const item = plan[i];
+      const vehicle = this.createVehicleModel(item.type, item.variant);
       vehicle.mesh.position.set(0, -999, 0);
       this.scene.add(vehicle.mesh);
       this.vehicles.push(vehicle);
@@ -91,15 +142,16 @@ export class TrafficManager {
   }
 
   /**
-   * Constructs authentic, highly recognizable vehicle models
+   * Constructs authentic, highly recognizable vehicle models with variant liveries
    */
-  private createVehicleModel(type: TrafficType): TrafficVehicle {
+  private createVehicleModel(type: TrafficType, variant: number = 0): TrafficVehicle {
     const group = new THREE.Group();
     let size: THREE.Vector3;
 
     if (type === 'van') {
       // ── COMMERCIAL CARGO DELIVERY VAN (Sprinter / Transit Style) ──
       size = new THREE.Vector3(2.1, 2.3, 5.2);
+      const vanMat = this.vanMaterials[variant % this.vanMaterials.length];
 
       // 1. Lower chassis frame & underbody trim
       const lowerTrimGeom = new THREE.BoxGeometry(2.06, 0.28, 5.0);
@@ -109,21 +161,21 @@ export class TrafficManager {
 
       // 2. Main Cargo Box Body
       const cargoBodyGeom = new THREE.BoxGeometry(2.02, 1.48, 3.4);
-      const cargoBody = new THREE.Mesh(cargoBodyGeom, this.vanMaterial);
+      const cargoBody = new THREE.Mesh(cargoBodyGeom, vanMat);
       cargoBody.position.set(0, 1.18, -0.7);
       cargoBody.castShadow = true;
       group.add(cargoBody);
 
       // 3. Cabin & Sloped Hood Front
       const cabinGeom = new THREE.BoxGeometry(1.98, 1.25, 1.4);
-      const cabin = new THREE.Mesh(cabinGeom, this.vanMaterial);
+      const cabin = new THREE.Mesh(cabinGeom, vanMat);
       cabin.position.set(0, 1.05, 1.5);
       cabin.castShadow = true;
       group.add(cabin);
 
       // Front aerodynamic nose slope
       const noseGeom = new THREE.BoxGeometry(1.94, 0.42, 0.75);
-      const nose = new THREE.Mesh(noseGeom, this.vanMaterial);
+      const nose = new THREE.Mesh(noseGeom, vanMat);
       nose.position.set(0, 0.72, 2.15);
       nose.castShadow = true;
       group.add(nose);
@@ -210,10 +262,11 @@ export class TrafficManager {
     } else if (type === 'suv') {
       // ── LUXURY MODERN SPORT SUV (Range Rover / Cayenne Style) ──
       size = new THREE.Vector3(2.15, 1.75, 4.7);
+      const suvMat = this.suvMaterials[variant % this.suvMaterials.length];
 
       // 1. Lower Sculpted Body & Rocker Panels
       const bodyGeom = new THREE.BoxGeometry(2.1, 0.58, 4.5);
-      const body = new THREE.Mesh(bodyGeom, this.suvMaterial);
+      const body = new THREE.Mesh(bodyGeom, suvMat);
       body.position.set(0, 0.65, 0);
       body.castShadow = true;
       group.add(body);
@@ -230,7 +283,7 @@ export class TrafficManager {
       group.add(cabinGlass);
 
       const roofGeom = new THREE.BoxGeometry(1.78, 0.08, 2.55);
-      const roof = new THREE.Mesh(roofGeom, this.suvMaterial);
+      const roof = new THREE.Mesh(roofGeom, suvMat);
       roof.position.set(0, 1.6, -0.3);
       roof.castShadow = true;
       group.add(roof);
@@ -247,7 +300,7 @@ export class TrafficManager {
 
       // 3. Front Hood, Chrome Grille & Skid Plate
       const hoodGeom = new THREE.BoxGeometry(1.98, 0.25, 1.4);
-      const hood = new THREE.Mesh(hoodGeom, this.suvMaterial);
+      const hood = new THREE.Mesh(hoodGeom, suvMat);
       hood.position.set(0, 0.88, 1.55);
       hood.castShadow = true;
       group.add(hood);
@@ -289,7 +342,7 @@ export class TrafficManager {
 
       // Rear Spoiler & Dual Chrome Exhausts
       const spoilerGeom = new THREE.BoxGeometry(1.6, 0.08, 0.3);
-      const spoiler = new THREE.Mesh(spoilerGeom, this.suvMaterial);
+      const spoiler = new THREE.Mesh(spoilerGeom, suvMat);
       spoiler.position.set(0, 1.62, -1.65);
       group.add(spoiler);
 
@@ -318,23 +371,24 @@ export class TrafficManager {
     } else if (type === 'sedan') {
       // ── EXECUTIVE HIGHWAY SPORTS SEDAN (BMW / Audi Style) ──
       size = new THREE.Vector3(2.05, 1.4, 4.6);
+      const sedanMat = this.sedanMaterials[variant % this.sedanMaterials.length];
 
       // 1. Aerodynamic Lower Body
       const bodyGeom = new THREE.BoxGeometry(2.0, 0.44, 4.5);
-      const body = new THREE.Mesh(bodyGeom, this.sedanMaterial);
+      const body = new THREE.Mesh(bodyGeom, sedanMat);
       body.position.set(0, 0.48, 0);
       body.castShadow = true;
       group.add(body);
 
       // 2. Sculpted Engine Hood & Trunk Deck
       const hoodGeom = new THREE.BoxGeometry(1.9, 0.18, 1.4);
-      const hood = new THREE.Mesh(hoodGeom, this.sedanMaterial);
+      const hood = new THREE.Mesh(hoodGeom, sedanMat);
       hood.position.set(0, 0.68, 1.4);
       hood.castShadow = true;
       group.add(hood);
 
       const trunkGeom = new THREE.BoxGeometry(1.85, 0.22, 0.9);
-      const trunk = new THREE.Mesh(trunkGeom, this.sedanMaterial);
+      const trunk = new THREE.Mesh(trunkGeom, sedanMat);
       trunk.position.set(0, 0.7, -1.75);
       trunk.castShadow = true;
       group.add(trunk);
@@ -346,7 +400,7 @@ export class TrafficManager {
       group.add(glass);
 
       const roofGeom = new THREE.BoxGeometry(1.62, 0.06, 1.8);
-      const roof = new THREE.Mesh(roofGeom, this.sedanMaterial);
+      const roof = new THREE.Mesh(roofGeom, sedanMat);
       roof.position.set(0, 1.22, -0.25);
       roof.castShadow = true;
       group.add(roof);
@@ -412,23 +466,24 @@ export class TrafficManager {
     } else {
       // ── COMMERCIAL FREIGHT BOX TRUCK (Heavy Highway Semi) ──
       size = new THREE.Vector3(2.5, 3.4, 10.0);
+      const cabMat = this.truckCabMaterials[variant % this.truckCabMaterials.length];
 
       // 1. Tractor Sleeper Cab & Sloped Deflector
       const cabGeom = new THREE.BoxGeometry(2.38, 2.0, 2.6);
-      const cab = new THREE.Mesh(cabGeom, this.truckCabMaterial);
+      const cab = new THREE.Mesh(cabGeom, cabMat);
       cab.position.set(0, 1.6, 3.2);
       cab.castShadow = true;
       group.add(cab);
 
       const hoodGeom = new THREE.BoxGeometry(2.18, 1.15, 1.3);
-      const hood = new THREE.Mesh(hoodGeom, this.truckCabMaterial);
+      const hood = new THREE.Mesh(hoodGeom, cabMat);
       hood.position.set(0, 1.1, 4.8);
       hood.castShadow = true;
       group.add(hood);
 
       // Roof Air Fairing Deflector Wedge
       const deflectorGeom = new THREE.BoxGeometry(2.2, 0.6, 1.6);
-      const deflector = new THREE.Mesh(deflectorGeom, this.truckCabMaterial);
+      const deflector = new THREE.Mesh(deflectorGeom, cabMat);
       deflector.position.set(0, 2.8, 2.8);
       group.add(deflector);
 
@@ -541,8 +596,15 @@ export class TrafficManager {
     return {
       mesh: group,
       type,
-      speedKmh: 80 + Math.random() * 30,
+      speedKmh: 85,
+      targetSpeedKmh: 85,
       laneIndex: 0,
+      targetLaneIndex: 0,
+      isChangingLane: false,
+      laneChangeProgress: 0,
+      startX: 0,
+      targetX: 0,
+      laneChangeCooldown: 5 + Math.random() * 8,
       bounds: new THREE.Box3(),
       size,
       active: false,
@@ -550,21 +612,42 @@ export class TrafficManager {
     };
   }
 
+  /**
+   * Initializes highway traffic in staggered, balanced slalom waves.
+   * Guarantees at least 1-2 open escape corridors at all times.
+   */
   public reset(playerZ: number): void {
-    let spawnZ = playerZ + 45;
+    // 16 vehicles arranged across 8 staggered waves
+    const laneSequence = [0, 2, 1, 3, 0, 2, 1, 3, 2, 0, 3, 1, 0, 2, 1, 3];
+    const zOffsets = [48, 72, 104, 126, 158, 180, 210, 232, 262, 284, 314, 336, 366, 388, 418, 440];
+
     for (let i = 0; i < this.vehicles.length; i++) {
       const v = this.vehicles[i];
-      const lane = i % 4;
+      const lane = laneSequence[i % laneSequence.length];
       const laneX = RoadManager.LANES[lane];
+      const spawnZ = playerZ + zOffsets[i % zOffsets.length];
+
+      // Lane speed hierarchy:
+      // Lane 0: 76-86 km/h (heavy freight / slow lane)
+      // Lane 1: 84-95 km/h (delivery / commercial lane)
+      // Lane 2: 95-108 km/h (cruising lane)
+      // Lane 3: 106-122 km/h (fast passing lane)
+      const baseSpeed = 76 + lane * 10;
+      const typeMod = v.type === 'truck' ? -5 : (v.type === 'van' ? -1 : 5);
+      const cruiseSpeed = baseSpeed + typeMod + (Math.random() * 6 - 3);
 
       v.active = true;
       v.laneIndex = lane;
+      v.targetLaneIndex = lane;
+      v.isChangingLane = false;
+      v.laneChangeProgress = 0;
+      v.laneChangeCooldown = 6 + Math.random() * 8;
       v.nearMissed = false;
-      v.speedKmh = v.type === 'truck' ? 70 + Math.random() * 15 : (v.type === 'van' ? 80 + Math.random() * 20 : 85 + Math.random() * 25);
+      v.speedKmh = cruiseSpeed;
+      v.targetSpeedKmh = cruiseSpeed;
+      v.mesh.rotation.y = 0;
       v.mesh.position.set(laneX, 0, spawnZ);
       this.updateVehicleBounds(v);
-
-      spawnZ += 20 + Math.random() * 25;
     }
   }
 
@@ -577,26 +660,112 @@ export class TrafficManager {
     onNearMiss: (pts: number) => void,
     onCrash: () => void
   ): void {
-    for (const v of this.vehicles) {
+    for (let i = 0; i < this.vehicles.length; i++) {
+      const v = this.vehicles[i];
       if (!v.active) continue;
 
-      // Move civilian vehicle forward at its cruising speed
+      // ── 1. ANTI-CLIPPING SAFE DISTANCE PACING ──
+      // Find the closest vehicle ahead in the same lane or target lane
+      let minLeaderDist = 999;
+      let leaderSpeed = v.targetSpeedKmh;
+
+      for (let j = 0; j < this.vehicles.length; j++) {
+        if (i === j) continue;
+        const other = this.vehicles[j];
+        if (!other.active) continue;
+
+        const sameLane = other.laneIndex === v.laneIndex || (v.isChangingLane && other.laneIndex === v.targetLaneIndex);
+        if (sameLane) {
+          const dz = other.mesh.position.z - v.mesh.position.z;
+          if (dz > 0 && dz < minLeaderDist) {
+            minLeaderDist = dz;
+            leaderSpeed = other.speedKmh;
+          }
+        }
+      }
+
+      // Smooth brake buffering if catching up to a slower vehicle
+      if (minLeaderDist < 32) {
+        if (minLeaderDist < 16) {
+          // Urgent safe buffer: brake smoothly to maintain distance
+          v.speedKmh = THREE.MathUtils.lerp(v.speedKmh, Math.min(v.speedKmh, leaderSpeed - 6), delta * 4.5);
+        } else {
+          // Smoothly match leader vehicle speed (never clip through)
+          v.speedKmh = THREE.MathUtils.lerp(v.speedKmh, leaderSpeed, delta * 2.5);
+        }
+      } else {
+        // Free road ahead: cruise smoothly toward target speed
+        v.speedKmh = THREE.MathUtils.lerp(v.speedKmh, v.targetSpeedKmh, delta * 1.5);
+      }
+
+      // ── 2. AUTONOMOUS CIVILIAN LANE CHANGING AI ──
+      v.laneChangeCooldown -= delta;
+      if (!v.isChangingLane && v.laneChangeCooldown <= 0) {
+        const stuckBehindSlower = minLeaderDist < 26;
+        if (stuckBehindSlower || Math.random() < 0.15) {
+          const candidateLanes: number[] = [];
+          if (v.laneIndex > 0) candidateLanes.push(v.laneIndex - 1);
+          if (v.laneIndex < 3) candidateLanes.push(v.laneIndex + 1);
+
+          for (const candLane of candidateLanes) {
+            // Ensure candidate lane is clear ahead and behind
+            const laneBlocked = this.vehicles.some(
+              other => other !== v && other.active &&
+              (other.laneIndex === candLane || (other.isChangingLane && other.targetLaneIndex === candLane)) &&
+              Math.abs(other.mesh.position.z - v.mesh.position.z) < 30
+            );
+
+            // Avoid cutting in front of player
+            const playerTooClose = Math.abs(playerZ - v.mesh.position.z) < 28 &&
+              Math.abs(playerX - RoadManager.LANES[candLane]) < 2.2;
+
+            if (!laneBlocked && !playerTooClose) {
+              v.isChangingLane = true;
+              v.laneChangeProgress = 0;
+              v.startX = v.mesh.position.x;
+              v.targetLaneIndex = candLane;
+              v.targetX = RoadManager.LANES[candLane];
+              v.laneChangeCooldown = 8 + Math.random() * 10;
+              break;
+            }
+          }
+        }
+      }
+
+      // Smooth Lane Transition Interpolation with Body Steering Yaw
+      if (v.isChangingLane) {
+        v.laneChangeProgress += delta / 1.6; // 1.6s smooth lane transition
+        if (v.laneChangeProgress >= 1) {
+          v.laneChangeProgress = 1;
+          v.isChangingLane = false;
+          v.laneIndex = v.targetLaneIndex;
+          v.mesh.position.x = v.targetX;
+          v.mesh.rotation.y = 0;
+        } else {
+          const t = v.laneChangeProgress;
+          const smoothT = t * t * (3 - 2 * t);
+          v.mesh.position.x = THREE.MathUtils.lerp(v.startX, v.targetX, smoothT);
+          const steerSign = v.targetX > v.startX ? 1 : -1;
+          v.mesh.rotation.y = Math.sin(t * Math.PI) * 0.05 * steerSign;
+        }
+      }
+
+      // Move vehicle forward along Z axis
       const metersPerSec = v.speedKmh / 3.6;
       v.mesh.position.z += metersPerSec * delta;
       this.updateVehicleBounds(v);
 
-      // 1. Collision Check with Player
+      // ── 3. COLLISION CHECK WITH PLAYER ──
       if (playerBounds.intersectsBox(v.bounds)) {
         onCrash();
         return;
       }
 
-      // 2. High-Speed Near-Miss Check
-      // Player must be going > 115 km/h, lateral distance < 2.1m, overlapping Z
+      // ── 4. HIGH-SPEED NEAR-MISS DETECTION ──
       if (!v.nearMissed && playerSpeedKmh > 115) {
         const dx = Math.abs(playerX - v.mesh.position.x);
         const dz = Math.abs(playerZ - v.mesh.position.z);
-        const nearMissDistanceX = (v.size.x / 2 + 1.05) + 0.65; // ~2.1m clearance
+        const nearMissDistanceX = (v.size.x / 2 + 1.05) + 0.65;
         const overlapZ = (v.size.z / 2 + 2.3);
 
         if (dx < nearMissDistanceX && dz < overlapZ && dx > (v.size.x / 2 + 0.95)) {
@@ -605,36 +774,54 @@ export class TrafficManager {
         }
       }
 
-      // 3. Bidirectional Traffic Recycling (prevents empty highway when player slows or stops)
-      if (v.mesh.position.z < playerZ - 35 || v.mesh.position.z > playerZ + 210) {
+      // ── 5. BIDIRECTIONAL TRAFFIC RECYCLING ──
+      if (v.mesh.position.z < playerZ - 40 || v.mesh.position.z > playerZ + 230) {
         this.recycleVehicle(playerZ, v);
       }
     }
   }
 
+  /**
+   * Intelligently respawns vehicles ahead of player with maximum clearance
+   * and guaranteed open weaving channels.
+   */
   private recycleVehicle(playerZ: number, v: TrafficVehicle): void {
-    // Find a safe spawn position ahead of player that doesn't overlap other vehicles
-    let bestLane = Math.floor(Math.random() * 4);
-    let bestZ = playerZ + 55 + Math.random() * 90;
+    const spawnDistance = 65 + Math.random() * 95;
+    const candidateZ = playerZ + spawnDistance;
 
-    for (let attempts = 0; attempts < 6; attempts++) {
-      const candidateLane = (bestLane + attempts) % 4;
-      const candidateZ = playerZ + 50 + Math.random() * 95;
+    // Evaluate all 4 lanes for maximum clearance
+    let bestLane = 0;
+    let bestClearance = -1;
 
-      const laneBlocked = this.vehicles.some(
-        other => other !== v && other.active && other.laneIndex === candidateLane && Math.abs(other.mesh.position.z - candidateZ) < 24
-      );
-
-      if (!laneBlocked) {
-        bestLane = candidateLane;
-        bestZ = candidateZ;
-        break;
+    for (let l = 0; l < 4; l++) {
+      let minDz = 999;
+      for (const other of this.vehicles) {
+        if (other === v || !other.active) continue;
+        if (other.laneIndex === l || (other.isChangingLane && other.targetLaneIndex === l)) {
+          const dz = Math.abs(other.mesh.position.z - candidateZ);
+          if (dz < minDz) minDz = dz;
+        }
+      }
+      if (minDz > bestClearance) {
+        bestClearance = minDz;
+        bestLane = l;
       }
     }
 
+    // Set speed adhering to lane hierarchy
+    const baseSpeed = 76 + bestLane * 10;
+    const typeMod = v.type === 'truck' ? -5 : (v.type === 'van' ? -1 : 5);
+    const speed = baseSpeed + typeMod + (Math.random() * 6 - 3);
+
     v.laneIndex = bestLane;
-    v.mesh.position.set(RoadManager.LANES[bestLane], 0, bestZ);
-    v.speedKmh = v.type === 'truck' ? 70 + Math.random() * 15 : (v.type === 'van' ? 80 + Math.random() * 20 : 85 + Math.random() * 25);
+    v.targetLaneIndex = bestLane;
+    v.isChangingLane = false;
+    v.laneChangeProgress = 0;
+    v.laneChangeCooldown = 7 + Math.random() * 8;
+    v.mesh.rotation.y = 0;
+    v.mesh.position.set(RoadManager.LANES[bestLane], 0, candidateZ);
+    v.speedKmh = speed;
+    v.targetSpeedKmh = speed;
     v.nearMissed = false;
     this.updateVehicleBounds(v);
   }
@@ -689,10 +876,12 @@ export class TrafficManager {
         }
       });
     }
-    this.vanMaterial.dispose();
-    this.sedanMaterial.dispose();
-    this.suvMaterial.dispose();
-    this.truckCabMaterial.dispose();
+
+    for (const m of this.vanMaterials) m.dispose();
+    for (const m of this.sedanMaterials) m.dispose();
+    for (const m of this.suvMaterials) m.dispose();
+    for (const m of this.truckCabMaterials) m.dispose();
+
     this.truckBoxMaterial.dispose();
     this.trimMaterial.dispose();
     this.chromeMaterial.dispose();
