@@ -1185,6 +1185,67 @@ html, body, #root {
   font-size: 12px;
 }
 
+/* Traffic Proximity Hazard Alert (Early Left/Right Swerve Cue) */
+.proximity-hazard-overlay {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 15;
+  animation: hazardPulse 0.35s infinite alternate;
+}
+
+@keyframes hazardPulse {
+  0% { transform: translateX(-50%) scale(0.96); opacity: 0.9; }
+  100% { transform: translateX(-50%) scale(1.04); opacity: 1; }
+}
+
+.proximity-hazard-pill {
+  background: rgba(15, 22, 36, 0.92);
+  border: 1.5px solid #ff2244;
+  border-radius: 20px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 0 18px rgba(255, 34, 68, 0.55), inset 0 0 10px rgba(255, 34, 68, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.left-hazard .proximity-hazard-pill {
+  border-color: #ffaa00;
+  box-shadow: 0 0 18px rgba(255, 170, 0, 0.55);
+}
+
+.right-hazard .proximity-hazard-pill {
+  border-color: #ffaa00;
+  box-shadow: 0 0 18px rgba(255, 170, 0, 0.55);
+}
+
+.hazard-blip {
+  font-size: 13px;
+}
+
+.hazard-msg {
+  font-family: var(--font-racing);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #fff;
+}
+
+.hazard-hint {
+  font-family: var(--font-racing);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #ffdd44;
+  background: rgba(255, 221, 68, 0.16);
+  padding: 2px 7px;
+  border-radius: 8px;
+}
+
 /* Evaded Bonus Banner */
 .evaded-popup {
   position: absolute;

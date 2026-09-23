@@ -119,13 +119,15 @@ export class PlayerCar {
       color: 0x660000,
     });
 
-    // Neon Underglow Ground Decal & Light
-    const underglowGeom = new THREE.PlaneGeometry(2.7, 5.2);
+    // Soft Neon Underglow Ground Decal (Radial Gradient, No Hard Box Borders)
+    const underglowTex = this.createUnderglowTexture();
+    const underglowGeom = new THREE.PlaneGeometry(3.2, 5.6);
     underglowGeom.rotateX(-Math.PI / 2);
     const underglowMat = new THREE.MeshBasicMaterial({
       color: new THREE.Color(config.underglowColor),
+      map: underglowTex,
       transparent: true,
-      opacity: 0.75,
+      opacity: 0.38,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
@@ -133,7 +135,7 @@ export class PlayerCar {
     this.underglowMesh.position.y = 0.04;
     this.mesh.add(this.underglowMesh);
 
-    this.underglowLight = new THREE.PointLight(new THREE.Color(config.underglowColor), 2.0, 5.0);
+    this.underglowLight = new THREE.PointLight(new THREE.Color(config.underglowColor), 0.8, 4.0);
     this.underglowLight.position.set(0, 0.25, 0);
     this.mesh.add(this.underglowLight);
 
@@ -321,36 +323,13 @@ export class PlayerCar {
 
   private addRealisticHeadlights(parent: THREE.Group, carLength: number): void {
     const halfLen = carLength * 0.46;
-    const beamLength = 28;
 
-    // Headlight beam cone — transparent, additive (volumetric feel)
-    const beamGeom = new THREE.ConeGeometry(2.8, beamLength, 16, 1, true);
-    beamGeom.rotateX(Math.PI / 2);
-    beamGeom.translate(0, 0, beamLength / 2);
-    const beamMat = new THREE.MeshBasicMaterial({
-      color: 0xd0eeff,
-      transparent: true,
-      opacity: 0.09,  // subtle — realistic nahi cartoon
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-
-    const leftBeam = new THREE.Mesh(beamGeom, beamMat);
-    leftBeam.position.set(-0.72, 0.42, halfLen);
-    parent.add(leftBeam);
-
-    const rightBeam = new THREE.Mesh(beamGeom, beamMat);
-    rightBeam.position.set(0.72, 0.42, halfLen);
-    parent.add(rightBeam);
-
-    // ── Emissive Lens (bloom pe glow karega!) ────────────────────────────
-    // MeshStandardMaterial + emissive = UnrealBloomPass pick karta hai
+    // ── Emissive Lens (Supercar front headlights glow) ───────────────────
     const lensGeom = new THREE.SphereGeometry(0.09, 12, 12);
     const lensMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       emissive: new THREE.Color(0xd0eeff),
-      emissiveIntensity: 6.0, // bloom threshold 0.82 se upar — strong glow
+      emissiveIntensity: 4.5,
       roughness: 0.0,
       metalness: 0.0,
     });
@@ -362,17 +341,16 @@ export class PlayerCar {
     parent.add(lensR);
     this.headlightCones.push(lensL, lensR);
 
-    // ── Actual SpotLight for road illumination ───────────────────────────
-    // Realistic headlight throw — road surface pe actual light padti hai
-    const spotL = new THREE.SpotLight(0xd0eeff, 3.5, 35, Math.PI / 10, 0.4, 1.5);
+    // ── Gentle forward road throw (Soft, no harsh road glare) ────────────
+    const spotL = new THREE.SpotLight(0xd0eeff, 1.2, 30, Math.PI / 10, 0.5, 1.8);
     spotL.position.set(-0.72, 0.42, halfLen);
-    spotL.target.position.set(-0.72, -0.5, halfLen + 20);
+    spotL.target.position.set(-0.72, -0.4, halfLen + 18);
     parent.add(spotL);
     parent.add(spotL.target);
 
-    const spotR = new THREE.SpotLight(0xd0eeff, 3.5, 35, Math.PI / 10, 0.4, 1.5);
+    const spotR = new THREE.SpotLight(0xd0eeff, 1.2, 30, Math.PI / 10, 0.5, 1.8);
     spotR.position.set(0.72, 0.42, halfLen);
-    spotR.target.position.set(0.72, -0.5, halfLen + 20);
+    spotR.target.position.set(0.72, -0.4, halfLen + 18);
     parent.add(spotR);
     parent.add(spotR.target);
   }
@@ -919,25 +897,23 @@ export class PlayerCar {
     return wheel;
   }
 
-  private createVolumetricBeam(parent: THREE.Group, x: number, y: number, z: number): void {
-    const beamLength = 26;
-    const beamGeom = new THREE.ConeGeometry(2.8, beamLength, 16, 1, true);
-    beamGeom.rotateX(Math.PI / 2);
-    beamGeom.translate(0, 0, beamLength / 2);
+  private createUnderglowTexture(): THREE.CanvasTexture {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d')!;
+    const grad = ctx.createRadialGradient(64, 128, 12, 64, 128, 64);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+    grad.addColorStop(0.35, 'rgba(255, 255, 255, 0.45)');
+    grad.addColorStop(0.75, 'rgba(255, 255, 255, 0.12)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 128, 256);
+    return new THREE.CanvasTexture(canvas);
+  }
 
-    const beamMat = new THREE.MeshBasicMaterial({
-      color: 0x99ddff,
-      transparent: true,
-      opacity: 0.14,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-    });
-
-    const beam = new THREE.Mesh(beamGeom, beamMat);
-    beam.position.set(x, y, z);
-    parent.add(beam);
-    this.headlightCones.push(beam);
+  private createVolumetricBeam(_parent: THREE.Group, _x: number, _y: number, _z: number): void {
+    // Intentionally empty: Remove obstructive floating cone meshes to maintain 100% clean forward visibility
   }
 
   public update(delta: number, controls: PlayerControls): void {

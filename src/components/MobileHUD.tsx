@@ -75,6 +75,29 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
         </div>
       )}
 
+      {/* 3.5 DANGER PROXIMITY HAZARD WARNING (Early Left/Right Swerve Cue) */}
+      {hud.proximityWarning && (
+        <div className={`proximity-hazard-overlay ${hud.proximityWarning.lane.toLowerCase()}-hazard`}>
+          <div className="proximity-hazard-pill">
+            <span className="hazard-blip">⚠️</span>
+            <span className="hazard-msg">
+              {hud.proximityWarning.lane === 'SAME'
+                ? `TRAFFIC AHEAD (${hud.proximityWarning.distance}m)`
+                : hud.proximityWarning.lane === 'LEFT'
+                ? `CAR ON LEFT (${hud.proximityWarning.distance}m)`
+                : `CAR ON RIGHT (${hud.proximityWarning.distance}m)`}
+            </span>
+            <span className="hazard-hint">
+              {hud.proximityWarning.lane === 'SAME'
+                ? 'SWERVE LEFT/RIGHT'
+                : hud.proximityWarning.lane === 'LEFT'
+                ? 'KEEP RIGHT ▶'
+                : '◀ KEEP LEFT'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* 4. TOP-LEFT STATS CLUSTER (Flanking Rearview Mirror) */}
       <div className="top-hud-left">
         <div className="stat-card distance-card">

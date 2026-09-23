@@ -33,6 +33,7 @@ export interface HUDData {
   tiltActive: boolean;
   weather: WeatherType;
   isLightningFlashing: boolean;
+  proximityWarning?: { distance: number; lane: 'SAME' | 'LEFT' | 'RIGHT' } | null;
 }
 
 export interface GameSummary {
@@ -550,6 +551,10 @@ export class Engine {
         tiltActive: tiltManager.enabled,
         weather: this.weatherManager.currentWeather,
         isLightningFlashing: this.isLightningFlashing,
+        proximityWarning: this.trafficManager.getProximityWarning(
+          this.playerCar.mesh.position.z,
+          this.playerCar.mesh.position.x
+        ),
       });
     }
   };

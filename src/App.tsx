@@ -153,11 +153,13 @@ export const App: React.FC = () => {
     updateManager.setGameState(gameState);
   }, [gameState]);
 
-  // 2. 8K Splash Screen Intro Timer & "Dhan-Dhan" Engine Audio
+  // 2. Ultra-Fast Hero Splash Screen Intro (< 0.75s or instant tap)
   useEffect(() => {
     if (gameState === 'SPLASH') {
       const triggerIntro = () => {
         audioManager.playCinematicIntroSound();
+        setSplashProgress(100);
+        setSplashTimerDone(true);
         window.removeEventListener('pointerdown', triggerIntro);
       };
       window.addEventListener('pointerdown', triggerIntro);
@@ -166,13 +168,13 @@ export const App: React.FC = () => {
       const startTime = Date.now();
       const interval = setInterval(() => {
         const elapsed = (Date.now() - startTime) / 1000;
-        const progress = Math.min(100, (elapsed / 3.0) * 100);
+        const progress = Math.min(100, (elapsed / 0.75) * 100);
         setSplashProgress(progress);
-        if (elapsed >= 3.0) {
+        if (elapsed >= 0.75) {
           clearInterval(interval);
           setSplashTimerDone(true);
         }
-      }, 50);
+      }, 30);
 
       return () => {
         clearInterval(interval);
@@ -328,7 +330,38 @@ export const App: React.FC = () => {
     }
   };
 
-  // Step 3 -> Step 4: Launch Race with 3-2-1-GO! Countdown
+  // Instant 1-Tap Quick Race (Starts immediately in < 0.6s)
+  const launchQuickRace = useCallback(() => {
+    HapticsManager.buttonTap();
+    audioManager.unlock();
+    document.documentElement.requestFullscreen().catch(() => {});
+    if (engineRef.current) {
+      engineRef.current.setTurntableMode(false);
+      engineRef.current.setTrackEnvironment(selectedTrack);
+    }
+
+    setGameState('COUNTDOWN');
+    setCountdown(1);
+    audioManager.playCountdownBeep(false);
+
+    setTimeout(() => {
+      setCountdown('GO!');
+      audioManager.playCountdownBeep(true);
+      if (engineRef.current) {
+        engineRef.current.start();
+      }
+      if (tiltSteeringEnabled) {
+        tiltManager.start();
+        tiltManager.calibrate();
+      } else {
+        tiltManager.stop();
+      }
+      setGameState('RACING');
+      setTimeout(() => setCountdown(null), 500);
+    }, 400);
+  }, [selectedTrack, tiltSteeringEnabled]);
+
+  // Step 3 -> Step 4: Launch Race with Snappy 3-2-1-GO! Countdown (1.2s total)
   const launchCountdownAndRace = useCallback(() => {
     HapticsManager.buttonTap();
     audioManager.unlock();
@@ -344,12 +377,12 @@ export const App: React.FC = () => {
     setTimeout(() => {
       setCountdown(2);
       audioManager.playCountdownBeep(false);
-    }, 1000);
+    }, 350);
 
     setTimeout(() => {
       setCountdown(1);
       audioManager.playCountdownBeep(false);
-    }, 2000);
+    }, 700);
 
     setTimeout(() => {
       setCountdown('GO!');
@@ -364,8 +397,8 @@ export const App: React.FC = () => {
         tiltManager.stop();
       }
       setGameState('RACING');
-      setTimeout(() => setCountdown(null), 700);
-    }, 3000);
+      setTimeout(() => setCountdown(null), 500);
+    }, 1050);
   }, [selectedTrack, tiltSteeringEnabled]);
 
   // Sound Toggle
@@ -424,14 +457,14 @@ export const App: React.FC = () => {
       {/* Over-The-Air Real-time Cloud Update Banner */}
       <UpdateNotification gameState={gameState} />
 
-      {/* PWA 1-Tap Offline Standalone Game Installer */}
-      <InstallPrompt />
+      {/* PWA 1-Tap Offline Standalone Game Installer (Hidden during race to keep road 100% clean) */}
+      {gameState !== 'RACING' && <InstallPrompt />}
 
       {/* Mobile Landscape Orientation Enforcement Overlay */}
       <RotatePhonePrompt />
 
       {/* =====================================================================
-          STEP 1: 8K HERO SPLASH SCREEN ("Dhan-Dhan" Engine Roar + 3s Timer)
+          STEP 1: 8K HERO SPLASH SCREEN ("Dhan-Dhan" Engine Roar + Quick Start)
           ===================================================================== */}
       {gameState === 'SPLASH' && (
         <div className="splash-screen-overlay">
@@ -453,13 +486,34 @@ export const App: React.FC = () => {
                 <div className="splash-progress-track">
                   <div className="splash-progress-fill" style={{ width: `${splashProgress}%` }} />
                 </div>
-                <span className="splash-hint">TAP SCREEN FOR ENGINE SOUND</span>
+                <span className="splash-hint">TAP ANYWHERE TO JUMP IN</span>
               </div>
             ) : (
               <div className="splash-actions-group">
-                <button className="splash-play-btn" onClick={handlePlayFromSplash}>
-                  <Play size={26} fill="currentColor" />
-                  <span>PLAY GAME</span>
+                <button
+                  className="splash-play-btn quick-race-btn"
+                  onClick={launchQuickRace}
+                  style={{
+                    background: 'linear-gradient(135deg, #00f3ff 0%, #0077ff 100%)',
+                    boxShadow: '0 0 24px rgba(0, 243, 255, 0.7)',
+                    border: '1px solid #7df9ff',
+                  }}
+                >
+                  <Play size={24} fill="currentColor" />
+                  <span>⚡ QUICK RACE (INSTANT)</span>
+                </button>
+
+                <button
+                  className="splash-play-btn"
+                  onClick={handlePlayFromSplash}
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.85)',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    fontSize: '13px',
+                    padding: '12px 18px',
+                  }}
+                >
+                  <span>GARAGE & TRACKS</span>
                 </button>
 
                 <button
@@ -468,8 +522,8 @@ export const App: React.FC = () => {
                   onClick={() => triggerGlobalAppInstall()}
                   title="Install Directly on Phone (Offline Flight Mode)"
                 >
-                  <Download size={18} />
-                  <span>INSTALL STANDALONE APP</span>
+                  <Download size={16} />
+                  <span>INSTALL APP</span>
                 </button>
               </div>
             )}

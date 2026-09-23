@@ -55,33 +55,32 @@ export class RoadManager {
     this.asphaltRoughnessTexture.repeat.set(4, 28);
 
     this.asphaltMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1c1f26,       // Slightly warmer grey — natural asphalt
+      color: 0x131720,       // Deep highway charcoal
       map: asphaltDiffuse,
       bumpMap: this.asphaltBumpTexture,
-      bumpScale: 0.03,
+      bumpScale: 0.018,
       roughnessMap: this.asphaltRoughnessTexture,
-      roughness: 0.82,       // Natural asphalt roughness — matte, not shiny
-      metalness: 0.06,       // Almost zero — asphalt plastic/stone nahi metal
-      envMapIntensity: 0.4,  // Low reflection — realistic dry road
+      roughness: 0.90,       // Matte asphalt — eliminates blinding glare and reflections
+      metalness: 0.02,       // Non-metallic asphalt
+      envMapIntensity: 0.12, // Subtle ambient reflection, no mirror effects
     });
 
-    // Road Lane Markings — Realistic white, BARELY glowing
-    // Real roads mein markings sirf headlights se reflect karti hain, khud nahi glowing
+    // Road Lane Markings — Realistic white, clean retro-reflective
     this.lineMaterial = new THREE.MeshStandardMaterial({
-      color: 0xe8e8e8,       // Off-white, not pure white
+      color: 0xe8e8e8,
       emissive: 0xffffff,
-      emissiveIntensity: 0.04, // Barely visible glow — realistic retro-reflective
-      roughness: 0.55,
-      metalness: 0.05,
+      emissiveIntensity: 0.03, // Clean visibility without bloom blinding
+      roughness: 0.65,
+      metalness: 0.02,
     });
 
-    // Yellow center divider — natural yellow, not orange neon
+    // Yellow center divider — natural highway yellow
     this.yellowLineMaterial = new THREE.MeshStandardMaterial({
-      color: 0xf0c040,       // Natural yellow road paint
+      color: 0xf0c040,
       emissive: 0xffd060,
-      emissiveIntensity: 0.06, // Very subtle
-      roughness: 0.55,
-      metalness: 0.05,
+      emissiveIntensity: 0.04,
+      roughness: 0.65,
+      metalness: 0.02,
     });
 
     // Highway Shoulder Red & White Rumble Strip Curb
@@ -91,23 +90,23 @@ export class RoadManager {
     curbTex.repeat.set(1, 40);
     this.curbMaterial = new THREE.MeshStandardMaterial({
       map: curbTex,
-      roughness: 0.45,
-      metalness: 0.15,
+      roughness: 0.55,
+      metalness: 0.1,
     });
 
     // Cast-Iron Highway Drainage Grates
     this.grateMaterial = new THREE.MeshStandardMaterial({
       color: 0x22262d,
-      roughness: 0.7,
-      metalness: 0.85,
+      roughness: 0.75,
+      metalness: 0.75,
     });
 
-    // Galvanized Corrugated Steel Guardrails (Armco W-Beam)
+    // Galvanized Steel Guardrails (Clean matte industrial steel)
     this.barrierMaterial = new THREE.MeshStandardMaterial({
-      color: 0x73839c,
-      metalness: 0.92,
-      roughness: 0.22,
-      envMapIntensity: 2.2,
+      color: 0x5a687d,
+      metalness: 0.75,
+      roughness: 0.45,
+      envMapIntensity: 0.5,
     });
 
     this.barrierPostMaterial = new THREE.MeshStandardMaterial({
@@ -313,33 +312,17 @@ export class RoadManager {
     canvas.height = 512;
     const ctx = canvas.getContext('2d')!;
 
-    // Base rough asphalt (high roughness value = matte)
-    ctx.fillStyle = '#656565';
+    // Base rough asphalt (high roughness value = matte non-reflective)
+    ctx.fillStyle = '#d0d0d0';
     ctx.fillRect(0, 0, 512, 512);
 
-    // Polished tire paths (dark in roughness map = low roughness = glossy specular)
-    ctx.fillStyle = '#222222';
+    // Subtle tire paths (gentle smooth wear, not mirror gloss)
+    ctx.fillStyle = '#a0a0a0';
     const laneWidthPx = 512 / 4;
     for (let l = 0; l < 4; l++) {
       const laneCenter = l * laneWidthPx + laneWidthPx / 2;
       ctx.fillRect(laneCenter - 26, 0, 18, 512);
       ctx.fillRect(laneCenter + 8, 0, 18, 512);
-    }
-
-    // Mirror wet puddles (very low roughness ~#080808)
-    ctx.fillStyle = '#080808';
-    for (let i = 0; i < 14; i++) {
-      ctx.beginPath();
-      ctx.ellipse(
-        Math.random() * 512,
-        Math.random() * 512,
-        35 + Math.random() * 60,
-        12 + Math.random() * 25,
-        Math.random() * Math.PI,
-        0,
-        Math.PI * 2
-      );
-      ctx.fill();
     }
 
     return new THREE.CanvasTexture(canvas);

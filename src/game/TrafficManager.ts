@@ -37,14 +37,19 @@ export class TrafficManager {
     this.scene = scene;
 
     // Initialize shared materials
-    this.taxiMaterial = new THREE.MeshStandardMaterial({ color: 0xffcc00, metalness: 0.6, roughness: 0.3 });
-    this.sedanMaterial = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.25 });
-    this.suvMaterial = new THREE.MeshStandardMaterial({ color: 0x1a202c, metalness: 0.7, roughness: 0.35 });
-    this.truckCabMaterial = new THREE.MeshStandardMaterial({ color: 0x3182ce, metalness: 0.5, roughness: 0.4 });
+    // High-Visibility Vehicle Materials with Distinct Highway Contrast
+    this.taxiMaterial = new THREE.MeshStandardMaterial({ color: 0xffaa00, metalness: 0.5, roughness: 0.35 });
+    this.sedanMaterial = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.85, roughness: 0.25 }); // Pearl white/silver
+    this.suvMaterial = new THREE.MeshStandardMaterial({ color: 0x2563eb, metalness: 0.7, roughness: 0.3 }); // Vibrant Royal Blue
+    this.truckCabMaterial = new THREE.MeshStandardMaterial({ color: 0xe11d48, metalness: 0.6, roughness: 0.35 }); // Safety Crimson
     this.truckTankMaterial = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.95, roughness: 0.15 }); // chrome tanker
     this.glassMaterial = new THREE.MeshPhysicalMaterial({ color: 0x0f172a, roughness: 0.1, metalness: 0.9, opacity: 0.85, transparent: true });
     this.tireMaterial = new THREE.MeshStandardMaterial({ color: 0x111114, roughness: 0.8, metalness: 0.1 });
-    this.taillightMaterial = new THREE.MeshBasicMaterial({ color: 0xbb1111 });
+    
+    // Ultra-bright Glowing Red LED Taillights (Visible from 150m away)
+    this.taillightMaterial = new THREE.MeshBasicMaterial({ 
+      color: 0xff0033,
+    });
 
     this.initPool();
   }
@@ -66,7 +71,7 @@ export class TrafficManager {
     let size = new THREE.Vector3(2.0, 1.4, 4.4);
 
     if (type === 'truck') {
-      size = new THREE.Vector3(2.5, 3.2, 9.2);
+      size = new THREE.Vector3(2.5, 3.2, 9.6);
       // Heavy Tanker Cab
       const cabGeom = new THREE.BoxGeometry(2.4, 2.8, 2.8);
       const cab = new THREE.Mesh(cabGeom, this.truckCabMaterial);
@@ -100,6 +105,26 @@ export class TrafficManager {
         rightW.position.set(1.15, 0.48, zw);
         group.add(rightW);
       }
+
+      // TRUCK REAR TAILLIGHTS (High-Visibility Safety Clusters at z = -4.9)
+      const truckTLGeom = new THREE.BoxGeometry(0.35, 0.22, 0.1);
+      const tlLeft = new THREE.Mesh(truckTLGeom, this.taillightMaterial);
+      tlLeft.position.set(-0.95, 0.65, -4.9);
+      group.add(tlLeft);
+
+      const tlRight = new THREE.Mesh(truckTLGeom, this.taillightMaterial);
+      tlRight.position.set(0.95, 0.65, -4.9);
+      group.add(tlRight);
+
+      // Truck Top Clearance Markers
+      const markerGeom = new THREE.BoxGeometry(0.2, 0.12, 0.08);
+      const markerLeft = new THREE.Mesh(markerGeom, this.taillightMaterial);
+      markerLeft.position.set(-0.9, 2.7, -4.75);
+      group.add(markerLeft);
+
+      const markerRight = new THREE.Mesh(markerGeom, this.taillightMaterial);
+      markerRight.position.set(0.9, 2.7, -4.75);
+      group.add(markerRight);
     } else {
       // Civilian Passenger Cars (Sedan, SUV, Taxi)
       const isSUV = type === 'suv';
@@ -147,8 +172,8 @@ export class TrafficManager {
         group.add(w);
       }
 
-      // Taillights
-      const tlGeom = new THREE.BoxGeometry(0.4, 0.12, 0.08);
+      // Ultra-Visible Glowing LED Taillights (Wider & Bolder at z = -2.2)
+      const tlGeom = new THREE.BoxGeometry(0.55, 0.16, 0.1);
       const leftTL = new THREE.Mesh(tlGeom, this.taillightMaterial);
       leftTL.position.set(-0.65, 0.35 + chassisHeight * 0.7, -2.2);
       group.add(leftTL);
@@ -156,6 +181,12 @@ export class TrafficManager {
       const rightTL = new THREE.Mesh(tlGeom, this.taillightMaterial);
       rightTL.position.set(0.65, 0.35 + chassisHeight * 0.7, -2.2);
       group.add(rightTL);
+
+      // Rear Red Lightbar Stripe
+      const barGeom = new THREE.BoxGeometry(1.2, 0.05, 0.08);
+      const rearBar = new THREE.Mesh(barGeom, this.taillightMaterial);
+      rearBar.position.set(0, 0.35 + chassisHeight * 0.7, -2.2);
+      group.add(rearBar);
     }
 
     return {
@@ -266,6 +297,38 @@ export class TrafficManager {
       v.mesh.position.z
     );
     v.bounds.setFromCenterAndSize(this.scratchBoundsCenter, v.size);
+  }
+
+  /**
+   * Real-time Danger Proximity Detection for Early Left/Right Steer Warnings
+   */
+  public getProximityWarning(playerZ: number, playerX: number): { distance: number; lane: 'SAME' | 'LEFT' | 'RIGHT' } | null {
+    let closestDist = 999;
+    let closestLane: 'SAME' | 'LEFT' | 'RIGHT' = 'SAME';
+
+    for (const v of this.vehicles) {
+      if (!v.active) continue;
+      const dz = v.mesh.position.z - playerZ;
+      // Danger zone: ahead within 4m to 40m
+      if (dz > 3.5 && dz < 40) {
+        const dx = v.mesh.position.x - playerX;
+        if (Math.abs(dx) < 3.2 && dz < closestDist) {
+          closestDist = dz;
+          if (Math.abs(dx) < 1.1) {
+            closestLane = 'SAME';
+          } else if (dx < 0) {
+            closestLane = 'LEFT';
+          } else {
+            closestLane = 'RIGHT';
+          }
+        }
+      }
+    }
+
+    if (closestDist <= 38) {
+      return { distance: Math.round(closestDist), lane: closestLane };
+    }
+    return null;
   }
 
   public dispose(): void {
