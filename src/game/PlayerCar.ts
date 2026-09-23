@@ -79,12 +79,12 @@ export class PlayerCar {
     // 4K High-End Automotive Metallic Flake Paint with Clearcoat
     this.carPaintMaterial = new THREE.MeshPhysicalMaterial({
       color: new THREE.Color(config.color),
-      metalness: 0.9,
-      roughness: 0.16,
+      metalness: 0.85,
+      roughness: 0.22,
       clearcoat: 1.0,
-      clearcoatRoughness: 0.05,
-      reflectivity: 1.0,
-      envMapIntensity: 2.4, // Rich neon city reflections
+      clearcoatRoughness: 0.1,
+      reflectivity: 0.9,
+      envMapIntensity: 0.85, // Smooth, authentic automotive clearcoat reflections (no flashing disco strobe)
     });
 
     // Weave Carbon Fiber Component Material
@@ -97,21 +97,21 @@ export class PlayerCar {
     // Dark Tinted Cockpit Canopy Glass
     this.glassMat = new THREE.MeshPhysicalMaterial({
       color: 0x04060a,
-      metalness: 0.95,
-      roughness: 0.05,
+      metalness: 0.9,
+      roughness: 0.08,
       clearcoat: 1.0,
       transmission: 0.35,
       transparent: true,
       opacity: 0.92,
-      envMapIntensity: 2.5,
+      envMapIntensity: 0.85,
     });
 
     // Titanium / Polished Chrome Accent Material
     this.chromeMat = new THREE.MeshStandardMaterial({
       color: 0xdde5ed,
-      metalness: 0.98,
-      roughness: 0.1,
-      envMapIntensity: 2.0,
+      metalness: 0.95,
+      roughness: 0.18,
+      envMapIntensity: 0.9,
     });
 
     // Taillight Brake Material
@@ -291,7 +291,7 @@ export class PlayerCar {
             if (isBodyPaint) {
               child.material = this.carPaintMaterial;
             } else if (child.material instanceof THREE.MeshStandardMaterial || child.material instanceof THREE.MeshPhysicalMaterial) {
-              child.material.envMapIntensity = 2.4;
+              child.material.envMapIntensity = 0.85;
               child.material.roughness = Math.min(child.material.roughness, 0.35);
               child.material.needsUpdate = true;
             }

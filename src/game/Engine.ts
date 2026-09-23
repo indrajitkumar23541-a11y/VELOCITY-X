@@ -567,26 +567,25 @@ export class Engine {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // 1. Midnight Sky Gradient with glowing horizon
+    // 1. Sleek Midnight Sky Gradient with Subtle Atmospheric Horizon Glow
     const skyGrad = ctx.createLinearGradient(0, 0, 0, 512);
-    skyGrad.addColorStop(0, '#010309');
-    skyGrad.addColorStop(0.32, '#050c1b');
-    skyGrad.addColorStop(0.46, '#081c38');
-    skyGrad.addColorStop(0.5, '#00f3ff');  // Electric cyan horizon line
-    skyGrad.addColorStop(0.52, '#ff007f'); // Neon magenta city reflection
-    skyGrad.addColorStop(0.62, '#0c1220');
-    skyGrad.addColorStop(1, '#020409');
+    skyGrad.addColorStop(0, '#010308');
+    skyGrad.addColorStop(0.38, '#060d1c');
+    skyGrad.addColorStop(0.49, '#111e38');
+    skyGrad.addColorStop(0.51, '#1b2a4a'); // Elegant subtle metropolitan horizon glow
+    skyGrad.addColorStop(0.55, '#0a1222');
+    skyGrad.addColorStop(1, '#02040a');
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, 1024, 512);
 
-    // 2. Distant sweeping searchlight beams (Skybeams)
+    // 2. Distant sweeping searchlight beams (Atmospheric Skybeams)
     ctx.save();
     for (let b = 0; b < 4; b++) {
       const bx = 180 + b * 240;
       const grad = ctx.createLinearGradient(bx, 256, bx + (b % 2 === 0 ? 80 : -80), 30);
-      grad.addColorStop(0, 'rgba(0, 243, 255, 0.28)');
-      grad.addColorStop(0.6, 'rgba(0, 243, 255, 0.08)');
-      grad.addColorStop(1, 'rgba(0, 243, 255, 0)');
+      grad.addColorStop(0, 'rgba(160, 210, 255, 0.16)');
+      grad.addColorStop(0.6, 'rgba(160, 210, 255, 0.04)');
+      grad.addColorStop(1, 'rgba(160, 210, 255, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.moveTo(bx - 12, 256);
@@ -598,7 +597,8 @@ export class Engine {
     }
     ctx.restore();
 
-    // 3. Multi-Tier Horizon Neon Skyline Reflection Silhouettes
+    // 3. Multi-Tier Architectural Skyline Silhouettes
+    const warmWindowColors = ['#fef3c7', '#fde68a', '#e2e8f0', '#cbd5e1'];
     for (let i = 0; i < 64; i++) {
       const x = (i / 64) * 1024 + (Math.sin(i * 3.5) * 8);
       const w = 12 + (i % 5) * 6;
@@ -606,19 +606,19 @@ export class Engine {
       const y = 256 - h;
 
       // Skyscraper body
-      ctx.fillStyle = '#050914';
+      ctx.fillStyle = '#060b18';
       ctx.fillRect(x, y, w, h);
 
-      // Windows grid
-      const winColor = i % 2 === 0 ? '#00f3ff' : (i % 3 === 0 ? '#ff007f' : '#ffd700');
+      // Realistic warm architectural office lighting (No harsh disco colors)
+      const winColor = warmWindowColors[i % warmWindowColors.length];
       ctx.fillStyle = winColor;
       for (let wy = y + 6; wy < 250; wy += 8) {
         ctx.fillRect(x + 2, wy, w - 4, 3);
       }
 
-      // Rooftop warning beacon
-      ctx.fillStyle = i % 2 === 0 ? '#ff3366' : '#00f3ff';
-      ctx.fillRect(x + w / 2 - 1, y - 8, 2, 8);
+      // Rooftop aviation warning beacon
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(x + w / 2 - 1, y - 6, 2, 6);
     }
 
     const texture = new THREE.CanvasTexture(canvas);
