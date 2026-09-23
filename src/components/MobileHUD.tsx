@@ -77,7 +77,11 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
 
       {/* 3.5 DANGER PROXIMITY HAZARD WARNING (Early Left/Right Swerve Cue) */}
       {hud.proximityWarning && (
-        <div className={`proximity-hazard-overlay ${hud.proximityWarning.lane.toLowerCase()}-hazard`}>
+        <div
+          className={`proximity-hazard-overlay ${hud.proximityWarning.lane.toLowerCase()}-hazard ${
+            hud.pursuitActive ? 'under-pursuit-banner' : ''
+          }`}
+        >
           <div className="proximity-hazard-pill">
             <span className="hazard-blip">⚠️</span>
             <span className="hazard-msg">

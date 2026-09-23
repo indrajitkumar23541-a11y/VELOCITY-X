@@ -511,7 +511,8 @@ export class Engine {
       delta,
       this.playerCar.mesh.position,
       this.playerCar.speedKmh,
-      this.playerCar.isNitroActive
+      this.playerCar.isNitroActive,
+      this.policeChase.state === 'PURSUIT'
     );
 
     // 6. Combo Multiplier Decay Timer

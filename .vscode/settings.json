@@ -1,0 +1,15 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.gradle.enabled": false,
+    "java.autobuild.enabled": false,
+    "java.import.exclusions": [
+        "**/android/**",
+        "**/node_modules/**"
+    ],
+    "java.project.resourceFilters": [
+        "node_modules",
+        "android"
+    ],
+    "gradle.nestedProjects": false,
+    "gradle.autoDetect": "off"
+}

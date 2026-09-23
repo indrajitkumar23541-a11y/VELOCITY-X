@@ -14,6 +14,9 @@ export class CameraManager {
   private shakeIntensity = 0;
   private shakeDecay = 5.0;
 
+  // Dynamic Police Pursuit Camera Elevation (Prevents cruisers from occluding player)
+  private pursuitBlend = 0;
+
   constructor() {
     this.camera = new THREE.PerspectiveCamera(
       this.baseFOV,
@@ -36,6 +39,7 @@ export class CameraManager {
 
   public reset(carPos: THREE.Vector3): void {
     this.shakeIntensity = 0;
+    this.pursuitBlend = 0;
     this.camera.fov = this.baseFOV;
     this.camera.updateProjectionMatrix();
     this.currentPos.set(carPos.x * 0.72, carPos.y + 1.45, carPos.z - 4.4);
@@ -44,16 +48,34 @@ export class CameraManager {
     this.camera.lookAt(this.lookTarget);
   }
 
-  public update(delta: number, carPos: THREE.Vector3, speedKmh: number, isNitro: boolean): void {
-    // 1. Dynamic FOV based on speed and nitro (smooth speed rush sensation)
+  public update(
+    delta: number,
+    carPos: THREE.Vector3,
+    speedKmh: number,
+    isNitro: boolean,
+    isPursuit: boolean = false
+  ): void {
+    // 1. Dynamic Pursuit Camera Blend (smooth transition into elevated chase view)
+    const targetPursuitBlend = isPursuit ? 1.0 : 0.0;
+    this.pursuitBlend = THREE.MathUtils.lerp(this.pursuitBlend, targetPursuitBlend, delta * 3.5);
+
+    // 2. Dynamic FOV based on speed, nitro & pursuit intensity
     const speedRatio = Math.min(1, speedKmh / 280);
-    const targetFOV = Math.min(this.maxFOV, this.baseFOV + speedRatio * 12 + (isNitro ? 6 : 0));
+    const targetFOV = Math.min(
+      this.maxFOV + 4,
+      this.baseFOV + speedRatio * 12 + (isNitro ? 6 : 0) + this.pursuitBlend * 4
+    );
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFOV, delta * 4);
     this.camera.updateProjectionMatrix();
 
-    // 2. Camera Chase Distance & Height
-    const backDistance = 4.4 + speedRatio * 0.7;
-    const height = 1.45 + speedRatio * 0.2;
+    // 3. Camera Chase Distance & Height (Elevates during pursuit for unobstructed vision)
+    const normalBackDistance = 4.4 + speedRatio * 0.7;
+    const pursuitBackDistance = 5.8 + speedRatio * 0.8;
+    const backDistance = THREE.MathUtils.lerp(normalBackDistance, pursuitBackDistance, this.pursuitBlend);
+
+    const normalHeight = 1.45 + speedRatio * 0.2;
+    const pursuitHeight = 2.35 + speedRatio * 0.25;
+    const height = THREE.MathUtils.lerp(normalHeight, pursuitHeight, this.pursuitBlend);
 
     // Rigidly lock Z distance to eliminate oscillating frame-rate micro-stutter
     this.currentPos.z = carPos.z - backDistance;
@@ -62,7 +84,7 @@ export class CameraManager {
     this.currentPos.x = THREE.MathUtils.lerp(this.currentPos.x, carPos.x * 0.72, delta * 10);
     this.currentPos.y = THREE.MathUtils.lerp(this.currentPos.y, carPos.y + height, delta * 8);
 
-    // 3. Impact & Collision Shake (only triggers on actual crashes / near-misses)
+    // 4. Impact & Collision Shake (only triggers on actual crashes / near-misses)
     let shakeX = 0;
     let shakeY = 0;
     if (this.shakeIntensity > 0.01) {
@@ -77,10 +99,10 @@ export class CameraManager {
       this.currentPos.z
     );
 
-    // 4. Stable look-ahead target smoothly tracking vehicle center
+    // 5. Stable look-ahead target tracking vehicle center with elevated pitch in pursuit
     this.lookTarget.x = THREE.MathUtils.lerp(this.lookTarget.x, carPos.x * 0.85, delta * 12);
-    this.lookTarget.y = carPos.y + 0.85;
-    this.lookTarget.z = carPos.z + 10;
+    this.lookTarget.y = THREE.MathUtils.lerp(carPos.y + 0.85, carPos.y + 0.65, this.pursuitBlend);
+    this.lookTarget.z = THREE.MathUtils.lerp(carPos.z + 10, carPos.z + 13, this.pursuitBlend);
     this.camera.lookAt(this.lookTarget);
   }
 }

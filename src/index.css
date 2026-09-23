@@ -1188,12 +1188,17 @@ html, body, #root {
 /* Traffic Proximity Hazard Alert (Early Left/Right Swerve Cue) */
 .proximity-hazard-overlay {
   position: absolute;
-  top: 72px;
+  top: 66px;
   left: 50%;
   transform: translateX(-50%);
   pointer-events: none;
   z-index: 15;
   animation: hazardPulse 0.35s infinite alternate;
+  transition: top 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.proximity-hazard-overlay.under-pursuit-banner {
+  top: 106px;
 }
 
 @keyframes hazardPulse {

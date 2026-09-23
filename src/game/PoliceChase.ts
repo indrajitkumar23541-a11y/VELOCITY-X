@@ -1,4 +1,4 @@
-// VELOCITY X - High-Speed Police Chase AI, Red-Blue Strobes & PIT Maneuvers
+// VELOCITY X - High-Speed Police Chase AI, Tactical Flanking & Anti-Camera Occlusion
 import * as THREE from 'three';
 import { audioManager } from './AudioManager';
 import { HapticsManager } from './HapticsManager';
@@ -16,6 +16,8 @@ export interface PoliceCruiser {
   blueLight: THREE.PointLight;
   redMesh: THREE.Mesh;
   blueMesh: THREE.Mesh;
+  grilleRedMesh: THREE.Mesh;
+  grilleBlueMesh: THREE.Mesh;
   active: boolean;
 }
 
@@ -46,7 +48,7 @@ export class PoliceChase {
     // 2 police cruisers
     for (let i = 0; i < 2; i++) {
       const cruiser = this.buildPoliceCruiserModel();
-      cruiser.mesh.position.set(i === 0 ? -1.8 : 1.8, 0, -999);
+      cruiser.mesh.position.set(i === 0 ? -2.2 : 2.2, 0, -999);
       this.scene.add(cruiser.mesh);
       this.cruisers.push(cruiser);
     }
@@ -54,78 +56,149 @@ export class PoliceChase {
 
   private buildPoliceCruiserModel(): PoliceCruiser {
     const group = new THREE.Group();
-    const size = new THREE.Vector3(2.1, 1.45, 4.6);
+    const size = new THREE.Vector3(2.05, 1.4, 4.65);
 
-    // Black & White Police Interceptor Body
-    const bodyGeom = new THREE.BoxGeometry(2.1, 0.48, 4.6);
-    const blackMat = new THREE.MeshStandardMaterial({ color: 0x090a0f, metalness: 0.8, roughness: 0.2 });
-    const body = new THREE.Mesh(bodyGeom, blackMat);
-    body.position.y = 0.4;
-    body.castShadow = true;
-    group.add(body);
+    // 1. Lower Chassis (Deep Obsidian Black High-Gloss)
+    const chassisGeom = new THREE.BoxGeometry(2.05, 0.36, 4.65);
+    const blackMat = new THREE.MeshStandardMaterial({
+      color: 0x0a0c12,
+      metalness: 0.85,
+      roughness: 0.22,
+    });
+    const chassis = new THREE.Mesh(chassisGeom, blackMat);
+    chassis.position.y = 0.32;
+    chassis.castShadow = true;
+    group.add(chassis);
 
-    // White Center Doors / Livery
-    const doorLiveryGeom = new THREE.BoxGeometry(2.12, 0.44, 1.8);
-    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf0f4f8, metalness: 0.4, roughness: 0.3 });
+    // 2. Aerodynamic Sloped Muscle Hood
+    const hoodGeom = new THREE.BoxGeometry(1.94, 0.24, 1.55);
+    const hood = new THREE.Mesh(hoodGeom, blackMat);
+    hood.position.set(0, 0.48, 1.45);
+    group.add(hood);
+
+    // 3. Rear Trunk Deck
+    const trunkGeom = new THREE.BoxGeometry(1.94, 0.28, 1.35);
+    const trunk = new THREE.Mesh(trunkGeom, blackMat);
+    trunk.position.set(0, 0.52, -1.45);
+    group.add(trunk);
+
+    // 4. Pure White Highway Patrol Door Livery
+    const doorLiveryGeom = new THREE.BoxGeometry(2.08, 0.38, 1.8);
+    const whiteMat = new THREE.MeshStandardMaterial({
+      color: 0xf5f7fb,
+      metalness: 0.35,
+      roughness: 0.28,
+    });
     const doorLivery = new THREE.Mesh(doorLiveryGeom, whiteMat);
-    doorLivery.position.set(0, 0.4, 0);
+    doorLivery.position.set(0, 0.42, 0);
     group.add(doorLivery);
 
-    // Dark Tinted Cabin
-    const cabinGeom = new THREE.BoxGeometry(1.7, 0.52, 2.3);
-    const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x06090e, roughness: 0.1, metalness: 0.9, opacity: 0.9, transparent: true });
+    // 5. Dark Tinted Stealth Cabin
+    const cabinGeom = new THREE.BoxGeometry(1.65, 0.48, 2.1);
+    const glassMat = new THREE.MeshPhysicalMaterial({
+      color: 0x05070a,
+      roughness: 0.08,
+      metalness: 0.9,
+      opacity: 0.92,
+      transparent: true,
+    });
     const cabin = new THREE.Mesh(cabinGeom, glassMat);
-    cabin.position.set(0, 0.82, -0.15);
+    cabin.position.set(0, 0.82, -0.1);
     group.add(cabin);
 
-    // Heavy Steel Push Bumper (Bullbar)
-    const bullbarGeom = new THREE.BoxGeometry(1.9, 0.35, 0.2);
-    const bullbarMat = new THREE.MeshStandardMaterial({ color: 0x22262e, metalness: 0.9, roughness: 0.3 });
-    const bullbar = new THREE.Mesh(bullbarGeom, bullbarMat);
-    bullbar.position.set(0, 0.38, 2.35);
-    group.add(bullbar);
+    // 6. Heavy Steel Push Bumper (Bullbar) with Vertical Ramming Posts
+    const bullbarMat = new THREE.MeshStandardMaterial({
+      color: 0x181c24,
+      metalness: 0.92,
+      roughness: 0.25,
+    });
+    const bullbarCrossGeom = new THREE.BoxGeometry(1.76, 0.34, 0.16);
+    const bullbarCross = new THREE.Mesh(bullbarCrossGeom, bullbarMat);
+    bullbarCross.position.set(0, 0.38, 2.38);
+    group.add(bullbarCross);
 
-    // Roof Lightbar (Dual Red & Blue Strobes)
-    const barBaseGeom = new THREE.BoxGeometry(1.2, 0.08, 0.2);
+    // 2 Vertical Ramming Posts
+    const postGeom = new THREE.BoxGeometry(0.12, 0.48, 0.2);
+    const postLeft = new THREE.Mesh(postGeom, bullbarMat);
+    postLeft.position.set(-0.48, 0.42, 2.4);
+    group.add(postLeft);
+
+    const postRight = new THREE.Mesh(postGeom, bullbarMat);
+    postRight.position.set(0.48, 0.42, 2.4);
+    group.add(postRight);
+
+    // 7. Ultra-Low Profile Rooftop Emergency LED Lightbar
+    const barBaseGeom = new THREE.BoxGeometry(1.2, 0.04, 0.16);
     const barBase = new THREE.Mesh(barBaseGeom, bullbarMat);
-    barBase.position.set(0, 1.12, -0.2);
+    barBase.position.set(0, 1.08, -0.15);
     group.add(barBase);
 
-    // Flashing Strobe Caps — emissive materials for bloom glow
-    const strobeGeom = new THREE.BoxGeometry(0.45, 0.12, 0.18);
-    // MeshStandardMaterial + emissive = UnrealBloomPass pick karega
+    // Flashing Strobe Caps — High-Intensity Bloom
+    const strobeGeom = new THREE.BoxGeometry(0.46, 0.08, 0.14);
     const redMat = new THREE.MeshStandardMaterial({
-      color: 0xff0022,
-      emissive: new THREE.Color(0xff0022),
-      emissiveIntensity: 5.0, // bloom threshold se upar
+      color: 0xff002b,
+      emissive: new THREE.Color(0xff002b),
+      emissiveIntensity: 5.5,
       roughness: 0.0,
     });
     const blueMat = new THREE.MeshStandardMaterial({
       color: 0x0055ff,
       emissive: new THREE.Color(0x0055ff),
-      emissiveIntensity: 5.0,
+      emissiveIntensity: 5.5,
       roughness: 0.0,
     });
 
     const redMesh = new THREE.Mesh(strobeGeom, redMat);
-    redMesh.position.set(-0.35, 1.18, -0.2);
+    redMesh.position.set(-0.32, 1.13, -0.15);
     group.add(redMesh);
 
     const blueMesh = new THREE.Mesh(strobeGeom, blueMat);
-    blueMesh.position.set(0.35, 1.18, -0.2);
+    blueMesh.position.set(0.32, 1.13, -0.15);
     group.add(blueMesh);
 
-    // High-Intensity PointLights — wider range for dramatic road illumination
-    const redLight = new THREE.PointLight(0xff0022, 4.5, 20);
-    redLight.position.set(-0.35, 1.3, -0.2);
+    // Center Takedown / Scene Light
+    const centerTakedownGeom = new THREE.BoxGeometry(0.12, 0.08, 0.14);
+    const takedownMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: new THREE.Color(0xffffff),
+      emissiveIntensity: 3.5,
+    });
+    const takedownMesh = new THREE.Mesh(centerTakedownGeom, takedownMat);
+    takedownMesh.position.set(0, 1.13, -0.15);
+    group.add(takedownMesh);
+
+    // 8. Front Grille Wig-Wag Strobes
+    const wigWagGeom = new THREE.BoxGeometry(0.24, 0.09, 0.06);
+    const grilleRedMesh = new THREE.Mesh(wigWagGeom, redMat);
+    grilleRedMesh.position.set(-0.62, 0.44, 2.37);
+    group.add(grilleRedMesh);
+
+    const grilleBlueMesh = new THREE.Mesh(wigWagGeom, blueMat);
+    grilleBlueMesh.position.set(0.62, 0.44, 2.37);
+    group.add(grilleBlueMesh);
+
+    // 9. Rear LED Taillight Strip
+    const tailStripGeom = new THREE.BoxGeometry(1.82, 0.07, 0.06);
+    const tailMat = new THREE.MeshStandardMaterial({
+      color: 0xff1122,
+      emissive: new THREE.Color(0xff0011),
+      emissiveIntensity: 2.5,
+    });
+    const tailStrip = new THREE.Mesh(tailStripGeom, tailMat);
+    tailStrip.position.set(0, 0.54, -2.34);
+    group.add(tailStrip);
+
+    // 10. High-Intensity Dynamic PointLights
+    const redLight = new THREE.PointLight(0xff002b, 4.5, 20);
+    redLight.position.set(-0.32, 1.25, -0.15);
     group.add(redLight);
 
-    const blueLight = new THREE.PointLight(0x0066ff, 4.5, 20);
-    blueLight.position.set(0.35, 1.3, -0.2);
+    const blueLight = new THREE.PointLight(0x0055ff, 4.5, 20);
+    blueLight.position.set(0.32, 1.25, -0.15);
     group.add(blueLight);
 
-    // 4 Wheels
-    const wheelGeom = new THREE.CylinderGeometry(0.34, 0.34, 0.26, 16);
+    // 11. 4 Sport Interceptor Wheels with Alloy Rims
+    const wheelGeom = new THREE.CylinderGeometry(0.34, 0.34, 0.25, 16);
     wheelGeom.rotateZ(Math.PI / 2);
     const tireMat = new THREE.MeshStandardMaterial({ color: 0x111114, roughness: 0.8 });
     const wheelPositions = [
@@ -151,6 +224,8 @@ export class PoliceChase {
       blueLight,
       redMesh,
       blueMesh,
+      grilleRedMesh,
+      grilleBlueMesh,
       active: false,
     };
   }
@@ -161,11 +236,14 @@ export class PoliceChase {
     this.state = 'PURSUIT';
     this.timeInPursuit = 0;
     this.evasionTimer = 0;
-    this.ramCooldown = 1.5;
+    this.ramCooldown = 1.8;
 
-    // Spawn cruisers behind player (-Z)
-    const offsets = [-18, -32];
-    const lanes = [playerLaneX > 0 ? -1.8 : 1.8, playerLaneX];
+    // Spawn cruisers behind player (-Z) in flanking lanes
+    const flankSide = playerLaneX >= 0 ? -1 : 1;
+    const lane0 = THREE.MathUtils.clamp(playerLaneX + flankSide * 2.8, -4.2, 4.2);
+    const lane1 = THREE.MathUtils.clamp(playerLaneX - flankSide * 2.8, -4.2, 4.2);
+    const offsets = [-20, -34];
+    const lanes = [lane0, lane1];
 
     this.cruisers.forEach((c, idx) => {
       c.active = true;
@@ -197,7 +275,7 @@ export class PoliceChase {
     this.timeInPursuit += delta;
     this.ramCooldown -= delta;
 
-    // 1. High-Frequency Strobe Animation (8 Hz flashing)
+    // 1. High-Frequency Strobe Animation (8 Hz alternating flashing)
     this.strobeTimer += delta * 16;
     if (this.strobeTimer > 1) {
       this.strobeTimer = 0;
@@ -212,18 +290,25 @@ export class PoliceChase {
     let closestDist = 999;
     let avgPanX = 0;
 
-    // 2. Cruiser AI Behaviors
+    // Calculate dynamic flanking corridors based on current player position
+    const flankSide = playerX >= 0 ? -1 : 1;
+    const flankLane0 = THREE.MathUtils.clamp(playerX + flankSide * 2.8, -4.2, 4.2);
+    const flankLane1 = THREE.MathUtils.clamp(playerX - flankSide * 2.8, -4.2, 4.2);
+
+    // 2. Cruiser AI Behaviors (Anti-Camera-Blocking & Tactical Flanking)
     for (let i = 0; i < this.cruisers.length; i++) {
       const c = this.cruisers[i];
       if (!c.active) continue;
 
-      // Strobe update: emissiveIntensity toggle for bloom effect
-      const redEmissive = redOn ? 5.0 : 0.05;
-      const blueEmissive = blueOn ? 5.0 : 0.05;
+      // Strobe emissive toggle for bloom effect
+      const redEmissive = redOn ? 5.5 : 0.05;
+      const blueEmissive = blueOn ? 5.5 : 0.05;
       c.redLight.intensity = redOn ? 4.5 : 0.1;
       c.blueLight.intensity = blueOn ? 4.5 : 0.1;
       (c.redMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = redEmissive;
       (c.blueMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = blueEmissive;
+      (c.grilleRedMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = redEmissive;
+      (c.grilleBlueMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = blueEmissive;
 
       // Cruiser distance along Z relative to player
       const dz = c.mesh.position.z - playerZ;
@@ -233,47 +318,72 @@ export class PoliceChase {
         avgPanX = c.mesh.position.x - playerX;
       }
 
-      // Cruiser Speed Modulation: Matches player speed + aggressive catchup
-      if (dz < -4) {
-        // Behind player: accelerate aggressively to catch up
-        c.speedKmh = Math.max(playerSpeedKmh + 28, 260);
-      } else if (dz > 6) {
-        // Ahead of player: slow down to box in
-        c.speedKmh = Math.max(60, playerSpeedKmh - 15);
-      } else {
-        // Alongside player: match speed closely
-        c.speedKmh = playerSpeedKmh + (i === 0 ? 4 : -3);
-      }
+      const lateralDiff = Math.abs(c.mesh.position.x - playerX);
 
-      // Forward motion
-      c.mesh.position.z += (c.speedKmh / 3.6) * delta;
-
-      // Lateral AI: Flanking and PIT Ramming
       if (i === 0) {
-        // Lead Interceptor: tries to pull alongside player and execute PIT maneuver
-        if (Math.abs(dz) < 3.5 && this.ramCooldown <= 0) {
-          // Ram into player quarter-panel!
+        // ── Cruiser 0: Lead Interceptor ("The Hunter") ──────────────────────
+        // Tries to pull alongside player on primary flank (dz ≈ 0 to +1.5)
+        c.targetLaneX = flankLane0;
+
+        // Tactical PIT Maneuver: Only trigger when pulled alongside
+        if (Math.abs(dz) < 2.0 && lateralDiff < 3.2 && this.ramCooldown <= 0) {
+          // Ram into player quarter-panel from the side!
           c.targetLaneX = playerX;
-          this.ramCooldown = 2.2;
+          this.ramCooldown = 2.8;
           HapticsManager.policeImpact();
+        }
+
+        // Speed regulation to match player side-by-side
+        if (dz < -2.0) {
+          // Behind player: accelerate to pull alongside
+          c.speedKmh = Math.max(playerSpeedKmh + 26, 260);
+        } else if (dz > 2.5) {
+          // Overshot ahead: decelerate to stay alongside
+          c.speedKmh = Math.max(70, playerSpeedKmh - 12);
         } else {
-          // Flank adjacent lane
-          c.targetLaneX = playerX > 0 ? playerX - 3.2 : playerX + 3.2;
+          // Running alongside: match speed
+          c.speedKmh = playerSpeedKmh + 3;
         }
       } else {
-        // Support Cruiser: tails behind directly to pressure
-        c.targetLaneX = playerX;
+        // ── Cruiser 1: Support Flanker / Standoff ("The Enforcer") ──────────
+        // Primary rule: Flank opposite side. NEVER sit between camera and player!
+        c.targetLaneX = flankLane1;
+
+        // ANTI-CAMERA-OCCLUSION STANDOFF LAW:
+        // If Cruiser 1 is in the same lateral lane as the player (within 1.7m),
+        // it MUST maintain a standoff distance of at least 7.5m behind the player.
+        // This prevents it from ever entering the chase camera view frustum!
+        if (lateralDiff < 1.7 && dz > -7.5) {
+          // Apply emergency brakes and steer hard to the flank!
+          c.speedKmh = Math.min(c.speedKmh, playerSpeedKmh - 30);
+          c.targetLaneX = flankLane1;
+        } else if (lateralDiff >= 2.0) {
+          // Safely on the flank: match pace slightly behind Cruiser 0 (dz ≈ -3.5m)
+          if (dz < -4.5) {
+            c.speedKmh = Math.max(playerSpeedKmh + 22, 250);
+          } else if (dz > -2.0) {
+            c.speedKmh = Math.max(70, playerSpeedKmh - 10);
+          } else {
+            c.speedKmh = playerSpeedKmh;
+          }
+        } else {
+          // Trailing safely in rear standoff
+          c.speedKmh = Math.min(playerSpeedKmh, c.speedKmh);
+        }
       }
 
       // Smooth lateral movement towards target
-      c.mesh.position.x = THREE.MathUtils.lerp(c.mesh.position.x, c.targetLaneX, delta * 3.8);
+      c.mesh.position.x = THREE.MathUtils.lerp(c.mesh.position.x, c.targetLaneX, delta * 4.2);
+
+      // Forward motion
+      c.mesh.position.z += (c.speedKmh / 3.6) * delta;
       this.updateCruiserBounds(c);
 
       // Ramming / Collision with player - apply real physical impulse
       if (playerBounds.intersectsBox(c.bounds)) {
         HapticsManager.policeImpact();
         const pushDir = c.mesh.position.x < playerX ? 1 : -1;
-        onPoliceRam?.(pushDir * 4.2 * delta);
+        onPoliceRam?.(pushDir * 4.5 * delta);
       }
     }
 

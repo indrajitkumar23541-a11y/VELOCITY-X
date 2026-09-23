@@ -1,5 +1,5 @@
 // VELOCITY X - Auto-Updating Offline Service Worker (OTA Hot-Sync)
-const BUILD_TIME = '1790191045090';
+const BUILD_TIME = '1790199019291';
 const CACHE_NAME = 'velocity-x-' + BUILD_TIME;
 
 const CORE_ASSETS = [
