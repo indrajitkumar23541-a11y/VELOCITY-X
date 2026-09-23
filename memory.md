@@ -58,6 +58,11 @@
 | **WebGL GPU Resource Leaks on Re-mount** | Geometries and materials were not disposed of when the game unmounted or destroyed. | Implemented comprehensive `dispose()` across `RoadManager`, `TrafficManager`, `PoliceChase`, and `PlayerCar`. |
 | **Crash Timeout Race Condition** | Rapid restart after crash could trigger a stale `finishRun` timeout on the newly started race. | Managed `finishRunTimeoutId` handle and cleared it on `stop()`, `resetRunState()`, and `destroy()`. |
 | **Stuck Controls & Audio on Window Blur** | Switching tabs or app minimization left keys stuck in active state and audio running. | Added `blur` and `visibilitychange` listeners in `App.tsx` to release controls and pause audio. |
+| **Volumetric Headlight Cone Obstruction ("Ghaak")** | Giant 26m `ConeGeometry` mesh directly in front of car obscured 50% of the forward view in 3rd person camera. | Completely removed floating cone geometry while retaining bright emissive lens glow; softened spotlights. Road ahead is 100% crystal clear. |
+| **Solid Underglow Rectangular Decal** | Harsh 2.7m x 5.2m plane with 0.75 opacity looked like a bright solid red carpet on the road. | Replaced with feathered radial gradient canvas texture at 0.38 opacity for authentic soft ground neon. |
+| **Blinding Road Glare & Mirror Reflections** | PBR roughness map had #080808 values and asphalt material had 0.4 envMapIntensity, reflecting all skyscraper windows like a mirror. | Changed asphalt to matte charcoal (roughness 0.90, envMapIntensity 0.12), eliminated mirror puddles, and reduced barrier glare. |
+| **Traffic Car Invisibility & Left/Right Steer Collisions** | Vehicles blended with dark highway, trucks had zero taillights, and civilian taillights were dull dark boxes. | Added ultra-bright glowing red LED taillights (`0xff0033`) to ALL vehicles including dual clusters & markers on trucks. Added HUD Proximity Hazard Alert (`⚠️ TRAFFIC AHEAD - 25M`). |
+| **Slow Game Launch / Multi-Screen Delay** | 3.0s forced splash timer + 3-step menu + 3.0s countdown meant 10–12s wait to play. | Reduced splash to 0.75s (instant tap-to-skip), added 1-tap "⚡ QUICK RACE" on title screen, and shortened countdown to 1.05s. |
 
 ---
 
