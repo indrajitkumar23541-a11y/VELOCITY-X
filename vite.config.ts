@@ -3,12 +3,14 @@ import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
 
-function swVersionPlugin(): Plugin {
+const buildTimestamp = Date.now().toString();
+const appVersion = '1.2.0';
+
+function swVersionPlugin(timestamp: string): Plugin {
   return {
     name: 'sw-version-plugin',
     closeBundle() {
       const swPath = path.resolve(__dirname, 'dist/sw.js');
-      const timestamp = Date.now().toString();
       if (fs.existsSync(swPath)) {
         let content = fs.readFileSync(swPath, 'utf-8');
         content = content.replace(/__BUILD_TIMESTAMP__/g, timestamp);
@@ -18,11 +20,15 @@ function swVersionPlugin(): Plugin {
       // Write version.json into dist for remote version checking
       const versionPath = path.resolve(__dirname, 'dist/version.json');
       const versionData = {
-        version: `1.0.${timestamp.slice(-6)}`,
+        version: appVersion,
         timestamp,
         buildDate: new Date().toISOString(),
       };
       fs.writeFileSync(versionPath, JSON.stringify(versionData, null, 2));
+
+      // Also ensure public/version.json exists for dev/local sync
+      const publicVersionPath = path.resolve(__dirname, 'public/version.json');
+      fs.writeFileSync(publicVersionPath, JSON.stringify(versionData, null, 2));
     },
   };
 }
@@ -30,7 +36,11 @@ function swVersionPlugin(): Plugin {
 // https://vitejs.dev/config/
 export default defineConfig({
   base: './',
-  plugins: [react(), swVersionPlugin()],
+  define: {
+    __BUILD_TIMESTAMP__: JSON.stringify(buildTimestamp),
+    __APP_VERSION__: JSON.stringify(appVersion),
+  },
+  plugins: [react(), swVersionPlugin(buildTimestamp)],
   server: {
     host: true,
     port: 3000,

@@ -1,5 +1,5 @@
 // VELOCITY X - Auto-Updating Offline Service Worker (OTA Hot-Sync)
-const BUILD_TIME = '1790033237607';
+const BUILD_TIME = '1790168338156';
 const CACHE_NAME = 'velocity-x-' + BUILD_TIME;
 
 const CORE_ASSETS = [
@@ -15,8 +15,7 @@ const CORE_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  // Activate immediately so new updates take effect right away
-  self.skipWaiting();
+  // Pre-cache core shell assets
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(CORE_ASSETS).catch((err) => {
@@ -48,7 +47,13 @@ self.addEventListener('activate', (event) => {
 // Smart Caching: Network-First for HTML/Navigations, Cache-First with Background Update for Assets
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  if (req.method !== 'GET') return;
+  // Never cache version.json so remote update checks are always 100% fresh from network
+  if (req.url.includes('version.json')) {
+    event.respondWith(
+      fetch(req).catch(() => caches.match(req))
+    );
+    return;
+  }
 
   // 1. Navigation & HTML: Always try network first so updates are pulled instantly when online
   if (req.mode === 'navigate' || req.headers.get('accept')?.includes('text/html')) {

@@ -15,6 +15,7 @@ import { InstallPrompt, triggerGlobalAppInstall } from './components/InstallProm
 import { LeaderboardModal } from './components/LeaderboardModal';
 import { RainScreenOverlay } from './components/RainScreenOverlay';
 import { UpdateNotification } from './components/UpdateNotification';
+import { updateManager } from './game/UpdateManager';
 import {
   Volume2,
   VolumeX,
@@ -34,6 +35,25 @@ import {
 } from 'lucide-react';
 
 export type GameState = 'SPLASH' | 'SELECT_TRACK' | 'SELECT_CAR' | 'COUNTDOWN' | 'RACING' | 'GARAGE' | 'GAME_OVER';
+
+const PAINT_COLORS = [
+  { name: 'Guards Red', hex: '#d61a1a' },
+  { name: 'Cyber Cyan', hex: '#00f3ff' },
+  { name: 'Obsidian Black', hex: '#11141a' },
+  { name: 'Modena Blue', hex: '#0055ff' },
+  { name: 'Arancio Gold', hex: '#e59500' },
+  { name: 'Toxic Lime', hex: '#22ff44' },
+  { name: 'Ultraviolet', hex: '#a822ff' },
+];
+
+const UNDERGLOW_COLORS = [
+  { name: 'Red Pulse', hex: '#ff2200' },
+  { name: 'Electric Cyan', hex: '#00f3ff' },
+  { name: 'Neon Amber', hex: '#ff8800' },
+  { name: 'Cyber Blue', hex: '#00d4ff' },
+  { name: 'Toxic Green', hex: '#00ff66' },
+  { name: 'Plasma Violet', hex: '#9933ff' },
+];
 
 export const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -116,6 +136,7 @@ export const App: React.FC = () => {
 
     engine.onGameOver = (runSummary) => {
       tiltManager.stop();
+      audioManager.stopAllGameSounds();
       setSummary(runSummary);
       setGameState('GAME_OVER');
       setStats(StorageManager.getStats());
@@ -126,6 +147,11 @@ export const App: React.FC = () => {
       engine.destroy();
     };
   }, []);
+
+  // Sync active game state with UpdateManager to prevent mid-race reloads
+  useEffect(() => {
+    updateManager.setGameState(gameState);
+  }, [gameState]);
 
   // 2. 8K Splash Screen Intro Timer & "Dhan-Dhan" Engine Audio
   useEffect(() => {
@@ -167,7 +193,7 @@ export const App: React.FC = () => {
     }
   }, [activeCar, gameState]);
 
-  // Desktop Keyboard Controls (W/A/S/D / Arrows / Shift / Space)
+  // Desktop Keyboard Controls (W/A/S/D / Arrows / Shift / Space) + Blur/Visibility Safety
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (gameState !== 'RACING' || !engineRef.current) return;
@@ -189,11 +215,37 @@ export const App: React.FC = () => {
       if (!e.shiftKey) c.nitro = false;
     };
 
+    const resetControls = () => {
+      if (engineRef.current) {
+        const c = engineRef.current.controls;
+        c.steerLeft = false;
+        c.steerRight = false;
+        c.throttle = false;
+        c.brake = false;
+        c.nitro = false;
+      }
+    };
+
+    const handleBlur = () => {
+      resetControls();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        resetControls();
+        audioManager.stopAllGameSounds();
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [gameState]);
 
@@ -243,6 +295,35 @@ export const App: React.FC = () => {
       const unlocked = updatedCars.find(c => c.id === carId);
       if (unlocked) {
         setActiveCar(unlocked);
+      }
+    }
+  };
+
+  // Custom Paint & Underglow Selection
+  const handlePaintSelect = (hex: string) => {
+    HapticsManager.buttonTap();
+    StorageManager.updateCarCustomization(activeCar.id, hex, activeCar.underglowColor);
+    const updatedCars = StorageManager.getCars();
+    setCars(updatedCars);
+    const found = updatedCars.find(c => c.id === activeCar.id);
+    if (found) {
+      setActiveCar(found);
+      if (engineRef.current) {
+        engineRef.current.setCarConfig(found);
+      }
+    }
+  };
+
+  const handleUnderglowSelect = (hex: string) => {
+    HapticsManager.buttonTap();
+    StorageManager.updateCarCustomization(activeCar.id, activeCar.color, hex);
+    const updatedCars = StorageManager.getCars();
+    setCars(updatedCars);
+    const found = updatedCars.find(c => c.id === activeCar.id);
+    if (found) {
+      setActiveCar(found);
+      if (engineRef.current) {
+        engineRef.current.setCarConfig(found);
       }
     }
   };
@@ -559,6 +640,41 @@ export const App: React.FC = () => {
                     <Smartphone size={13} />
                     <span>PHONE TILT (BUTTONS GAYAB)</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Supercar Paint & Neon Underglow Customizer */}
+              <div className="showroom-customizer-row">
+                <div className="customizer-group">
+                  <span className="customizer-label">PAINT:</span>
+                  <div className="color-swatches">
+                    {PAINT_COLORS.map(c => (
+                      <button
+                        key={c.hex}
+                        type="button"
+                        className={`color-swatch-btn ${activeCar.color === c.hex ? 'active' : ''}`}
+                        style={{ backgroundColor: c.hex }}
+                        onClick={() => handlePaintSelect(c.hex)}
+                        title={c.name}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="customizer-group">
+                  <span className="customizer-label">NEON:</span>
+                  <div className="color-swatches">
+                    {UNDERGLOW_COLORS.map(u => (
+                      <button
+                        key={u.hex}
+                        type="button"
+                        className={`color-swatch-btn ${activeCar.underglowColor === u.hex ? 'active' : ''}`}
+                        style={{ backgroundColor: u.hex, boxShadow: `0 0 8px ${u.hex}` }}
+                        onClick={() => handleUnderglowSelect(u.hex)}
+                        title={u.name}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,14 +1,28 @@
 // VELOCITY X - Automatic Cloud Update Manager (OTA Background Sync)
+declare const __BUILD_TIMESTAMP__: string;
+declare const __APP_VERSION__: string;
+
 type UpdateCallback = () => void;
 
 class UpdateManager {
   private registration: ServiceWorkerRegistration | null = null;
   private updateAvailable = false;
   private callbacks: Set<UpdateCallback> = new Set();
+  private currentGameState: string = 'SPLASH';
+  private pendingReload = false;
+  private isRefreshing = false;
 
   constructor() {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       this.init();
+    }
+  }
+
+  public setGameState(state: string): void {
+    this.currentGameState = state;
+    // If an update was downloaded while the player was racing, apply it now that race has finished
+    if (this.pendingReload && state !== 'RACING') {
+      this.applyUpdate();
     }
   }
 
@@ -41,11 +55,14 @@ class UpdateManager {
       });
 
       // Reload when new service worker takes over control
-      let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          window.location.reload();
+        if (!this.isRefreshing) {
+          if (this.currentGameState === 'RACING') {
+            this.pendingReload = true;
+          } else {
+            this.isRefreshing = true;
+            window.location.reload();
+          }
         }
       });
 
@@ -55,37 +72,62 @@ class UpdateManager {
         this.checkForUpdate();
       });
 
-      // 2. Check for update when app returns to foreground
+      // 2. Check for update when app returns to foreground / phone unlocked
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           this.checkForUpdate();
         }
       });
 
-      // 3. Periodic background check every 60 seconds while online
+      // 3. Periodic background check every 45 seconds while online
       window.setInterval(() => {
         if (navigator.onLine) {
           this.checkForUpdate();
         }
-      }, 60000);
+      }, 45000);
 
       // Initial check after startup
-      setTimeout(() => this.checkForUpdate(), 3000);
+      setTimeout(() => this.checkForUpdate(), 2500);
     } catch (err) {
       console.warn('[UpdateManager] Registration error:', err);
     }
   }
 
   /**
-   * Actively queries the server for a newer sw.js byte hash
+   * Actively queries the server for version.json and sw.js
    */
   public async checkForUpdate(): Promise<void> {
-    if (!this.registration || !navigator.onLine) return;
+    if (!navigator.onLine) return;
+
     try {
-      await this.registration.update();
-      console.log('[UpdateManager] Checked GitHub cloud for updates');
-    } catch (err) {
-      console.warn('[UpdateManager] Check update error:', err);
+      // 1. Direct version.json network check (bypasses browser heuristics)
+      const res = await fetch(`./version.json?_t=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const remote = await res.json();
+        const currentTimestamp = typeof __BUILD_TIMESTAMP__ !== 'undefined' ? __BUILD_TIMESTAMP__ : '';
+        if (remote.timestamp && currentTimestamp && remote.timestamp !== currentTimestamp) {
+          console.log(`[UpdateManager] Newer build detected in cloud: ${remote.version} (${remote.timestamp}) vs local (${currentTimestamp})`);
+          if (this.registration) {
+            await this.registration.update();
+          }
+          this.notifyUpdateReady();
+          return;
+        }
+      }
+    } catch {
+      // Offline or network error
+    }
+
+    // 2. Check service worker byte hash
+    if (this.registration) {
+      try {
+        await this.registration.update();
+        if (this.registration.waiting) {
+          this.notifyUpdateReady();
+        }
+      } catch (err) {
+        console.warn('[UpdateManager] Check update error:', err);
+      }
     }
   }
 
@@ -101,6 +143,7 @@ class UpdateManager {
   }
 
   private notifyUpdateReady(): void {
+    if (this.updateAvailable) return;
     console.log('[UpdateManager] ⚡ New game version downloaded and ready to apply!');
     this.updateAvailable = true;
     this.callbacks.forEach((cb) => cb());
@@ -110,6 +153,9 @@ class UpdateManager {
    * Tell waiting service worker to skipWaiting and trigger reload
    */
   public applyUpdate(): void {
+    if (this.isRefreshing) return;
+    this.isRefreshing = true;
+
     if (this.registration?.waiting) {
       this.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
     } else {

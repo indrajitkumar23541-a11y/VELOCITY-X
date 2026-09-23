@@ -55,31 +55,33 @@ export class RoadManager {
     this.asphaltRoughnessTexture.repeat.set(4, 28);
 
     this.asphaltMaterial = new THREE.MeshStandardMaterial({
-      color: 0x161a24,
+      color: 0x1c1f26,       // Slightly warmer grey — natural asphalt
       map: asphaltDiffuse,
       bumpMap: this.asphaltBumpTexture,
-      bumpScale: 0.045, // realistic asphalt aggregate micro-relief
+      bumpScale: 0.03,
       roughnessMap: this.asphaltRoughnessTexture,
-      roughness: 0.16, // sleek wet tarmac specular sheen
-      metalness: 0.38,
-      envMapIntensity: 1.9,
+      roughness: 0.82,       // Natural asphalt roughness — matte, not shiny
+      metalness: 0.06,       // Almost zero — asphalt plastic/stone nahi metal
+      envMapIntensity: 0.4,  // Low reflection — realistic dry road
     });
 
-    // Retro-Reflective Thermoplastic Lane Markings
+    // Road Lane Markings — Realistic white, BARELY glowing
+    // Real roads mein markings sirf headlights se reflect karti hain, khud nahi glowing
     this.lineMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      emissive: 0x88ccff,
-      emissiveIntensity: 0.65,
-      roughness: 0.18,
-      metalness: 0.2,
+      color: 0xe8e8e8,       // Off-white, not pure white
+      emissive: 0xffffff,
+      emissiveIntensity: 0.04, // Barely visible glow — realistic retro-reflective
+      roughness: 0.55,
+      metalness: 0.05,
     });
 
+    // Yellow center divider — natural yellow, not orange neon
     this.yellowLineMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffa000,
-      emissive: 0xff7700,
-      emissiveIntensity: 0.75,
-      roughness: 0.18,
-      metalness: 0.2,
+      color: 0xf0c040,       // Natural yellow road paint
+      emissive: 0xffd060,
+      emissiveIntensity: 0.06, // Very subtle
+      roughness: 0.55,
+      metalness: 0.05,
     });
 
     // Highway Shoulder Red & White Rumble Strip Curb
@@ -128,14 +130,14 @@ export class RoadManager {
     buildingTex.repeat.set(1, 1);
 
     this.buildingMaterial = new THREE.MeshStandardMaterial({
-      color: 0x080e1a,
-      roughness: 0.28,
-      metalness: 0.72,
+      color: 0x0d1420,       // Dark building face
+      roughness: 0.55,
+      metalness: 0.4,
       map: buildingTex,
       emissiveMap: buildingTex,
       emissive: 0xffffff,
-      emissiveIntensity: 0.95,
-      envMapIntensity: 2.5,
+      emissiveIntensity: 0.45, // Windows glow subtly — realistic office lights
+      envMapIntensity: 0.8,
     });
 
     // Podium Base Material (Glass + Metal Louvers)
@@ -1282,6 +1284,52 @@ export class RoadManager {
       this.asphaltMaterial.roughness = 0.16;
       this.asphaltMaterial.metalness = 0.38;
       this.asphaltMaterial.bumpScale = 0.045;
+    }
+  }
+
+  public dispose(): void {
+    for (const segment of this.roadSegments) {
+      this.scene.remove(segment);
+      segment.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+        }
+      });
+    }
+    this.scene.remove(this.founderGantry);
+    this.founderGantry.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.geometry?.dispose();
+      }
+    });
+
+    this.asphaltBumpTexture.dispose();
+    this.asphaltRoughnessTexture.dispose();
+    this.asphaltMaterial.map?.dispose();
+    this.asphaltMaterial.dispose();
+    this.lineMaterial.dispose();
+    this.yellowLineMaterial.dispose();
+    this.curbMaterial.map?.dispose();
+    this.curbMaterial.dispose();
+    this.grateMaterial.dispose();
+    this.barrierMaterial.dispose();
+    this.barrierPostMaterial.dispose();
+    this.buildingMaterial.map?.dispose();
+    this.buildingMaterial.dispose();
+    this.podiumMaterial.dispose();
+    this.concreteMaterial.dispose();
+    this.helipadMaterial.map?.dispose();
+    this.helipadMaterial.dispose();
+    this.founderBillboardMat.map?.dispose();
+    this.founderBillboardMat.dispose();
+
+    for (const mat of this.neonSignMaterials) {
+      mat.map?.dispose();
+      mat.dispose();
+    }
+    for (const mat of this.vmsSignMaterials) {
+      mat.map?.dispose();
+      mat.dispose();
     }
   }
 }

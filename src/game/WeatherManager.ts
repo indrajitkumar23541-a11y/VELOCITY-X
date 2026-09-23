@@ -14,9 +14,22 @@ export class WeatherManager {
   private ambientLight: THREE.AmbientLight;
   private scene: THREE.Scene;
 
-  // Lighting Baseline Values
+  // Lighting Baseline Values (dynamic based on track mode)
   private baseDirIntensity = 1.8;
-  private baseAmbientIntensity = 1.4;
+  private baseAmbientIntensity = 1.8;
+
+  public setTrackMode(mode: 'NIGHT' | 'DAY'): void {
+    if (mode === 'NIGHT') {
+      this.baseDirIntensity = 1.8;
+      this.baseAmbientIntensity = 1.8;
+    } else {
+      this.baseDirIntensity = 3.6;
+      this.baseAmbientIntensity = 2.4;
+    }
+    if (!this.isFlashing) {
+      this.resetLighting();
+    }
+  }
 
   // Lightning Simulation State
   private lightningTimer = 8;
@@ -121,6 +134,7 @@ export class WeatherManager {
   }
 
   public dispose(): void {
+    audioManager.stopRain();
     this.rainSystem.dispose();
   }
 }

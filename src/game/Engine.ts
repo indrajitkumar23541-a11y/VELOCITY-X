@@ -1,5 +1,9 @@
 // VELOCITY X - Core WebGL 2.0 Engine & Game Orchestrator
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { CameraManager } from './CameraManager';
 import { PlayerCar, PlayerControls } from './PlayerCar';
 import { RoadManager } from './RoadManager';
@@ -41,9 +45,21 @@ export interface GameSummary {
   isHighScore: boolean;
 }
 
+// Mobile performance detection — low-end pe bloom disable
+function detectLowEndDevice(): boolean {
+  // Agar <= 4 cores ho ya mobile GPU ho toh low-end maano
+  const cores = navigator.hardwareConcurrency ?? 4;
+  const isMobileUA = /Android|iPhone|iPad/i.test(navigator.userAgent);
+  // Rough heuristic: 4 cores ya kam wala mobile = low-end
+  return isMobileUA && cores <= 4;
+}
+
 export class Engine {
   public renderer: THREE.WebGLRenderer;
   public scene: THREE.Scene;
+  private composer: EffectComposer;
+  private bloomPass: UnrealBloomPass;
+  public readonly bloomEnabled: boolean;
   public cameraManager: CameraManager;
   public playerCar: PlayerCar;
   public roadManager: RoadManager;
@@ -61,6 +77,8 @@ export class Engine {
   private clock = new THREE.Clock();
   private isRunning = false;
   private animFrameId: number | null = null;
+  private finishRunTimeoutId: number | null = null;
+  private hudUpdateTimer = 0;
 
   // Game Progression State
   public score = 0;
@@ -98,41 +116,46 @@ export class Engine {
       depth: true,
     });
 
-    // Clamp DPR to 1.75 to prevent 4K retina overheating while keeping crisp visuals
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    // Mobile: DPR 1.0 max for performance; Desktop: 1.75 for crispness
+    const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+    this.renderer.setPixelRatio(isMobile
+      ? Math.min(window.devicePixelRatio || 1, 1.0)
+      : Math.min(window.devicePixelRatio || 1, 1.75)
+    );
     this.renderer.setSize(window.innerWidth, window.innerHeight);
 
-    // Photorealistic ACES Filmic Tone Mapping
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.25;
+    // Photorealistic ACES Filmic Tone Mapping — realistic, not cartoon
+    // OutputPass handles tone mapping when bloom is active
+    this.renderer.toneMapping = THREE.NoToneMapping;
+    this.renderer.toneMappingExposure = 1.0;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // 2. Scene & High-Visibility Cyber City Linear Fog (extends out to 280m)
+    // Scene: Deep navy night sky (not pure black — more like real night)
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x060913);
-    this.scene.fog = new THREE.Fog(0x060913, 25, 280);
+    this.scene.background = new THREE.Color(0x0a0e1a); // Deep navy, not black
+    this.scene.fog = new THREE.FogExp2(0x0a0e1a, 0.006); // Exponential fog — depth realistic
 
     // 3. Procedural Cyberpunk HDR Environment Map for 4K Supercar Reflections
     this.setupCyberpunkEnvironment();
 
-    // 4. Dynamic Directional Moonlight with tight shadow frustum
-    this.dirLight = new THREE.DirectionalLight(0xb0d8ff, 2.6);
-    this.dirLight.position.set(25, 45, 20);
+    // Moonlight: warm neutral (not blue-tinted), realistic outdoor night
+    this.dirLight = new THREE.DirectionalLight(0xfff5e8, 1.8);
+    this.dirLight.position.set(25, 55, 20);
     this.dirLight.castShadow = true;
     this.dirLight.shadow.mapSize.width = 1024;
     this.dirLight.shadow.mapSize.height = 1024;
     this.dirLight.shadow.camera.near = 0.5;
-    this.dirLight.shadow.camera.far = 140;
-    this.dirLight.shadow.camera.left = -22;
-    this.dirLight.shadow.camera.right = 22;
-    this.dirLight.shadow.camera.top = 25;
-    this.dirLight.shadow.camera.bottom = -25;
+    this.dirLight.shadow.camera.far = 120;
+    this.dirLight.shadow.camera.left = -18;
+    this.dirLight.shadow.camera.right = 18;
+    this.dirLight.shadow.camera.top = 22;
+    this.dirLight.shadow.camera.bottom = -22;
     this.dirLight.shadow.bias = -0.0006;
     this.scene.add(this.dirLight);
 
-    // Ambient Night Road Fill Light with Cyber City Hue
-    this.ambientLight = new THREE.AmbientLight(0x384a68, 2.2);
+    // Ambient: warm neutral fill — banishes blue cast, more realistic outdoor night
+    this.ambientLight = new THREE.AmbientLight(0x5a6070, 1.8);
     this.scene.add(this.ambientLight);
 
     // 4. Subsystems
@@ -151,6 +174,32 @@ export class Engine {
       setTimeout(() => { this.isLightningFlashing = false; }, 160);
     };
 
+    // ── Post-Processing Pipeline (Mobile-Adaptive Bloom) ──────────────────
+    // Low-end mobile: bloom skip karo FPS bachao
+    // High-end mobile/desktop: subtle realistic bloom
+    this.bloomEnabled = !detectLowEndDevice();
+
+    this.composer = new EffectComposer(this.renderer);
+    const renderPass = new RenderPass(this.scene, this.cameraManager.camera);
+    this.composer.addPass(renderPass);
+
+    // Bloom: threshold upar kiya — sirf VERY bright things bloom lein
+    // Road markings (emissive 0.04) bloom nahi karengi, sirf headlights/police (emissive 5-6)
+    this.bloomPass = new UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth, window.innerHeight),
+      0.28,  // strength  — subtle and clean
+      0.4,   // radius    — tight, sharp
+      0.88   // threshold — only very bright emissives bloom
+    );
+    if (this.bloomEnabled) {
+      this.composer.addPass(this.bloomPass);
+    }
+
+    // OutputPass: ACESFilmic tone mapping + gamma correction
+    const outputPass = new OutputPass();
+    this.composer.addPass(outputPass);
+    // ─────────────────────────────────────────────────────────────────────
+
     window.addEventListener('resize', this.onResize);
   }
 
@@ -159,6 +208,10 @@ export class Engine {
   }
 
   public start(): void {
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
+    }
     this.isRunning = true;
     this.clock.start();
     this.resetRunState();
@@ -171,9 +224,18 @@ export class Engine {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;
     }
+    if (this.finishRunTimeoutId !== null) {
+      clearTimeout(this.finishRunTimeoutId);
+      this.finishRunTimeoutId = null;
+    }
+    audioManager.stopAllGameSounds();
   }
 
   public resetRunState(): void {
+    if (this.finishRunTimeoutId !== null) {
+      clearTimeout(this.finishRunTimeoutId);
+      this.finishRunTimeoutId = null;
+    }
     this.score = 0;
     this.distanceMeters = 0;
     this.nearMissCount = 0;
@@ -186,18 +248,20 @@ export class Engine {
     this.roadManager.reset(this.playerCar.mesh.position.z);
     this.trafficManager.reset(this.playerCar.mesh.position.z);
     this.policeChase.reset();
+    this.cameraManager.reset(this.playerCar.mesh.position);
   }
 
   public setTrackEnvironment(mode: 'NIGHT' | 'DAY'): void {
     this.trackMode = mode;
     this.roadManager.setTrackEnvironment(mode);
+    this.weatherManager.setTrackMode(mode);
     if (mode === 'NIGHT') {
-      this.scene.background = new THREE.Color(0x060913);
-      this.scene.fog = new THREE.Fog(0x060913, 25, 280);
-      this.dirLight.color.setHex(0xb0d8ff);
-      this.dirLight.intensity = 2.6;
-      this.ambientLight.color.setHex(0x384a68);
-      this.ambientLight.intensity = 2.2;
+      this.scene.background = new THREE.Color(0x0a0e1a);
+      this.scene.fog = new THREE.FogExp2(0x0a0e1a, 0.006);
+      this.dirLight.color.setHex(0xfff5e8);
+      this.dirLight.intensity = 1.8;
+      this.ambientLight.color.setHex(0x5a6070);
+      this.ambientLight.intensity = 1.8;
     } else {
       this.scene.background = new THREE.Color(0x527799);
       this.scene.fog = new THREE.Fog(0x6b8fae, 35, 300);
@@ -222,6 +286,8 @@ export class Engine {
     const width = window.innerWidth;
     const height = window.innerHeight;
     this.renderer.setSize(width, height);
+    this.composer.setSize(width, height);
+    this.bloomPass.resolution.set(width, height);
     this.cameraManager.resize(width, height);
   };
 
@@ -263,7 +329,11 @@ export class Engine {
     this.particleSystem.emitSparks(this.playerCar.mesh.position, 28);
 
     // Trigger Game Over after short cinematic delay
-    setTimeout(() => {
+    if (this.finishRunTimeoutId !== null) {
+      clearTimeout(this.finishRunTimeoutId);
+    }
+    this.finishRunTimeoutId = window.setTimeout(() => {
+      this.finishRunTimeoutId = null;
       this.finishRun(false);
     }, 1400);
   };
@@ -275,7 +345,11 @@ export class Engine {
     HapticsManager.crash();
     this.cameraManager.triggerShake(0.35);
 
-    setTimeout(() => {
+    if (this.finishRunTimeoutId !== null) {
+      clearTimeout(this.finishRunTimeoutId);
+    }
+    this.finishRunTimeoutId = window.setTimeout(() => {
+      this.finishRunTimeoutId = null;
       this.finishRun(true);
     }, 1200);
   };
@@ -295,6 +369,7 @@ export class Engine {
 
   private finishRun(isBusted: boolean): void {
     this.stop();
+    audioManager.stopAllGameSounds();
 
     // Save stats offline
     const stats = StorageManager.getStats();
@@ -351,7 +426,8 @@ export class Engine {
         Math.cos(this.turntableAngle) * dist
       );
       this.cameraManager.camera.lookAt(0, 0.55, 0);
-      this.renderer.render(this.scene, this.cameraManager.camera);
+      // Showroom mein bhi bloom — car ke headlights glow karengi
+      this.composer.render();
       return;
     }
 
@@ -418,7 +494,8 @@ export class Engine {
       this.playerCar.speedKmh,
       this.playerCar.bounds,
       this.handleBusted,
-      this.handlePursuitEvaded
+      this.handlePursuitEvaded,
+      (forceX) => this.playerCar.applyLateralImpulse(forceX)
     );
 
     // 5. Update Particle System, Weather & Camera
@@ -449,11 +526,13 @@ export class Engine {
       this.score += Math.floor((this.playerCar.speedKmh / 36) * delta * 10 * this.comboMultiplier);
     }
 
-    // 7. Render WebGL Scene
-    this.renderer.render(this.scene, this.cameraManager.camera);
+    // 7. Render WebGL Scene via Post-Processing Composer
+    this.composer.render();
 
-    // 8. Update React HUD
-    if (this.onHUDUpdate) {
+    // 8. Update React HUD throttled to ~20 Hz to eliminate GC & React reconciliation stutter
+    this.hudUpdateTimer += delta;
+    if (this.hudUpdateTimer >= 0.048 && this.onHUDUpdate) {
+      this.hudUpdateTimer = 0;
       this.onHUDUpdate({
         speedKmh: Math.floor(this.playerCar.speedKmh),
         gear: this.playerCar.currentGear,
@@ -551,9 +630,21 @@ export class Engine {
 
   public destroy(): void {
     this.stop();
+    if (this.finishRunTimeoutId !== null) {
+      clearTimeout(this.finishRunTimeoutId);
+      this.finishRunTimeoutId = null;
+    }
     window.removeEventListener('resize', this.onResize);
     this.weatherManager.dispose();
     this.particleSystem.dispose();
+    this.roadManager.dispose();
+    this.trafficManager.dispose();
+    this.policeChase.dispose();
+    this.playerCar.dispose();
+    if (this.scene.environment) {
+      this.scene.environment.dispose();
+    }
+    this.composer.dispose();
     this.renderer.dispose();
   }
 }

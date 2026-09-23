@@ -35,6 +35,7 @@ export class PoliceChase {
   // Visual Alert State for HUD/Post-processing
   public redBlueFlashIntensity = 0; // 0..1 for screen-edge vignetting
   public distanceToClosest = 999;
+  private scratchBoundsCenter = new THREE.Vector3();
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -90,10 +91,21 @@ export class PoliceChase {
     barBase.position.set(0, 1.12, -0.2);
     group.add(barBase);
 
-    // Flashing Strobe Caps
+    // Flashing Strobe Caps — emissive materials for bloom glow
     const strobeGeom = new THREE.BoxGeometry(0.45, 0.12, 0.18);
-    const redMat = new THREE.MeshBasicMaterial({ color: 0xff0022 });
-    const blueMat = new THREE.MeshBasicMaterial({ color: 0x0055ff });
+    // MeshStandardMaterial + emissive = UnrealBloomPass pick karega
+    const redMat = new THREE.MeshStandardMaterial({
+      color: 0xff0022,
+      emissive: new THREE.Color(0xff0022),
+      emissiveIntensity: 5.0, // bloom threshold se upar
+      roughness: 0.0,
+    });
+    const blueMat = new THREE.MeshStandardMaterial({
+      color: 0x0055ff,
+      emissive: new THREE.Color(0x0055ff),
+      emissiveIntensity: 5.0,
+      roughness: 0.0,
+    });
 
     const redMesh = new THREE.Mesh(strobeGeom, redMat);
     redMesh.position.set(-0.35, 1.18, -0.2);
@@ -103,12 +115,12 @@ export class PoliceChase {
     blueMesh.position.set(0.35, 1.18, -0.2);
     group.add(blueMesh);
 
-    // High-Intensity Point Lights
-    const redLight = new THREE.PointLight(0xff0022, 2.5, 16);
+    // High-Intensity PointLights — wider range for dramatic road illumination
+    const redLight = new THREE.PointLight(0xff0022, 4.5, 20);
     redLight.position.set(-0.35, 1.3, -0.2);
     group.add(redLight);
 
-    const blueLight = new THREE.PointLight(0x0066ff, 2.5, 16);
+    const blueLight = new THREE.PointLight(0x0066ff, 4.5, 20);
     blueLight.position.set(0.35, 1.3, -0.2);
     group.add(blueLight);
 
@@ -173,7 +185,8 @@ export class PoliceChase {
     playerSpeedKmh: number,
     playerBounds: THREE.Box3,
     onBusted: () => void,
-    onEvaded: (bonus: number) => void
+    onEvaded: (bonus: number) => void,
+    onPoliceRam?: (pushForceX: number) => void
   ): void {
     if (this.state !== 'PURSUIT') {
       this.redBlueFlashIntensity = 0;
@@ -204,11 +217,13 @@ export class PoliceChase {
       const c = this.cruisers[i];
       if (!c.active) continue;
 
-      // Update strobe lights
-      c.redLight.intensity = redOn ? 3.5 : 0.2;
-      c.blueLight.intensity = blueOn ? 3.5 : 0.2;
-      (c.redMesh.material as THREE.MeshBasicMaterial).color.setHex(redOn ? 0xff0022 : 0x440005);
-      (c.blueMesh.material as THREE.MeshBasicMaterial).color.setHex(blueOn ? 0x0066ff : 0x001144);
+      // Strobe update: emissiveIntensity toggle for bloom effect
+      const redEmissive = redOn ? 5.0 : 0.05;
+      const blueEmissive = blueOn ? 5.0 : 0.05;
+      c.redLight.intensity = redOn ? 4.5 : 0.1;
+      c.blueLight.intensity = blueOn ? 4.5 : 0.1;
+      (c.redMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = redEmissive;
+      (c.blueMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = blueEmissive;
 
       // Cruiser distance along Z relative to player
       const dz = c.mesh.position.z - playerZ;
@@ -254,12 +269,11 @@ export class PoliceChase {
       c.mesh.position.x = THREE.MathUtils.lerp(c.mesh.position.x, c.targetLaneX, delta * 3.8);
       this.updateCruiserBounds(c);
 
-      // Ramming / Collision with player
+      // Ramming / Collision with player - apply real physical impulse
       if (playerBounds.intersectsBox(c.bounds)) {
-        // Push player sideways
         HapticsManager.policeImpact();
         const pushDir = c.mesh.position.x < playerX ? 1 : -1;
-        playerX += pushDir * 3.5 * delta;
+        onPoliceRam?.(pushDir * 4.2 * delta);
       }
     }
 
@@ -291,10 +305,12 @@ export class PoliceChase {
   }
 
   private updateCruiserBounds(c: PoliceCruiser): void {
-    c.bounds.setFromCenterAndSize(
-      new THREE.Vector3(c.mesh.position.x, c.mesh.position.y + c.size.y / 2, c.mesh.position.z),
-      c.size
+    this.scratchBoundsCenter.set(
+      c.mesh.position.x,
+      c.mesh.position.y + c.size.y / 2,
+      c.mesh.position.z
     );
+    c.bounds.setFromCenterAndSize(this.scratchBoundsCenter, c.size);
   }
 
   public reset(): void {
@@ -307,5 +323,23 @@ export class PoliceChase {
       c.mesh.position.set(0, -999, 0);
     });
     audioManager.updateSiren(false, 1, 0);
+  }
+
+  public dispose(): void {
+    for (const c of this.cruisers) {
+      this.scene.remove(c.mesh);
+      c.mesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+          if (Array.isArray(child.material)) {
+            child.material.forEach(m => m.dispose());
+          } else if (child.material) {
+            child.material.dispose();
+          }
+        }
+      });
+      c.redLight.dispose();
+      c.blueLight.dispose();
+    }
   }
 }

@@ -68,6 +68,7 @@ export class PlayerCar {
   // Collision & Near-Miss Bounding Box
   public bounds = new THREE.Box3();
   private carSize = new THREE.Vector3(2.1, 1.2, 4.6);
+  private scratchCenter = new THREE.Vector3();
 
   constructor(scene: THREE.Scene, config: CarConfig) {
     this.config = config;
@@ -320,36 +321,60 @@ export class PlayerCar {
 
   private addRealisticHeadlights(parent: THREE.Group, carLength: number): void {
     const halfLen = carLength * 0.46;
-    const beamLength = 32;
-    const beamGeom = new THREE.ConeGeometry(3.2, beamLength, 16, 1, true);
+    const beamLength = 28;
+
+    // Headlight beam cone — transparent, additive (volumetric feel)
+    const beamGeom = new THREE.ConeGeometry(2.8, beamLength, 16, 1, true);
     beamGeom.rotateX(Math.PI / 2);
     beamGeom.translate(0, 0, beamLength / 2);
-
     const beamMat = new THREE.MeshBasicMaterial({
-      color: 0x99ddff,
+      color: 0xd0eeff,
       transparent: true,
-      opacity: 0.16,
+      opacity: 0.09,  // subtle — realistic nahi cartoon
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       side: THREE.DoubleSide,
     });
 
     const leftBeam = new THREE.Mesh(beamGeom, beamMat);
-    leftBeam.position.set(-0.72, 0.45, halfLen);
+    leftBeam.position.set(-0.72, 0.42, halfLen);
     parent.add(leftBeam);
 
     const rightBeam = new THREE.Mesh(beamGeom, beamMat);
-    rightBeam.position.set(0.72, 0.45, halfLen);
+    rightBeam.position.set(0.72, 0.42, halfLen);
     parent.add(rightBeam);
 
-    const lensGeom = new THREE.SphereGeometry(0.08, 12, 12);
-    const lensMat = new THREE.MeshBasicMaterial({ color: 0xccf0ff });
+    // ── Emissive Lens (bloom pe glow karega!) ────────────────────────────
+    // MeshStandardMaterial + emissive = UnrealBloomPass pick karta hai
+    const lensGeom = new THREE.SphereGeometry(0.09, 12, 12);
+    const lensMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: new THREE.Color(0xd0eeff),
+      emissiveIntensity: 6.0, // bloom threshold 0.82 se upar — strong glow
+      roughness: 0.0,
+      metalness: 0.0,
+    });
     const lensL = new THREE.Mesh(lensGeom, lensMat);
-    lensL.position.set(-0.72, 0.45, halfLen);
+    lensL.position.set(-0.72, 0.42, halfLen);
     parent.add(lensL);
     const lensR = new THREE.Mesh(lensGeom, lensMat);
-    lensR.position.set(0.72, 0.45, halfLen);
+    lensR.position.set(0.72, 0.42, halfLen);
     parent.add(lensR);
+    this.headlightCones.push(lensL, lensR);
+
+    // ── Actual SpotLight for road illumination ───────────────────────────
+    // Realistic headlight throw — road surface pe actual light padti hai
+    const spotL = new THREE.SpotLight(0xd0eeff, 3.5, 35, Math.PI / 10, 0.4, 1.5);
+    spotL.position.set(-0.72, 0.42, halfLen);
+    spotL.target.position.set(-0.72, -0.5, halfLen + 20);
+    parent.add(spotL);
+    parent.add(spotL.target);
+
+    const spotR = new THREE.SpotLight(0xd0eeff, 3.5, 35, Math.PI / 10, 0.4, 1.5);
+    spotR.position.set(0.72, 0.42, halfLen);
+    spotR.target.position.set(0.72, -0.5, halfLen + 20);
+    parent.add(spotR);
+    parent.add(spotR.target);
   }
 
   // =========================================================================
@@ -1069,10 +1094,15 @@ export class PlayerCar {
   }
 
   public updateBounds(): void {
-    this.bounds.setFromCenterAndSize(
-      new THREE.Vector3(this.mesh.position.x, this.mesh.position.y + 0.6, this.mesh.position.z),
-      this.carSize
-    );
+    this.scratchCenter.set(this.mesh.position.x, this.mesh.position.y + 0.6, this.mesh.position.z);
+    this.bounds.setFromCenterAndSize(this.scratchCenter, this.carSize);
+  }
+
+  public applyLateralImpulse(forceX: number): void {
+    if (this.isCrashed) return;
+    this.mesh.position.x = THREE.MathUtils.clamp(this.mesh.position.x + forceX, -7.1, 7.1);
+    this.steeringInertia = THREE.MathUtils.clamp(this.steeringInertia + Math.sign(forceX) * 0.45, -1, 1);
+    this.updateBounds();
   }
 
   public reset(startLaneIndex = 1): void {
@@ -1085,5 +1115,23 @@ export class PlayerCar {
     this.isCrashed = false;
     this.isNitroActive = false;
     this.updateBounds();
+  }
+
+  public dispose(): void {
+    if (this.carRoot) {
+      this.mesh.remove(this.carRoot);
+      this.carRoot.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+        }
+      });
+    }
+    this.carPaintMaterial.dispose();
+    this.carbonMat.dispose();
+    this.glassMat.dispose();
+    this.chromeMat.dispose();
+    this.brakeLightMaterial.dispose();
+    this.underglowMesh.geometry.dispose();
+    (this.underglowMesh.material as THREE.Material).dispose();
   }
 }

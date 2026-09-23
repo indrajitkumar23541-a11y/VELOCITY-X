@@ -19,6 +19,8 @@ export class AudioManager {
   private nitroGain: GainNode | null = null;
   private nitroFilter: BiquadFilterNode | null = null;
   private isNitroPlaying: boolean = false;
+  private nitroStopTimeout: number | null = null;
+  private cachedWhiteNoiseBuffer: AudioBuffer | null = null;
 
   // Police Siren Nodes
   private sirenOsc: OscillatorNode | null = null;
@@ -49,7 +51,7 @@ export class AudioManager {
       this.ctx = new AudioCtx();
 
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+      this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : this.volume, this.ctx.currentTime);
       this.masterGain.connect(this.ctx.destination);
 
       this.setupEngineSound();
@@ -186,48 +188,63 @@ export class AudioManager {
     this.nitroGain.connect(this.masterGain);
   }
 
-  private createWhiteNoiseBuffer(): AudioBuffer {
-    if (!this.ctx) throw new Error('No context');
-    const bufferSize = this.ctx.sampleRate * 2; // 2 seconds
-    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) {
-      data[i] = Math.random() * 2 - 1;
+  private getWhiteNoiseBuffer(): AudioBuffer | null {
+    if (!this.ctx) return null;
+    if (!this.cachedWhiteNoiseBuffer) {
+      const bufferSize = this.ctx.sampleRate * 2; // 2 seconds
+      this.cachedWhiteNoiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = this.cachedWhiteNoiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
     }
-    return buffer;
+    return this.cachedWhiteNoiseBuffer;
   }
 
   public startNitro(): void {
     if (!this.ctx || !this.nitroGain || !this.nitroFilter) return;
-    if (this.isNitroPlaying) return;
+
+    if (this.nitroStopTimeout !== null) {
+      clearTimeout(this.nitroStopTimeout);
+      this.nitroStopTimeout = null;
+    }
 
     this.isNitroPlaying = true;
-    try {
-      this.nitroNoiseNode = this.ctx.createBufferSource();
-      this.nitroNoiseNode.buffer = this.createWhiteNoiseBuffer();
-      this.nitroNoiseNode.loop = true;
-      this.nitroNoiseNode.connect(this.nitroFilter);
-      this.nitroNoiseNode.start();
+    const t = this.ctx.currentTime;
 
-      const t = this.ctx.currentTime;
+    try {
+      if (!this.nitroNoiseNode) {
+        const buf = this.getWhiteNoiseBuffer();
+        if (!buf) return;
+        this.nitroNoiseNode = this.ctx.createBufferSource();
+        this.nitroNoiseNode.buffer = buf;
+        this.nitroNoiseNode.loop = true;
+        this.nitroNoiseNode.connect(this.nitroFilter);
+        this.nitroNoiseNode.start(t);
+      }
+
       this.nitroGain.gain.cancelScheduledValues(t);
-      this.nitroGain.gain.setValueAtTime(0, t);
-      this.nitroGain.gain.linearRampToValueAtTime(0.55, t + 0.15);
+      this.nitroGain.gain.setValueAtTime(this.nitroGain.gain.value, t);
+      this.nitroGain.gain.linearRampToValueAtTime(0.55, t + 0.12);
     } catch {
       // ignore
     }
   }
 
   public stopNitro(): void {
-    if (!this.ctx || !this.nitroGain) return;
-    if (!this.isNitroPlaying) return;
+    if (!this.ctx || !this.nitroGain || !this.isNitroPlaying) return;
 
+    this.isNitroPlaying = false;
     const t = this.ctx.currentTime;
     this.nitroGain.gain.cancelScheduledValues(t);
-    this.nitroGain.gain.linearRampToValueAtTime(0, t + 0.2);
+    this.nitroGain.gain.setValueAtTime(this.nitroGain.gain.value, t);
+    this.nitroGain.gain.linearRampToValueAtTime(0, t + 0.18);
 
-    setTimeout(() => {
-      if (this.nitroNoiseNode) {
+    if (this.nitroStopTimeout !== null) {
+      clearTimeout(this.nitroStopTimeout);
+    }
+    this.nitroStopTimeout = window.setTimeout(() => {
+      if (this.nitroNoiseNode && !this.isNitroPlaying) {
         try {
           this.nitroNoiseNode.stop();
           this.nitroNoiseNode.disconnect();
@@ -236,8 +253,8 @@ export class AudioManager {
         }
         this.nitroNoiseNode = null;
       }
-      this.isNitroPlaying = false;
-    }, 250);
+      this.nitroStopTimeout = null;
+    }, 220);
 
     // Blow-off valve release "pshhhh"
     this.playBlowOffValve();
@@ -246,15 +263,17 @@ export class AudioManager {
   private playBlowOffValve(): void {
     if (!this.ctx || !this.masterGain) return;
     try {
+      const buf = this.getWhiteNoiseBuffer();
+      if (!buf) return;
       const noise = this.ctx.createBufferSource();
-      noise.buffer = this.createWhiteNoiseBuffer();
+      noise.buffer = buf;
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'highpass';
       filter.frequency.setValueAtTime(2200, this.ctx.currentTime);
 
       const gain = this.ctx.createGain();
       const t = this.ctx.currentTime;
-      gain.gain.setValueAtTime(0.4, t);
+      gain.gain.setValueAtTime(0.35, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
 
       noise.connect(filter);
@@ -262,7 +281,7 @@ export class AudioManager {
       gain.connect(this.masterGain);
 
       noise.start(t);
-      noise.stop(t + 0.4);
+      noise.stop(t + 0.38);
     } catch {
       // ignore
     }
@@ -403,22 +422,25 @@ export class AudioManager {
       osc.stop(t + 0.5);
 
       // Metal crunch noise
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = this.createWhiteNoiseBuffer();
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(800, t);
+      const buf = this.getWhiteNoiseBuffer();
+      if (buf) {
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buf;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(800, t);
 
-      const noiseGain = this.ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.7, t);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.7, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
 
-      noise.connect(filter);
-      filter.connect(noiseGain);
-      noiseGain.connect(this.masterGain);
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(this.masterGain);
 
-      noise.start(t);
-      noise.stop(t + 0.65);
+        noise.start(t);
+        noise.stop(t + 0.65);
+      }
     } catch {
       // ignore
     }
@@ -711,6 +733,51 @@ export class AudioManager {
       });
     } catch {
       // ignore
+    }
+  }
+
+  /**
+   * Immediately silence all ongoing game sounds (engine, nitro, siren, skid, rain)
+   * Called on crash, busted, game over, or navigation back to garage/menu
+   */
+  public stopAllGameSounds(): void {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    if (this.engineGain) {
+      this.engineGain.gain.cancelScheduledValues(t);
+      this.engineGain.gain.setValueAtTime(0, t);
+    }
+
+    if (this.nitroGain) {
+      this.nitroGain.gain.cancelScheduledValues(t);
+      this.nitroGain.gain.setValueAtTime(0, t);
+      if (this.nitroNoiseNode) {
+        try {
+          this.nitroNoiseNode.stop();
+          this.nitroNoiseNode.disconnect();
+        } catch {
+          // ignore
+        }
+        this.nitroNoiseNode = null;
+      }
+      this.isNitroPlaying = false;
+    }
+
+    if (this.sirenGain) {
+      this.sirenGain.gain.cancelScheduledValues(t);
+      this.sirenGain.gain.setValueAtTime(0, t);
+    }
+
+    if (this.skidGain) {
+      this.skidGain.gain.cancelScheduledValues(t);
+      this.skidGain.gain.setValueAtTime(0, t);
+      this.isSkidPlaying = false;
+    }
+
+    if (this.rainGain) {
+      this.rainGain.gain.cancelScheduledValues(t);
+      this.rainGain.gain.setValueAtTime(0, t);
     }
   }
 }

@@ -7,9 +7,9 @@ export class CameraManager {
   private targetPos = new THREE.Vector3();
   private lookTarget = new THREE.Vector3();
 
-  // Dynamic FOV range
-  private baseFOV = 68;
-  private maxFOV = 92;
+  // Dynamic FOV range — Night City Racing jaisa tight framing
+  private baseFOV = 65;
+  private maxFOV = 78;
 
   // Impact & Nitro Camera Shake
   private shakeIntensity = 0;
@@ -35,6 +35,17 @@ export class CameraManager {
     this.camera.updateProjectionMatrix();
   }
 
+  public reset(carPos: THREE.Vector3): void {
+    this.shakeIntensity = 0;
+    this.camera.fov = this.baseFOV;
+    this.camera.updateProjectionMatrix();
+    this.targetPos.set(carPos.x * 0.6, carPos.y + 1.4, carPos.z - 4.2);
+    this.currentPos.copy(this.targetPos);
+    this.camera.position.copy(this.currentPos);
+    this.lookTarget.set(carPos.x * 0.3, carPos.y + 0.6, carPos.z + 8);
+    this.camera.lookAt(this.lookTarget);
+  }
+
   public update(delta: number, carPos: THREE.Vector3, speedKmh: number, isNitro: boolean): void {
     // 1. Dynamic FOV based on speed and nitro
     const speedRatio = Math.min(1, speedKmh / 280);
@@ -42,12 +53,13 @@ export class CameraManager {
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFOV, delta * 5);
     this.camera.updateProjectionMatrix();
 
-    // 2. Camera Chase Distance: low, aggressive hypercar chase framing (Image 4)
-    const backDistance = 5.6 + speedRatio * 1.4;
-    const height = 1.95 + speedRatio * 0.35;
+    // Camera Chase Distance: low & close — Night City Racing style
+    // Height 1.4m: car ke peeche bilkul neeche, car badi dikhegi
+    const backDistance = 4.2 + speedRatio * 0.8;
+    const height = 1.4 + speedRatio * 0.25;
 
     this.targetPos.set(
-      carPos.x * 0.7, // slight lateral lag for dynamic drift feel
+      carPos.x * 0.6,  // tight lateral tracking
       carPos.y + height,
       carPos.z - backDistance
     );
@@ -77,11 +89,11 @@ export class CameraManager {
       this.currentPos.z
     );
 
-    // 4. Look ahead along the highway (Focused directly down the expressway)
+    // 4. Look at car + small look-ahead (tighter framing, car more centered)
     this.lookTarget.set(
-      carPos.x * 0.35,
-      carPos.y + 1.05,
-      carPos.z + 16 // look 16m ahead
+      carPos.x * 0.3,
+      carPos.y + 0.6,
+      carPos.z + 8  // 8m look-ahead — car fills more of screen
     );
     this.camera.lookAt(this.lookTarget);
   }

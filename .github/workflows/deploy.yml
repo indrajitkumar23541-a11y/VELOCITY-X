@@ -101,8 +101,8 @@ jobs:
         continue-on-error: true
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.0.0
-          name: "VELOCITY X — v1.0.0 Official Release (Android & iOS)"
+          tag_name: v1.2.0
+          name: "VELOCITY X — v1.2.0 Official Release (Android & iOS)"
           body: |
             ## 🏎️ VELOCITY X — Cyber Highway Police Pursuit
             

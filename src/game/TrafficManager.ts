@@ -30,6 +30,9 @@ export class TrafficManager {
   private tireMaterial: THREE.MeshStandardMaterial;
   private taillightMaterial: THREE.MeshBasicMaterial;
 
+  // Scratch vector for zero-GC bounding box updates
+  private scratchBoundsCenter = new THREE.Vector3();
+
   constructor(scene: THREE.Scene) {
     this.scene = scene;
 
@@ -171,7 +174,7 @@ export class TrafficManager {
     let spawnZ = playerZ + 45;
     for (let i = 0; i < this.vehicles.length; i++) {
       const v = this.vehicles[i];
-      const lane = Math.floor(Math.random() * 4);
+      const lane = i % 4;
       const laneX = RoadManager.LANES[lane];
 
       v.active = true;
@@ -181,7 +184,7 @@ export class TrafficManager {
       v.mesh.position.set(laneX, 0, spawnZ);
       this.updateVehicleBounds(v);
 
-      spawnZ += 28 + Math.random() * 32;
+      spawnZ += 20 + Math.random() * 25;
     }
   }
 
@@ -209,7 +212,7 @@ export class TrafficManager {
       }
 
       // 2. High-Speed Near-Miss Check
-      // Player must be going > 115 km/h, lateral distance < 1.95m, overlapping Z
+      // Player must be going > 115 km/h, lateral distance < 2.1m, overlapping Z
       if (!v.nearMissed && playerSpeedKmh > 115) {
         const dx = Math.abs(playerX - v.mesh.position.x);
         const dz = Math.abs(playerZ - v.mesh.position.z);
@@ -222,30 +225,65 @@ export class TrafficManager {
         }
       }
 
-      // 3. Recycle vehicles that fall far behind player (or too far ahead)
-      if (v.mesh.position.z < playerZ - 35) {
-        // Find furthest active vehicle ahead
-        let maxZ = playerZ + 50;
-        for (const other of this.vehicles) {
-          if (other.active && other.mesh.position.z > maxZ) {
-            maxZ = other.mesh.position.z;
-          }
-        }
-        // Reposition ahead in random lane
-        const newLane = Math.floor(Math.random() * 4);
-        v.laneIndex = newLane;
-        v.mesh.position.set(RoadManager.LANES[newLane], 0, maxZ + 25 + Math.random() * 30);
-        v.speedKmh = v.type === 'truck' ? 70 + Math.random() * 15 : 85 + Math.random() * 25;
-        v.nearMissed = false;
-        this.updateVehicleBounds(v);
+      // 3. Bidirectional Traffic Recycling (prevents empty highway when player slows or stops)
+      if (v.mesh.position.z < playerZ - 35 || v.mesh.position.z > playerZ + 210) {
+        this.recycleVehicle(playerZ, v);
       }
     }
   }
 
+  private recycleVehicle(playerZ: number, v: TrafficVehicle): void {
+    // Find a safe spawn position ahead of player that doesn't overlap other vehicles
+    let bestLane = Math.floor(Math.random() * 4);
+    let bestZ = playerZ + 55 + Math.random() * 90;
+
+    for (let attempts = 0; attempts < 6; attempts++) {
+      const candidateLane = (bestLane + attempts) % 4;
+      const candidateZ = playerZ + 50 + Math.random() * 95;
+
+      const laneBlocked = this.vehicles.some(
+        other => other !== v && other.active && other.laneIndex === candidateLane && Math.abs(other.mesh.position.z - candidateZ) < 24
+      );
+
+      if (!laneBlocked) {
+        bestLane = candidateLane;
+        bestZ = candidateZ;
+        break;
+      }
+    }
+
+    v.laneIndex = bestLane;
+    v.mesh.position.set(RoadManager.LANES[bestLane], 0, bestZ);
+    v.speedKmh = v.type === 'truck' ? 70 + Math.random() * 15 : 85 + Math.random() * 25;
+    v.nearMissed = false;
+    this.updateVehicleBounds(v);
+  }
+
   private updateVehicleBounds(v: TrafficVehicle): void {
-    v.bounds.setFromCenterAndSize(
-      new THREE.Vector3(v.mesh.position.x, v.mesh.position.y + v.size.y / 2, v.mesh.position.z),
-      v.size
+    this.scratchBoundsCenter.set(
+      v.mesh.position.x,
+      v.mesh.position.y + v.size.y / 2,
+      v.mesh.position.z
     );
+    v.bounds.setFromCenterAndSize(this.scratchBoundsCenter, v.size);
+  }
+
+  public dispose(): void {
+    for (const v of this.vehicles) {
+      this.scene.remove(v.mesh);
+      v.mesh.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          child.geometry?.dispose();
+        }
+      });
+    }
+    this.taxiMaterial.dispose();
+    this.sedanMaterial.dispose();
+    this.suvMaterial.dispose();
+    this.truckCabMaterial.dispose();
+    this.truckTankMaterial.dispose();
+    this.glassMaterial.dispose();
+    this.tireMaterial.dispose();
+    this.taillightMaterial.dispose();
   }
 }

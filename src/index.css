@@ -752,6 +752,54 @@ html, body, #root {
   box-shadow: 0 0 10px var(--cyan-glow);
 }
 
+.showroom-customizer-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.customizer-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.customizer-label {
+  font-family: var(--font-racing);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.color-swatches {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-swatch-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.color-swatch-btn:hover {
+  transform: scale(1.2);
+}
+
+.color-swatch-btn.active {
+  border-color: #ffffff;
+  transform: scale(1.28);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.85);
+}
+
 .showroom-actions-col {
   display: flex;
   align-items: center;
