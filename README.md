@@ -6,18 +6,20 @@
 
 [![Play Live Game](https://img.shields.io/badge/🎮_PLAY_LIVE_GAME-GitHub_Pages-00f3ff?style=for-the-badge&logo=google-chrome&logoColor=black)](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/)
 [![Download Android APK](https://img.shields.io/badge/📱_DOWNLOAD-Android_APK-3ddc84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases)
+[![Download Windows EXE](https://img.shields.io/badge/💻_DOWNLOAD-Windows_Setup-0078d4?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/indrajitkumar23541-a11y/VELOCITY-X/deploy.yml?branch=main&style=for-the-badge&logo=github)](https://github.com/indrajitkumar23541-a11y/VELOCITY-X/actions)
 [![PWA Ready](https://img.shields.io/badge/⚡_PWA-100%25_Offline-ff007f?style=for-the-badge&logo=pwa&logoColor=white)](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/)
 
 ---
 
-## 📲 Quick Play on Phone (No App Store Needed!)
+## 📲 Play on Every Device (Universal App)
 
 | Platform | Recommended Method | How to Install |
 | :--- | :--- | :--- |
-| **Android** | **Direct APK (Native App)** | 1. Go to [Releases](https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases)<br>2. Download **`VELOCITY-X.apk`** & tap **Install**<br>3. Open and play offline with full hardware acceleration! |
-| **Android** | **Web Instant Install (PWA)** | 1. Open [Live Game Link](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/) in Chrome<br>2. Tap **"Install App"** banner or 3 dots $\rightarrow$ **"Install App"** |
+| **Android (Phone / Tablet)** | **Direct APK (Native App)** | 1. Go to [Releases](https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases)<br>2. Download **`VELOCITY-X.apk`** & tap **Install**<br>3. Open and play offline with full hardware acceleration! |
+| **Windows (PC / Laptop)** | **Direct .EXE / Desktop App** | 1. Download **`VELOCITY-X-Setup.exe`** from [Releases](https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases) & run setup<br>2. Or open in Edge/Chrome $\rightarrow$ Click **"Install App"** icon in URL bar |
 | **iOS (iPhone / iPad)** | **Home Screen App (PWA)** | 1. Open [Live Game Link](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/) in Safari<br>2. Tap Share button (📤) $\rightarrow$ **"Add to Home Screen"**<br>3. Launches as full-screen standalone app with 0 URL bar! |
+| **macOS (MacBook / iMac)** | **Dock App / Desktop** | 1. Open in Safari $\rightarrow$ File $\rightarrow$ **"Add to Dock"**<br>2. Or open in Chrome $\rightarrow$ Click **"Install VELOCITY X"** |
 
 ---
 

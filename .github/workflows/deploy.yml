@@ -102,15 +102,73 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/main')
         with:
           tag_name: v1.2.0
-          name: "VELOCITY X — v1.2.0 Official Release (Android & iOS)"
+          name: "VELOCITY X — Official Universal Release (Android, Windows, iOS & Web)"
           body: |
             ## 🏎️ VELOCITY X — Cyber Highway Police Pursuit
-            
-            ### 📱 How to Play:
-            - **Android Users**: Download `VELOCITY-X.apk` below and install it directly on your phone!
-            - **iOS & Android Users**: Open the live game link on your phone: [https://${{ github.repository_owner }}.github.io/VELOCITY-X/](https://${{ github.repository_owner }}.github.io/VELOCITY-X/) and tap **"Install App"** / **"Add to Home Screen"** to play 100% offline in Flight Mode!
+
+            ### 📱 Download & Play on Every Device:
+            - **Android (Phones & Tablets)**: Download `VELOCITY-X.apk` below and install directly!
+            - **Windows (Laptops & PC)**: Download `VELOCITY-X-Setup.exe` below for full 4K 120 FPS desktop play!
+            - **iOS / iPad / Android Web**: Open the live game link: [https://${{ github.repository_owner }}.github.io/VELOCITY-X/](https://${{ github.repository_owner }}.github.io/VELOCITY-X/) and tap **"Install App"** / **"Add to Home Screen"** to play 100% offline in Flight Mode!
           files: |
             ./VELOCITY-X.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # JOB 3: Build Native Windows Setup .EXE (Windows Laptop & PC Game)
+  build-windows-exe:
+    runs-on: windows-latest
+    needs: deploy-web
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Build Windows Executable Installer
+        run: npx electron-builder --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Find and Prepare Windows Setup File
+        shell: pwsh
+        run: |
+          $setupFile = Get-ChildItem -Path release -Filter "*Setup*.exe" | Select-Object -First 1
+          if ($setupFile) {
+            Copy-Item $setupFile.FullName -Destination "./VELOCITY-X-Setup.exe"
+            Write-Host "Prepared Windows Setup: ./VELOCITY-X-Setup.exe"
+          } else {
+            $anyExe = Get-ChildItem -Path release -Filter "*.exe" | Select-Object -First 1
+            if ($anyExe) {
+              Copy-Item $anyExe.FullName -Destination "./VELOCITY-X-Setup.exe"
+            }
+          }
+
+      - name: Upload Windows Setup as Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VELOCITY-X-Windows-Setup-EXE
+          path: ./VELOCITY-X-Setup.exe
+
+      - name: Attach Windows Setup to GitHub Release
+        uses: softprops/action-gh-release@v2
+        continue-on-error: true
+        if: startsWith(github.ref, 'refs/heads/main')
+        with:
+          tag_name: v1.2.0
+          files: |
+            ./VELOCITY-X-Setup.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 

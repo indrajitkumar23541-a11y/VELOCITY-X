@@ -1,0 +1,47 @@
+{
+  "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "appId": "com.velocityx.cyberracer",
+  "productName": "VELOCITY X",
+  "copyright": "Copyright © 2026 Indrajit Kumar",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "public/icons/**/*"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "public/icons/icon-512.png",
+    "artifactName": "VELOCITY-X-Setup-${version}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "VELOCITY X"
+  },
+  "mac": {
+    "target": ["dmg"],
+    "icon": "public/icons/icon-512.png",
+    "category": "public.app-category.racing-games",
+    "artifactName": "VELOCITY-X-${version}-Mac.${ext}"
+  },
+  "linux": {
+    "target": ["AppImage"],
+    "icon": "public/icons/icon-512.png",
+    "category": "Game",
+    "artifactName": "VELOCITY-X-${version}-Linux.${ext}"
+  }
+}

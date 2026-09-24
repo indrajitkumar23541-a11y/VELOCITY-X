@@ -152,40 +152,60 @@ export const InstallPrompt: React.FC = () => {
             </p>
 
             <div className="install-steps-list">
-              {/* Method 1: Chrome Menu */}
+              {/* Platform 1: Android */}
               <div className="install-step-item highlight-step">
-                <div className="step-badge">1</div>
+                <div className="step-badge">📱</div>
                 <div className="step-content">
-                  <h4>Android Phone (Chrome)</h4>
-                  <p>Chrome me upar right side me <strong>3 dots (⋮)</strong> dabayein, fir <strong>"Install app"</strong> ya <strong>"Add to Home screen"</strong> par tap karein.</p>
-                </div>
-              </div>
-
-              {/* Method 2: iPhone Safari */}
-              <div className="install-step-item">
-                <div className="step-badge">2</div>
-                <div className="step-content">
-                  <h4>iPhone / iPad (Safari)</h4>
-                  <p>Safari ke bottom me <strong>Share button (📤)</strong> dabayein, fir scroll karke <strong>"Add to Home Screen"</strong> chunein.</p>
-                </div>
-              </div>
-
-              {/* Method 3: Direct APK Download */}
-              <div className="install-step-item">
-                <div className="step-badge">APK</div>
-                <div className="step-content">
-                  <h4>Direct Android .APK File</h4>
-                  <p>Agar aap direct file download karna chahte hain:</p>
+                  <h4>Android Phone & Tablet</h4>
+                  <p>Chrome me <strong>"Install app"</strong> dabayein ya direct APK download karein:</p>
                   <a
-                    href="https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases"
+                    href="https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases/download/v1.2.0/VELOCITY-X.apk"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="apk-download-link-btn"
                   >
                     <Download size={14} />
-                    <span>Download VELOCITY-X.apk</span>
+                    <span>Download Android APK (23 MB)</span>
                     <ExternalLink size={12} />
                   </a>
+                </div>
+              </div>
+
+              {/* Platform 2: Windows PC / Laptop */}
+              <div className="install-step-item">
+                <div className="step-badge">💻</div>
+                <div className="step-content">
+                  <h4>Windows PC & Laptop (Win 10 / 11)</h4>
+                  <p>Browser me URL bar ke pass <strong>"Install App" (Computer Icon)</strong> dabayein, ya setup download karein:</p>
+                  <a
+                    href="https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="apk-download-link-btn"
+                    style={{ background: 'linear-gradient(135deg, rgba(0, 119, 255, 0.3) 0%, rgba(0, 243, 255, 0.2) 100%)', borderColor: '#00d4ff' }}
+                  >
+                    <Download size={14} />
+                    <span>Download Windows Setup (.exe)</span>
+                    <ExternalLink size={12} />
+                  </a>
+                </div>
+              </div>
+
+              {/* Platform 3: iPhone / iPad */}
+              <div className="install-step-item">
+                <div className="step-badge">🍏</div>
+                <div className="step-content">
+                  <h4>iPhone & iPad (iOS / iPadOS)</h4>
+                  <p>Safari ke bottom me <strong>Share button (📤)</strong> dabayein, fir scroll karke <strong>"Add to Home Screen"</strong> chunein. Ye full-screen standalone app ban jayega!</p>
+                </div>
+              </div>
+
+              {/* Platform 4: Mac */}
+              <div className="install-step-item">
+                <div className="step-badge">🍎</div>
+                <div className="step-content">
+                  <h4>MacBook & iMac (macOS)</h4>
+                  <p>Safari me <strong>File ➔ "Add to Dock"</strong> karein ya Chrome me <strong>"Install VELOCITY X"</strong> par click karein.</p>
                 </div>
               </div>
 
@@ -193,7 +213,7 @@ export const InstallPrompt: React.FC = () => {
               <div className="install-step-item">
                 <div className="step-badge">🔗</div>
                 <div className="step-content">
-                  <h4>Phone Link Share</h4>
+                  <h4>Universal Web Link (Share to Any Device)</h4>
                   <div className="copy-url-row">
                     <code>{currentOrigin}</code>
                     <button type="button" className="copy-btn" onClick={handleCopyOrigin}>
