@@ -613,35 +613,72 @@ export class TrafficManager {
   }
 
   /**
-   * Initializes highway traffic in staggered, balanced slalom waves.
-   * Guarantees at least 1-2 open escape corridors at all times.
+   * Returns a realistic cruising speed adhering to strict lane hierarchy.
+   * Ensures natural speed deltas between lanes so cars never pace side-by-side.
+   */
+  private calculateLaneSpeed(lane: number, type: TrafficType): number {
+    switch (lane) {
+      case 0: { // Slowest Freight / Truck Lane (Far Left)
+        const base = type === 'truck' ? 74 : 78;
+        return base + (Math.random() * 4 - 2);
+      }
+      case 1: { // Medium Cruising Lane (Middle Left)
+        const base = type === 'truck' ? 84 : (type === 'van' ? 88 : 94);
+        return base + (Math.random() * 4 - 2);
+      }
+      case 2: { // Fast Cruising Lane (Middle Right)
+        const base = type === 'truck' ? 95 : 108;
+        return base + (Math.random() * 5 - 2.5);
+      }
+      case 3: // Express Passing Lane (Far Right)
+      default: {
+        const base = 124;
+        return base + (Math.random() * 6 - 3);
+      }
+    }
+  }
+
+  /**
+   * Initializes highway traffic in staggered, balanced slalom waves across 500m.
+   * Guarantees at least 2 open escape corridors at all times for cuts and overtaking.
    */
   public reset(playerZ: number): void {
-    // 16 vehicles arranged across 8 staggered waves
-    const laneSequence = [0, 2, 1, 3, 0, 2, 1, 3, 2, 0, 3, 1, 0, 2, 1, 3];
-    const zOffsets = [48, 72, 104, 126, 158, 180, 210, 232, 262, 284, 314, 336, 366, 388, 418, 440];
+    // 16 vehicles arranged across staggered slalom waves spread over 520 meters
+    // Each wave leaves at least 2 adjacent or diagonal corridors 100% open
+    const initialConfig: { lane: number; zOffset: number }[] = [
+      { lane: 0, zOffset: 75 },   // Wave 1: Heavy freight on far-left (Lanes 1,2,3 completely clear)
+      { lane: 2, zOffset: 110 },  // Wave 2: Mid-fast cruiser in Lane 2 (Cut through Lane 1 or 3)
+      { lane: 1, zOffset: 155 },  // Wave 3: Delivery van in Lane 1 (Lanes 0,2,3 open)
+      { lane: 3, zOffset: 195 },  // Wave 4: Express car in Lane 3 (Lanes 0,1,2 open)
+      { lane: 0, zOffset: 240 },  // Wave 5: Slow freight
+      { lane: 2, zOffset: 265 },  // Wave 5 staggered: Lane 2 (Lanes 1 and 3 open for zigzag weave)
+      { lane: 1, zOffset: 310 },  // Wave 6: Lane 1
+      { lane: 3, zOffset: 350 },  // Wave 7: Lane 3
+      { lane: 0, zOffset: 395 },  // Wave 8: Lane 0
+      { lane: 2, zOffset: 420 },  // Wave 8 staggered: Lane 2
+      { lane: 1, zOffset: 460 },  // Wave 9: Lane 1
+      { lane: 3, zOffset: 500 },  // Wave 10: Lane 3
+      { lane: 0, zOffset: 540 },  // Wave 11: Lane 0
+      { lane: 2, zOffset: 575 },  // Wave 12: Lane 2
+      { lane: 1, zOffset: 615 },  // Wave 13: Lane 1
+      { lane: 3, zOffset: 655 },  // Wave 14: Lane 3
+    ];
 
     for (let i = 0; i < this.vehicles.length; i++) {
       const v = this.vehicles[i];
-      const lane = laneSequence[i % laneSequence.length];
+      const cfg = initialConfig[i % initialConfig.length];
+      const lane = cfg.lane;
       const laneX = RoadManager.LANES[lane];
-      const spawnZ = playerZ + zOffsets[i % zOffsets.length];
+      const spawnZ = playerZ + cfg.zOffset;
 
-      // Lane speed hierarchy:
-      // Lane 0: 76-86 km/h (heavy freight / slow lane)
-      // Lane 1: 84-95 km/h (delivery / commercial lane)
-      // Lane 2: 95-108 km/h (cruising lane)
-      // Lane 3: 106-122 km/h (fast passing lane)
-      const baseSpeed = 76 + lane * 10;
-      const typeMod = v.type === 'truck' ? -5 : (v.type === 'van' ? -1 : 5);
-      const cruiseSpeed = baseSpeed + typeMod + (Math.random() * 6 - 3);
+      const cruiseSpeed = this.calculateLaneSpeed(lane, v.type);
 
       v.active = true;
       v.laneIndex = lane;
       v.targetLaneIndex = lane;
       v.isChangingLane = false;
       v.laneChangeProgress = 0;
-      v.laneChangeCooldown = 6 + Math.random() * 8;
+      v.laneChangeCooldown = 10 + Math.random() * 10;
       v.nearMissed = false;
       v.speedKmh = cruiseSpeed;
       v.targetSpeedKmh = cruiseSpeed;
@@ -684,40 +721,47 @@ export class TrafficManager {
         }
       }
 
-      // Smooth brake buffering if catching up to a slower vehicle
-      if (minLeaderDist < 32) {
-        if (minLeaderDist < 16) {
-          // Urgent safe buffer: brake smoothly to maintain distance
-          v.speedKmh = THREE.MathUtils.lerp(v.speedKmh, Math.min(v.speedKmh, leaderSpeed - 6), delta * 4.5);
+      // Smoothly pace behind leader without forming an artificial traffic jam
+      if (minLeaderDist < 28) {
+        if (minLeaderDist < 14) {
+          // Urgent gentle brake buffer (never drop more than 3 km/h below leader)
+          v.speedKmh = THREE.MathUtils.lerp(v.speedKmh, Math.min(v.speedKmh, leaderSpeed - 3), delta * 3.5);
         } else {
-          // Smoothly match leader vehicle speed (never clip through)
-          v.speedKmh = THREE.MathUtils.lerp(v.speedKmh, leaderSpeed, delta * 2.5);
+          // Match leader speed smoothly (prevents clipping through without bunching)
+          v.speedKmh = THREE.MathUtils.lerp(v.speedKmh, leaderSpeed, delta * 2.0);
         }
       } else {
-        // Free road ahead: cruise smoothly toward target speed
-        v.speedKmh = THREE.MathUtils.lerp(v.speedKmh, v.targetSpeedKmh, delta * 1.5);
+        // Free road ahead: cruise smoothly toward designated lane speed
+        v.speedKmh = THREE.MathUtils.lerp(v.speedKmh, v.targetSpeedKmh, delta * 1.2);
       }
 
-      // ── 2. AUTONOMOUS CIVILIAN LANE CHANGING AI ──
+      // ── 2. AUTONOMOUS CIVILIAN LANE CHANGING AI (PLAYER-AWARE) ──
       v.laneChangeCooldown -= delta;
-      if (!v.isChangingLane && v.laneChangeCooldown <= 0) {
-        const stuckBehindSlower = minLeaderDist < 26;
-        if (stuckBehindSlower || Math.random() < 0.15) {
+
+      // CRITICAL OVERTAKE COURTESY:
+      // If the player is within 70m behind and speeding (>105 km/h), civilian cars MUST HOLD THEIR LANE!
+      // This allows the player to spot gaps, plan cuts, and weave cleanly without AI abruptly cutting them off.
+      const dzToPlayer = v.mesh.position.z - playerZ;
+      const playerApproaching = dzToPlayer > -10 && dzToPlayer < 75 && playerSpeedKmh > 105;
+
+      if (!v.isChangingLane && v.laneChangeCooldown <= 0 && !playerApproaching) {
+        const stuckBehindSlower = minLeaderDist < 24 && leaderSpeed < (v.targetSpeedKmh - 5);
+        if (stuckBehindSlower) {
           const candidateLanes: number[] = [];
           if (v.laneIndex > 0) candidateLanes.push(v.laneIndex - 1);
-          if (v.laneIndex < 3) candidateLanes.push(v.laneIndex + 1);
+          if (v.laneIndex < 3 && v.type !== 'truck') candidateLanes.push(v.laneIndex + 1);
 
           for (const candLane of candidateLanes) {
-            // Ensure candidate lane is clear ahead and behind
+            // Ensure candidate lane has at least 34m clearance ahead and behind
             const laneBlocked = this.vehicles.some(
               other => other !== v && other.active &&
               (other.laneIndex === candLane || (other.isChangingLane && other.targetLaneIndex === candLane)) &&
-              Math.abs(other.mesh.position.z - v.mesh.position.z) < 30
+              Math.abs(other.mesh.position.z - v.mesh.position.z) < 34
             );
 
-            // Avoid cutting in front of player
-            const playerTooClose = Math.abs(playerZ - v.mesh.position.z) < 28 &&
-              Math.abs(playerX - RoadManager.LANES[candLane]) < 2.2;
+            // Never cut directly in front of the player's lateral trajectory
+            const playerTooClose = Math.abs(playerZ - v.mesh.position.z) < 55 &&
+              Math.abs(playerX - RoadManager.LANES[candLane]) < 2.5;
 
             if (!laneBlocked && !playerTooClose) {
               v.isChangingLane = true;
@@ -725,7 +769,9 @@ export class TrafficManager {
               v.startX = v.mesh.position.x;
               v.targetLaneIndex = candLane;
               v.targetX = RoadManager.LANES[candLane];
-              v.laneChangeCooldown = 8 + Math.random() * 10;
+              // Update target speed to match the new lane's hierarchy
+              v.targetSpeedKmh = this.calculateLaneSpeed(candLane, v.type);
+              v.laneChangeCooldown = 12 + Math.random() * 10;
               break;
             }
           }
@@ -775,51 +821,122 @@ export class TrafficManager {
       }
 
       // ── 5. BIDIRECTIONAL TRAFFIC RECYCLING ──
-      if (v.mesh.position.z < playerZ - 40 || v.mesh.position.z > playerZ + 230) {
+      // Recycle if vehicle falls safely behind the player (-35m) or drifts too far ahead (+520m)
+      if (v.mesh.position.z < playerZ - 35 || v.mesh.position.z > playerZ + 520) {
         this.recycleVehicle(playerZ, v);
       }
     }
   }
 
   /**
-   * Intelligently respawns vehicles ahead of player with maximum clearance
-   * and guaranteed open weaving channels.
+   * Intelligently respawns vehicles ahead of player with guaranteed escape corridors.
+   * Never forms a 3-lane or 4-lane wall across the highway.
+   * Distributes traffic smoothly across an extended runway from +85m to +420m.
    */
   private recycleVehicle(playerZ: number, v: TrafficVehicle): void {
-    const spawnDistance = 65 + Math.random() * 95;
-    const candidateZ = playerZ + spawnDistance;
+    // Target vehicle type to realistic lane categories
+    let preferredLanes: number[];
+    if (v.type === 'truck') {
+      preferredLanes = [0, 1]; // Trucks belong strictly in slow/commercial freight lanes
+    } else if (v.type === 'van') {
+      preferredLanes = [0, 1, 2];
+    } else {
+      preferredLanes = [1, 2, 3]; // Sedans and sports SUVs in cruising and passing lanes
+    }
 
-    // Evaluate all 4 lanes for maximum clearance
-    let bestLane = 0;
-    let bestClearance = -1;
+    // Try candidate distance gates spread across the highway runway
+    const candidateDistances = [
+      85 + Math.random() * 30,
+      130 + Math.random() * 35,
+      180 + Math.random() * 35,
+      230 + Math.random() * 40,
+      285 + Math.random() * 40,
+      340 + Math.random() * 45,
+      395 + Math.random() * 45,
+    ];
 
-    for (let l = 0; l < 4; l++) {
-      let minDz = 999;
+    let bestLane = preferredLanes[Math.floor(Math.random() * preferredLanes.length)];
+    let bestSpawnZ = playerZ + 150 + Math.random() * 200;
+    let bestScore = -9999;
+
+    for (const dist of candidateDistances) {
+      const testZ = playerZ + dist;
+
+      // Check how many lanes are currently occupied in this 44m Z-window [testZ - 22, testZ + 22]
+      const occupiedLanes = new Set<number>();
       for (const other of this.vehicles) {
         if (other === v || !other.active) continue;
-        if (other.laneIndex === l || (other.isChangingLane && other.targetLaneIndex === l)) {
-          const dz = Math.abs(other.mesh.position.z - candidateZ);
-          if (dz < minDz) minDz = dz;
+        if (Math.abs(other.mesh.position.z - testZ) < 22) {
+          occupiedLanes.add(other.laneIndex);
+          if (other.isChangingLane) occupiedLanes.add(other.targetLaneIndex);
         }
       }
-      if (minDz > bestClearance) {
-        bestClearance = minDz;
-        bestLane = l;
+
+      // GUARANTEED ESCAPE CORRIDOR RULE:
+      // Never spawn in a window where 2 or more lanes are already occupied!
+      // This guarantees at least 2 lanes are ALWAYS 100% open for overtaking & cutting.
+      if (occupiedLanes.size >= 2) {
+        continue;
+      }
+
+      // Evaluate candidate lanes for this window
+      for (const lane of preferredLanes) {
+        if (occupiedLanes.has(lane)) continue;
+
+        // Calculate clearance to nearest vehicle in this specific lane
+        let minDzInLane = 999;
+        for (const other of this.vehicles) {
+          if (other === v || !other.active) continue;
+          if (other.laneIndex === lane || (other.isChangingLane && other.targetLaneIndex === lane)) {
+            const dz = Math.abs(other.mesh.position.z - testZ);
+            if (dz < minDzInLane) minDzInLane = dz;
+          }
+        }
+
+        // Must have at least 28m longitudinal clearance in this lane
+        if (minDzInLane >= 28) {
+          const score = minDzInLane + (4 - occupiedLanes.size) * 20;
+          if (score > bestScore) {
+            bestScore = score;
+            bestLane = lane;
+            bestSpawnZ = testZ;
+          }
+        }
       }
     }
 
-    // Set speed adhering to lane hierarchy
-    const baseSpeed = 76 + bestLane * 10;
-    const typeMod = v.type === 'truck' ? -5 : (v.type === 'van' ? -1 : 5);
-    const speed = baseSpeed + typeMod + (Math.random() * 6 - 3);
+    // Fallback if highway is exceptionally dense: pick the lane with the absolute biggest clearance
+    if (bestScore === -9999) {
+      let maxClearance = -1;
+      const fallbackZ = playerZ + 160 + Math.random() * 180;
+      for (const lane of preferredLanes) {
+        let minDz = 999;
+        for (const other of this.vehicles) {
+          if (other === v || !other.active) continue;
+          if (other.laneIndex === lane) {
+            const dz = Math.abs(other.mesh.position.z - fallbackZ);
+            if (dz < minDz) minDz = dz;
+          }
+        }
+        if (minDz > maxClearance) {
+          maxClearance = minDz;
+          bestLane = lane;
+          bestSpawnZ = fallbackZ;
+        }
+      }
+    }
 
+    // Configure the recycled vehicle adhering to strict lane hierarchy
+    const speed = this.calculateLaneSpeed(bestLane, v.type);
+
+    v.active = true;
     v.laneIndex = bestLane;
     v.targetLaneIndex = bestLane;
     v.isChangingLane = false;
     v.laneChangeProgress = 0;
-    v.laneChangeCooldown = 7 + Math.random() * 8;
+    v.laneChangeCooldown = 10 + Math.random() * 10;
     v.mesh.rotation.y = 0;
-    v.mesh.position.set(RoadManager.LANES[bestLane], 0, candidateZ);
+    v.mesh.position.set(RoadManager.LANES[bestLane], 0, bestSpawnZ);
     v.speedKmh = speed;
     v.targetSpeedKmh = speed;
     v.nearMissed = false;
