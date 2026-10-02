@@ -110,12 +110,8 @@ export class TiltManager {
 
     // Detect screen orientation (landscape primary 90° vs reverse landscape 270° / -90°)
     let screenAngle = 90;
-    if (typeof window !== 'undefined') {
-      if (window.screen?.orientation?.angle !== undefined) {
-        screenAngle = window.screen.orientation.angle;
-      } else if (typeof window.orientation === 'number') {
-        screenAngle = window.orientation;
-      }
+    if (typeof window !== 'undefined' && window.screen?.orientation?.angle !== undefined) {
+      screenAngle = window.screen.orientation.angle;
     }
 
     let raw = 0;

@@ -8,6 +8,7 @@ interface GameOverModalProps {
   summary: GameSummary;
   onRestart: () => void;
   onOpenGarage: () => void;
+  onOpenTracks?: () => void;
   onOpenLeaderboard?: () => void;
 }
 
@@ -15,6 +16,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   summary,
   onRestart,
   onOpenGarage,
+  onOpenTracks,
   onOpenLeaderboard,
 }) => {
   return (
@@ -99,6 +101,18 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             >
               <Trophy size={18} />
               <span>RECORDS</span>
+            </button>
+          )}
+
+          {onOpenTracks && (
+            <button
+              className="action-btn tracks-btn"
+              onClick={() => {
+                HapticsManager.buttonTap();
+                onOpenTracks();
+              }}
+            >
+              <span>TRACKS</span>
             </button>
           )}
 

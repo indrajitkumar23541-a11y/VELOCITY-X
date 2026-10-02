@@ -17,7 +17,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ onClose }) =
   const handleSaveCallsign = (e: React.FormEvent) => {
     e.preventDefault();
     HapticsManager.buttonTap();
-    const clean = callsignInput.trim().toUpperCase().slice(0, 14) || 'VIPER_01';
+    const clean = callsignInput.trim().toUpperCase().replace(/[^A-Z0-9_\-\s]/g, '').slice(0, 14) || 'VIPER_01';
     StorageManager.saveStats({ playerCallsign: clean });
     setStats(prev => ({ ...prev, playerCallsign: clean }));
     setIsEditingCallsign(false);
@@ -39,6 +39,7 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ onClose }) =
             type="button"
             className="modal-close-btn"
             onClick={() => { HapticsManager.buttonTap(); onClose(); }}
+            aria-label="Close Hall of Fame"
           >
             <X size={20} />
           </button>
@@ -58,13 +59,27 @@ export const LeaderboardModal: React.FC<LeaderboardModalProps> = ({ onClose }) =
                   maxLength={14}
                   autoFocus
                   className="callsign-input"
+                  aria-label="Driver Callsign"
+                  placeholder="CALLSIGN"
                 />
-                <button type="submit" className="save-callsign-btn">
+                <button type="submit" className="save-callsign-btn" aria-label="Save Callsign">
                   <Check size={14} />
                 </button>
               </form>
             ) : (
-              <span className="player-name-badge" onClick={() => setIsEditingCallsign(true)}>
+              <span
+                className="player-name-badge"
+                role="button"
+                tabIndex={0}
+                onClick={() => setIsEditingCallsign(true)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setIsEditingCallsign(true);
+                  }
+                }}
+                title="Click or press Enter to edit callsign"
+              >
                 {stats.playerCallsign}
                 <small className="edit-hint">(EDIT)</small>
               </span>

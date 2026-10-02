@@ -804,7 +804,6 @@ export class TrafficManager {
       // ── 3. COLLISION CHECK WITH PLAYER ──
       if (playerBounds.intersectsBox(v.bounds)) {
         onCrash();
-        return;
       }
 
       // ── 4. HIGH-SPEED NEAR-MISS DETECTION ──
@@ -969,16 +968,18 @@ export class TrafficManager {
           closestDist = dz;
           if (Math.abs(dx) < 1.1) {
             closestLane = 'SAME';
-          } else if (dx < 0) {
+          } else if (dx > 0) {
+            // In game coordinate frame (+Z forward), +X is Screen Left
             closestLane = 'LEFT';
           } else {
+            // -X is Screen Right
             closestLane = 'RIGHT';
           }
         }
       }
     }
 
-    if (closestDist <= 38) {
+    if (closestDist <= 40) {
       return { distance: Math.round(closestDist), lane: closestLane };
     }
     return null;

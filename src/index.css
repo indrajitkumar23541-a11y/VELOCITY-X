@@ -2,6 +2,22 @@
    VELOCITY X - Mobile-First High-Performance Cyberpunk Stylesheet
    ========================================================================== */
 
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 600 900;
+  font-display: swap;
+  src: url('/fonts/orbitron.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url('/fonts/rajdhani.woff2') format('woff2');
+}
+
 :root {
   --bg-dark: #080b12;
   --bg-card: rgba(14, 20, 32, 0.82);
@@ -154,17 +170,31 @@ html, body, #root {
   overflow: hidden;
 }
 
+.splash-bg-picture {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.splash-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
+
 .splash-bg-image {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: url('/images/splash-hero.jpg') center center / cover no-repeat,
-              radial-gradient(circle at center, #0e1a2d 0%, #05070d 100%);
-  filter: brightness(0.92) contrast(1.08);
-  transform: scale(1.02);
-  animation: slowZoom 20s infinite alternate ease-in-out;
+  background: radial-gradient(circle at center, #0e1a2d 0%, #05070d 100%);
 }
 
 @keyframes slowZoom {
@@ -2917,12 +2947,53 @@ html, body, #root {
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   padding: 4px 10px;
+  pointer-events: auto;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.weather-hud-chip:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
 }
 
 .weather-hud-chip.rain-active {
   border-color: var(--cyan);
   background: rgba(0, 243, 255, 0.15);
   box-shadow: 0 0 10px rgba(0, 243, 255, 0.25);
+}
+
+.audio-hud-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(14, 20, 32, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+}
+
+.audio-hud-btn:hover {
+  border-color: var(--cyan);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.audio-hud-btn.muted {
+  border-color: rgba(255, 60, 60, 0.4);
+  color: #ff4466;
+  background: rgba(255, 0, 40, 0.12);
+}
+
+.audio-hud-icon {
+  pointer-events: none;
 }
 
 .weather-hud-icon.rain {
@@ -3594,4 +3665,53 @@ body.force-virtual-landscape #root {
   color: #00f3ff;
   margin-top: 3px;
 }
+
+/* Desktop Keyboard Controls Key Guide */
+.desktop-hud-key-guide {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 14px;
+  background: rgba(10, 16, 28, 0.72);
+  border: 1px solid rgba(0, 243, 255, 0.22);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.3s ease;
+}
+
+.desktop-hud-key-guide .key-chip {
+  font-family: var(--font-racing);
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  letter-spacing: 0.8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.desktop-hud-key-guide kbd {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-family: var(--font-mono, monospace);
+  font-size: 9px;
+  font-weight: 800;
+  color: #00f3ff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+  .desktop-hud-key-guide {
+    display: none;
+  }
+}
+
 

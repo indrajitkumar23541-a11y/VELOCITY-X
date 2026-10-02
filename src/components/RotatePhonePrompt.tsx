@@ -17,12 +17,15 @@ export const RotatePhonePrompt: React.FC = () => {
       if (!portrait && document.body.classList.contains('force-virtual-landscape')) {
         document.body.classList.remove('force-virtual-landscape');
         setIsVirtualLandscape(false);
+        window.dispatchEvent(new Event('resize'));
       }
     };
 
     checkOrientation();
     window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
+    if (window.screen?.orientation) {
+      window.screen.orientation.addEventListener('change', checkOrientation);
+    }
 
     // If launched as standalone installed PWA/App, attempt landscape lock
     const isStandalone =
@@ -35,7 +38,9 @@ export const RotatePhonePrompt: React.FC = () => {
 
     return () => {
       window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
+      if (window.screen?.orientation) {
+        window.screen.orientation.removeEventListener('change', checkOrientation);
+      }
       document.body.classList.remove('force-virtual-landscape');
     };
   }, []);
@@ -82,6 +87,7 @@ export const RotatePhonePrompt: React.FC = () => {
             type="button"
             className="auto-landscape-btn"
             onClick={handleForceLandscape}
+            aria-label="FORCE AUTO-LANDSCAPE - Fullscreen Mode"
           >
             <Play size={18} fill="currentColor" />
             <span>FORCE AUTO-LANDSCAPE</span>
@@ -92,6 +98,7 @@ export const RotatePhonePrompt: React.FC = () => {
             type="button"
             className="portrait-install-action-btn"
             onClick={() => triggerGlobalAppInstall()}
+            aria-label="INSTALL APP (PERMANENT LANDSCAPE) - Add to Home Screen"
           >
             <Download size={16} />
             <span>INSTALL APP (PERMANENT LANDSCAPE)</span>

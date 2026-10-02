@@ -187,16 +187,16 @@ export class RoadManager {
   // =========================================================================
   private createAsphaltDiffuseTexture(): THREE.CanvasTexture {
     const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
+    canvas.width = 256;
+    canvas.height = 256;
     const ctx = canvas.getContext('2d')!;
 
     // Deep bituminous asphalt base
     ctx.fillStyle = '#141822';
-    ctx.fillRect(0, 0, 1024, 1024);
+    ctx.fillRect(0, 0, 256, 256);
 
     // Crushed stone aggregates (basalt, slate, and quartzite mineral flecks)
-    const imgData = ctx.getImageData(0, 0, 1024, 1024);
+    const imgData = ctx.getImageData(0, 0, 256, 256);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
       const noise = (Math.random() - 0.5) * 36;
@@ -208,39 +208,39 @@ export class RoadManager {
 
     // Polished tire wear paths (dark rubber deposit bands in each of 4 lanes)
     ctx.fillStyle = 'rgba(8, 10, 15, 0.42)';
-    const laneWidthPx = 1024 / 4;
+    const laneWidthPx = 256 / 4;
     for (let l = 0; l < 4; l++) {
       const laneCenter = l * laneWidthPx + laneWidthPx / 2;
       // Left wheel path
-      ctx.fillRect(laneCenter - 54, 0, 36, 1024);
+      ctx.fillRect(laneCenter - 14, 0, 9, 256);
       // Right wheel path
-      ctx.fillRect(laneCenter + 18, 0, 36, 1024);
+      ctx.fillRect(laneCenter + 5, 0, 9, 256);
     }
 
     // Lane center oil drip trails (longitudinal speckled drips where vehicles cruise)
     ctx.fillStyle = 'rgba(6, 8, 12, 0.55)';
     for (let l = 0; l < 4; l++) {
       const laneCenter = l * laneWidthPx + laneWidthPx / 2;
-      for (let d = 0; d < 35; d++) {
-        const y = Math.random() * 1024;
-        const xOffset = (Math.random() - 0.5) * 22;
+      for (let d = 0; d < 12; d++) {
+        const y = Math.random() * 256;
+        const xOffset = (Math.random() - 0.5) * 8;
         ctx.beginPath();
-        ctx.ellipse(laneCenter + xOffset, y, 4 + Math.random() * 6, 8 + Math.random() * 16, 0, 0, Math.PI * 2);
+        ctx.ellipse(laneCenter + xOffset, y, 1.5 + Math.random() * 2, 2.5 + Math.random() * 5, 0, 0, Math.PI * 2);
         ctx.fill();
       }
     }
 
     // Asphalt hairline surface cracks with tar sealant
     ctx.strokeStyle = 'rgba(10, 12, 18, 0.7)';
-    ctx.lineWidth = 1.5;
-    for (let c = 0; c < 8; c++) {
-      let cx = Math.random() * 1024;
-      let cy = Math.random() * 1024;
+    ctx.lineWidth = 1.2;
+    for (let c = 0; c < 4; c++) {
+      let cx = Math.random() * 256;
+      let cy = Math.random() * 256;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
-      for (let s = 0; s < 5; s++) {
-        cx += (Math.random() - 0.5) * 60;
-        cy += (Math.random() - 0.5) * 60;
+      for (let s = 0; s < 4; s++) {
+        cx += (Math.random() - 0.5) * 20;
+        cy += (Math.random() - 0.5) * 20;
         ctx.lineTo(cx, cy);
       }
       ctx.stroke();
@@ -248,13 +248,13 @@ export class RoadManager {
 
     // Reflective wet puddles (subtle sheen patches)
     ctx.fillStyle = 'rgba(10, 22, 38, 0.5)';
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 6; i++) {
       ctx.beginPath();
       ctx.ellipse(
-        Math.random() * 1024,
-        Math.random() * 1024,
-        60 + Math.random() * 110,
-        22 + Math.random() * 45,
+        Math.random() * 256,
+        Math.random() * 256,
+        18 + Math.random() * 32,
+        8 + Math.random() * 14,
         Math.random() * Math.PI,
         0,
         Math.PI * 2
@@ -267,16 +267,16 @@ export class RoadManager {
 
   private createAsphaltBumpTexture(): THREE.CanvasTexture {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 256;
+    canvas.height = 256;
     const ctx = canvas.getContext('2d')!;
 
     // Mid-gray height base
     ctx.fillStyle = '#808080';
-    ctx.fillRect(0, 0, 512, 512);
+    ctx.fillRect(0, 0, 256, 256);
 
     // High-frequency aggregate bumps (stone relief)
-    const imgData = ctx.getImageData(0, 0, 512, 512);
+    const imgData = ctx.getImageData(0, 0, 256, 256);
     const data = imgData.data;
     for (let i = 0; i < data.length; i += 4) {
       const bump = (Math.random() - 0.5) * 55;
@@ -289,15 +289,15 @@ export class RoadManager {
 
     // Recessed cracks (dark in height map)
     ctx.strokeStyle = '#303030';
-    ctx.lineWidth = 2;
-    for (let c = 0; c < 6; c++) {
-      let cx = Math.random() * 512;
-      let cy = Math.random() * 512;
+    ctx.lineWidth = 1.5;
+    for (let c = 0; c < 4; c++) {
+      let cx = Math.random() * 256;
+      let cy = Math.random() * 256;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
-      for (let s = 0; s < 4; s++) {
-        cx += (Math.random() - 0.5) * 50;
-        cy += (Math.random() - 0.5) * 50;
+      for (let s = 0; s < 3; s++) {
+        cx += (Math.random() - 0.5) * 25;
+        cy += (Math.random() - 0.5) * 25;
         ctx.lineTo(cx, cy);
       }
       ctx.stroke();
@@ -308,21 +308,21 @@ export class RoadManager {
 
   private createAsphaltRoughnessTexture(): THREE.CanvasTexture {
     const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = 256;
+    canvas.height = 256;
     const ctx = canvas.getContext('2d')!;
 
     // Base rough asphalt (high roughness value = matte non-reflective)
     ctx.fillStyle = '#d0d0d0';
-    ctx.fillRect(0, 0, 512, 512);
+    ctx.fillRect(0, 0, 256, 256);
 
     // Subtle tire paths (gentle smooth wear, not mirror gloss)
     ctx.fillStyle = '#a0a0a0';
-    const laneWidthPx = 512 / 4;
+    const laneWidthPx = 256 / 4;
     for (let l = 0; l < 4; l++) {
       const laneCenter = l * laneWidthPx + laneWidthPx / 2;
-      ctx.fillRect(laneCenter - 26, 0, 18, 512);
-      ctx.fillRect(laneCenter + 8, 0, 18, 512);
+      ctx.fillRect(laneCenter - 13, 0, 9, 256);
+      ctx.fillRect(laneCenter + 4, 0, 9, 256);
     }
 
     return new THREE.CanvasTexture(canvas);
@@ -383,24 +383,24 @@ export class RoadManager {
   // =========================================================================
   private createBuildingTexture(): THREE.CanvasTexture {
     const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
+    canvas.width = 512;
+    canvas.height = 512;
     const ctx = canvas.getContext('2d')!;
 
     // Dark sleek structural architectural glass facade
     ctx.fillStyle = '#050811';
-    ctx.fillRect(0, 0, 1024, 1024);
+    ctx.fillRect(0, 0, 512, 512);
 
     // Vertical structural mullions (steel vertical beams)
     ctx.fillStyle = '#0a101d';
-    for (let c = 0; c < 1024; c += 32) {
-      ctx.fillRect(c, 0, 4, 1024);
+    for (let c = 0; c < 512; c += 24) {
+      ctx.fillRect(c, 0, 3, 512);
     }
 
-    // Horizontal concrete floor spandrels every 48px
+    // Horizontal concrete floor spandrels every 32px
     ctx.fillStyle = '#070b14';
-    for (let r = 0; r < 1024; r += 48) {
-      ctx.fillRect(0, r, 1024, 8);
+    for (let r = 0; r < 512; r += 32) {
+      ctx.fillRect(0, r, 512, 6);
     }
 
     // Realistic office lighting: warm amber executive, crisp cool white, cyan corporate, dark unlit
@@ -412,31 +412,31 @@ export class RoadManager {
       '#ffd166', // Boardroom lighting
     ];
 
-    for (let y = 10; y < 1010; y += 48) {
-      for (let x = 6; x < 1010; x += 32) {
+    for (let y = 8; y < 504; y += 32) {
+      for (let x = 6; x < 504; x += 24) {
         // 60% of windows lit for realistic night contrast
         if (Math.random() < 0.62) {
           const color = windowColors[Math.floor(Math.random() * windowColors.length)];
           ctx.fillStyle = color;
-          ctx.fillRect(x, y, 22, 34);
+          ctx.fillRect(x, y, 15, 20);
 
           // Horizontal office blinds / desk silhouette
           if (Math.random() < 0.45) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.48)';
-            ctx.fillRect(x, y + 14, 22, 6);
+            ctx.fillRect(x, y + 8, 15, 4);
           }
         }
       }
     }
 
     // Architectural crown glowing LED strip
-    const grad = ctx.createLinearGradient(0, 0, 1024, 0);
+    const grad = ctx.createLinearGradient(0, 0, 512, 0);
     grad.addColorStop(0, '#00f3ff');
     grad.addColorStop(0.3, '#ff007f');
     grad.addColorStop(0.7, '#ffd700');
     grad.addColorStop(1, '#00f3ff');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 1024, 16);
+    ctx.fillRect(0, 0, 512, 12);
 
     return new THREE.CanvasTexture(canvas);
   }
@@ -1260,13 +1260,15 @@ export class RoadManager {
 
   public setWetness(isWet: boolean): void {
     if (isWet) {
-      this.asphaltMaterial.roughness = 0.06; // mirror slick puddles with city reflections
-      this.asphaltMaterial.metalness = 0.55;
-      this.asphaltMaterial.bumpScale = 0.025;
+      this.asphaltMaterial.roughness = 0.28; // authentic wet sheen with specular highlights
+      this.asphaltMaterial.metalness = 0.18;
+      this.asphaltMaterial.bumpScale = 0.024;
+      this.asphaltMaterial.envMapIntensity = 0.45;
     } else {
-      this.asphaltMaterial.roughness = 0.16;
-      this.asphaltMaterial.metalness = 0.38;
-      this.asphaltMaterial.bumpScale = 0.045;
+      this.asphaltMaterial.roughness = 0.90; // clean matte bituminous highway asphalt
+      this.asphaltMaterial.metalness = 0.02;
+      this.asphaltMaterial.bumpScale = 0.018;
+      this.asphaltMaterial.envMapIntensity = 0.12;
     }
   }
 

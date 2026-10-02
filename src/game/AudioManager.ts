@@ -31,6 +31,9 @@ export class AudioManager {
 
   // Tire Skid Nodes
   private skidGain: GainNode | null = null;
+  private skidNoiseNode: AudioBufferSourceNode | null = null;
+  private skidFilter: BiquadFilterNode | null = null;
+  private skidOsc: OscillatorNode | null = null;
   private isSkidPlaying: boolean = false;
 
   // Rain Sound Nodes
@@ -347,28 +350,65 @@ export class AudioManager {
   }
 
   // -------------------------------------------------------------
-  // Tire Skid / Drifting SFX
+  // Tire Skid / Drifting SFX (Resonant screech synthesis)
   // -------------------------------------------------------------
   private setupSkidSound(): void {
     if (!this.ctx || !this.masterGain) return;
 
-    this.skidGain = this.ctx.createGain();
-    this.skidGain.gain.setValueAtTime(0, this.ctx.currentTime);
-    this.skidGain.connect(this.masterGain);
+    try {
+      this.skidGain = this.ctx.createGain();
+      this.skidGain.gain.setValueAtTime(0, this.ctx.currentTime);
+
+      this.skidFilter = this.ctx.createBiquadFilter();
+      this.skidFilter.type = 'bandpass';
+      this.skidFilter.frequency.setValueAtTime(1250, this.ctx.currentTime);
+      this.skidFilter.Q.setValueAtTime(4.2, this.ctx.currentTime);
+
+      // Squeal pitch oscillator
+      this.skidOsc = this.ctx.createOscillator();
+      this.skidOsc.type = 'sawtooth';
+      this.skidOsc.frequency.setValueAtTime(740, this.ctx.currentTime);
+
+      const oscGain = this.ctx.createGain();
+      oscGain.gain.setValueAtTime(0.22, this.ctx.currentTime);
+      this.skidOsc.connect(oscGain);
+      oscGain.connect(this.skidFilter);
+
+      // Noise source for asphalt friction bite
+      const noiseBuffer = this.getWhiteNoiseBuffer();
+      if (noiseBuffer) {
+        this.skidNoiseNode = this.ctx.createBufferSource();
+        this.skidNoiseNode.buffer = noiseBuffer;
+        this.skidNoiseNode.loop = true;
+        this.skidNoiseNode.connect(this.skidFilter);
+        this.skidNoiseNode.start();
+      }
+
+      this.skidFilter.connect(this.skidGain);
+      this.skidGain.connect(this.masterGain);
+
+      this.skidOsc.start();
+    } catch {
+      // Audio fallback
+    }
   }
 
   public updateTireSkid(slipIntensity: number): void {
     if (!this.ctx || !this.skidGain) return;
 
     const t = this.ctx.currentTime;
-    if (slipIntensity > 0.15) {
-      if (!this.isSkidPlaying) {
-        this.isSkidPlaying = true;
+    if (slipIntensity > 0.14) {
+      this.isSkidPlaying = true;
+      const vol = Math.min(0.42, (slipIntensity - 0.14) * 0.75);
+      this.skidGain.gain.setTargetAtTime(vol, t, 0.04);
+      if (this.skidFilter) {
+        this.skidFilter.frequency.setTargetAtTime(1000 + slipIntensity * 950, t, 0.04);
       }
-      const vol = Math.min(0.4, (slipIntensity - 0.15) * 0.6);
-      this.skidGain.gain.setTargetAtTime(vol, t, 0.05);
-    } else {
-      this.skidGain.gain.setTargetAtTime(0, t, 0.1);
+      if (this.skidOsc) {
+        this.skidOsc.frequency.setTargetAtTime(650 + slipIntensity * 600, t, 0.04);
+      }
+    } else if (this.isSkidPlaying) {
+      this.skidGain.gain.setTargetAtTime(0, t, 0.08);
       this.isSkidPlaying = false;
     }
   }

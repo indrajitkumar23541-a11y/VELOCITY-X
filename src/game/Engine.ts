@@ -3,7 +3,8 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { GammaCorrectionShader } from 'three/examples/jsm/shaders/GammaCorrectionShader.js';
 import { CameraManager } from './CameraManager';
 import { PlayerCar, PlayerControls } from './PlayerCar';
 import { RoadManager } from './RoadManager';
@@ -196,12 +197,16 @@ export class Engine {
       this.composer.addPass(this.bloomPass);
     }
 
-    // OutputPass: ACESFilmic tone mapping + gamma correction
-    const outputPass = new OutputPass();
-    this.composer.addPass(outputPass);
+    // Accurate sRGB Gamma Correction Pass (lightweight 2D fragment shader, zero 3D LUT texture allocation)
+    const gammaPass = new ShaderPass(GammaCorrectionShader);
+    this.composer.addPass(gammaPass);
     // ─────────────────────────────────────────────────────────────────────
 
     window.addEventListener('resize', this.onResize);
+
+    // Initial frame render so canvas isn't blank on splash/load
+    this.resetRunState();
+    this.composer.render();
   }
 
   public setCarConfig(config: CarConfig): void {
@@ -249,7 +254,20 @@ export class Engine {
     this.roadManager.reset(this.playerCar.mesh.position.z);
     this.trafficManager.reset(this.playerCar.mesh.position.z);
     this.policeChase.reset();
+    this.weatherManager.reset(this.trackMode);
     this.cameraManager.reset(this.playerCar.mesh.position);
+
+    // Reset controls state to prevent carryover
+    this.controls.steerLeft = false;
+    this.controls.steerRight = false;
+    this.controls.throttle = false;
+    this.controls.brake = false;
+    this.controls.nitro = false;
+    this.controls.steerAxis = 0;
+  }
+
+  public toggleWeather(): WeatherType {
+    return this.weatherManager.toggleWeather();
   }
 
   public setTrackEnvironment(mode: 'NIGHT' | 'DAY'): void {
@@ -280,12 +298,22 @@ export class Engine {
       this.playerCar.mesh.position.set(0, 0, 0);
       this.playerCar.mesh.rotation.set(0, 0, 0);
       this.roadManager.reset(0);
+      if (!this.animFrameId) {
+        this.clock.start();
+        this.tick();
+      }
+    } else {
+      if (!this.isRunning && this.animFrameId) {
+        cancelAnimationFrame(this.animFrameId);
+        this.animFrameId = null;
+      }
     }
   }
 
   private onResize = (): void => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const parent = this.renderer.domElement.parentElement;
+    const width = (parent && parent.clientWidth > 0) ? parent.clientWidth : window.innerWidth;
+    const height = (parent && parent.clientHeight > 0) ? parent.clientHeight : window.innerHeight;
     this.renderer.setSize(width, height);
     this.composer.setSize(width, height);
     this.bloomPass.resolution.set(width, height);
@@ -375,7 +403,7 @@ export class Engine {
     // Save stats offline
     const stats = StorageManager.getStats();
     const isHighScore = this.score > stats.highScore;
-    const earnedCoins = Math.floor(this.score / 15) + (this.policeEvadedCount * 500);
+    const earnedCoins = Math.floor(this.score / 15) + (this.policeEvadedCount * 1000);
 
     StorageManager.saveStats({
       highScore: Math.max(stats.highScore, this.score),
@@ -410,7 +438,10 @@ export class Engine {
   }
 
   private tick = (): void => {
-    if (!this.isRunning) return;
+    if (!this.isRunning && !this.isTurntableMode) {
+      this.animFrameId = null;
+      return;
+    }
 
     this.animFrameId = requestAnimationFrame(this.tick);
 
@@ -649,6 +680,9 @@ export class Engine {
     this.playerCar.dispose();
     if (this.scene.environment) {
       this.scene.environment.dispose();
+    }
+    if (this.bloomPass) {
+      this.bloomPass.dispose();
     }
     this.composer.dispose();
     this.renderer.dispose();

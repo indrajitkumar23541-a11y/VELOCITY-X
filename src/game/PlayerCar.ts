@@ -8,7 +8,6 @@ import { RoadManager } from './RoadManager';
 // Setup shared Draco and GLTF Loaders for 60fps instant 3D model streaming
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('./draco/');
-dracoLoader.setDecoderConfig({ type: 'js' });
 
 const gltfLoader = new GLTFLoader();
 gltfLoader.setDRACOLoader(dracoLoader);
@@ -218,8 +217,17 @@ export class PlayerCar {
         break;
     }
 
-    // Asynchronously stream authentic 3D GLB supercar model with local Draco WASM decoding
-    this.loadRealSupercarGLB(modelPath, rotY, targetLength, targetGroup);
+    // Stream authentic 3D GLB supercar model during idle time so initial paint/Lighthouse completes instantly
+    const loadModelTask = () => {
+      if (targetGroup === this.carRoot) {
+        this.loadRealSupercarGLB(modelPath, rotY, targetLength, targetGroup);
+      }
+    };
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(loadModelTask, { timeout: 1500 });
+    } else {
+      setTimeout(loadModelTask, 600);
+    }
   }
 
   private loadRealSupercarGLB(modelPath: string, rotY: number, targetLength: number, targetGroup: THREE.Group): void {
@@ -268,6 +276,7 @@ export class PlayerCar {
         scene.position.x = -center.x;
         scene.position.z = -center.z;
         scene.position.y = -finalBbox.min.y;
+        scene.updateMatrixWorld(true);
 
         // Traverse hierarchy to assign metallic paint, PBR clearcoat, and identify wheels
         scene.traverse((child) => {
@@ -928,7 +937,7 @@ export class PlayerCar {
     this.isBraking = controls.brake;
     let targetSpeed = 0;
 
-    if (controls.nitro && this.nitroReserve > 0 && controls.throttle) {
+    if (controls.nitro && this.nitroReserve > 0 && !controls.brake) {
       this.isNitroActive = true;
       this.nitroReserve = Math.max(0, this.nitroReserve - 22 * delta);
       targetSpeed = this.nitroMaxSpeedKmh;
@@ -1077,7 +1086,9 @@ export class PlayerCar {
   public applyLateralImpulse(forceX: number): void {
     if (this.isCrashed) return;
     this.mesh.position.x = THREE.MathUtils.clamp(this.mesh.position.x + forceX, -7.1, 7.1);
-    this.steeringInertia = THREE.MathUtils.clamp(this.steeringInertia + Math.sign(forceX) * 0.45, -1, 1);
+    // Smooth impulse response: don't lock steering peg instantly
+    const impulse = Math.sign(forceX) * Math.min(0.2, Math.abs(forceX) * 1.5);
+    this.steeringInertia = THREE.MathUtils.clamp(this.steeringInertia + impulse, -1, 1);
     this.updateBounds();
   }
 
@@ -1107,7 +1118,11 @@ export class PlayerCar {
     this.glassMat.dispose();
     this.chromeMat.dispose();
     this.brakeLightMaterial.dispose();
+    if ((this.underglowMesh.material as THREE.MeshBasicMaterial).map) {
+      (this.underglowMesh.material as THREE.MeshBasicMaterial).map?.dispose();
+    }
     this.underglowMesh.geometry.dispose();
     (this.underglowMesh.material as THREE.Material).dispose();
+    this.underglowLight.dispose();
   }
 }

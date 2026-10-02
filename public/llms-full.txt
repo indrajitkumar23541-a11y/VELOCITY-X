@@ -1,0 +1,32 @@
+# VELOCITY X — Extended Technical Documentation & Agent Context
+
+> Complete technical architecture, component breakdown, state machine specs, and machine interaction contracts for VELOCITY X.
+
+## Quick Links
+
+- [Play Game](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/)
+- [Primary Summary (llms.txt)](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/llms.txt)
+- [Repository](https://github.com/indrajitkumar23541-a11y/VELOCITY-X)
+
+## Architecture Overview
+
+VELOCITY X is architected as an offline-first, client-rendered Single Page Application (SPA).
+
+### Core Subsystems:
+1. `Engine.ts`: Manages WebGLRenderer, scene graph, lighting, camera rig, and composer post-processing pipeline.
+2. `RoadManager.ts`: Dynamically generates highway segment meshes, road lane striping, reflective guardrails, and street lamps ahead of player position.
+3. `PlayerCar.ts`: Handles vehicle physics, acceleration curves, slip velocity, drift yaw calculations, and PBR paint shaders.
+4. `TrafficManager.ts`: Controls procedural civilian traffic spawning, lane distribution, speed variations, and collision bounding boxes.
+5. `PoliceChase.ts`: Simulates aggressive pursuit cruiser AI with flashing lightbars, proximity sirens, and lateral ramming vectors.
+6. `AudioManager.ts`: Real-time Web Audio API node graph generating procedural engine RPM harmonics, tire screech filters, nitro hiss, and ambient rain audio.
+7. `WeatherManager.ts`: Simulates dynamic rainstorms, 900 GPU rain streaks, rolling thunder sounds, and lightning flashes.
+8. `UpdateManager.ts`: Background Service Worker sync detecting new build timestamps and prompting instant one-tap hot-reloads.
+
+## Machine & Agent Action Points
+
+For automated browser agents, the key interaction nodes are:
+- `button.splash-quick-play-btn`: Instant 1-tap race launch bypassing showroom.
+- `button.splash-start-btn`: Navigates to track selection screen.
+- `button.auto-landscape-btn`: Requests fullscreen landscape lock.
+- `button.banner-install-btn`: Triggers PWA home-screen installation prompt.
+- Canvas Element: `.webgl-canvas` listens for pointer events, touches, and keyboard keys.

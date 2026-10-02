@@ -73,11 +73,27 @@ export const InstallPrompt: React.FC = () => {
 
   const currentOrigin = typeof window !== 'undefined' ? window.location.href : 'https://indrajitkumar23541-a11y.github.io/VELOCITY-X/';
 
-  const handleCopyOrigin = () => {
+  const handleCopyOrigin = async () => {
     HapticsManager.buttonTap();
-    navigator.clipboard.writeText(currentOrigin);
-    setCopiedUrl(true);
-    setTimeout(() => setCopiedUrl(false), 2000);
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(currentOrigin);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = currentOrigin;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2000);
+    } catch (err) {
+      console.warn('Copy to clipboard failed:', err);
+    }
   };
 
   if (isInstalled) return null;
@@ -113,6 +129,7 @@ export const InstallPrompt: React.FC = () => {
               type="button"
               className="banner-install-btn"
               onClick={handleInstallClick}
+              aria-label="INSTALL NOW - Install Velocity X App"
             >
               <Download size={15} />
               <span>INSTALL NOW</span>
@@ -122,6 +139,7 @@ export const InstallPrompt: React.FC = () => {
               className="banner-dismiss-btn"
               onClick={() => { HapticsManager.buttonTap(); setShowBanner(false); }}
               title="Dismiss for now"
+              aria-label="Dismiss install banner"
             >
               <X size={16} />
             </button>
@@ -142,6 +160,7 @@ export const InstallPrompt: React.FC = () => {
                 type="button"
                 className="modal-close-btn"
                 onClick={() => { HapticsManager.buttonTap(); setShowGuideModal(false); }}
+                aria-label="Close install guide"
               >
                 <X size={18} />
               </button>

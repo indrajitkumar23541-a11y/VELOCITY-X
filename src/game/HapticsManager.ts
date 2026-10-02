@@ -1,4 +1,5 @@
 // VELOCITY X - Mobile Physical Haptic Feedback Engine
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 export class HapticsManager {
   private static enabled = true;
@@ -12,52 +13,92 @@ export class HapticsManager {
   }
 
   /** Light 15ms tick on near-miss */
-  static nearMiss() {
-    if (!this.enabled || typeof navigator === 'undefined' || !('vibrate' in navigator)) return;
+  static async nearMiss() {
+    if (!this.enabled) return;
     try {
-      navigator.vibrate(18);
+      await Haptics.impact({ style: ImpactStyle.Light });
+      return;
     } catch {
-      // ignore
+      // Fallback to web Vibration API
+    }
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(18);
+      } catch {
+        // ignore
+      }
     }
   }
 
   /** Pulsing rumble when nitro boost is held */
-  static nitroPulse() {
-    if (!this.enabled || typeof navigator === 'undefined' || !('vibrate' in navigator)) return;
+  static async nitroPulse() {
+    if (!this.enabled) return;
     try {
-      navigator.vibrate([25, 20, 25]);
+      await Haptics.impact({ style: ImpactStyle.Medium });
+      return;
     } catch {
-      // ignore
+      // Fallback
+    }
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([25, 20, 25]);
+      } catch {
+        // ignore
+      }
     }
   }
 
   /** Police ram / PIT maneuver bump */
-  static policeImpact() {
-    if (!this.enabled || typeof navigator === 'undefined' || !('vibrate' in navigator)) return;
+  static async policeImpact() {
+    if (!this.enabled) return;
     try {
-      navigator.vibrate([60, 30, 80]);
+      await Haptics.impact({ style: ImpactStyle.Heavy });
+      return;
     } catch {
-      // ignore
+      // Fallback
+    }
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([60, 30, 80]);
+      } catch {
+        // ignore
+      }
     }
   }
 
   /** Heavy crash crunch */
-  static crash() {
-    if (!this.enabled || typeof navigator === 'undefined' || !('vibrate' in navigator)) return;
+  static async crash() {
+    if (!this.enabled) return;
     try {
-      navigator.vibrate([120, 50, 200]);
+      await Haptics.notification({ type: NotificationType.Error });
+      return;
     } catch {
-      // ignore
+      // Fallback
+    }
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([120, 50, 200]);
+      } catch {
+        // ignore
+      }
     }
   }
 
   /** UI button click tap */
-  static buttonTap() {
-    if (!this.enabled || typeof navigator === 'undefined' || !('vibrate' in navigator)) return;
+  static async buttonTap() {
+    if (!this.enabled) return;
     try {
-      navigator.vibrate(10);
+      await Haptics.impact({ style: ImpactStyle.Light });
+      return;
     } catch {
-      // ignore
+      // Fallback
+    }
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(10);
+      } catch {
+        // ignore
+      }
     }
   }
 }

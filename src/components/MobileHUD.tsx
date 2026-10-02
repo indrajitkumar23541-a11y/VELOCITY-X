@@ -1,18 +1,24 @@
 // VELOCITY X - Premium AAA Esports Racing Cockpit HUD
 import React, { useEffect, useState } from 'react';
 import { HUDData } from '../game/Engine';
-import { Zap, Flame, ShieldAlert, Award, Smartphone, CloudRain, Moon } from 'lucide-react';
+import { Zap, Flame, ShieldAlert, Award, Smartphone, CloudRain, Moon, Volume2, VolumeX } from 'lucide-react';
 
 interface MobileHUDProps {
   hud: HUDData;
   nearMissAlert: { text: string; combo: number; id: number } | null;
   evadedBonus: number | null;
+  onToggleWeather?: () => void;
+  onToggleAudio?: () => void;
+  isMuted?: boolean;
 }
 
 export const MobileHUD: React.FC<MobileHUDProps> = ({
   hud,
   nearMissAlert,
   evadedBonus,
+  onToggleWeather,
+  onToggleAudio,
+  isMuted = false,
 }) => {
   const [pulseNearMiss, setPulseNearMiss] = useState(false);
 
@@ -132,7 +138,15 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
           <span className="stat-value">{hud.score.toLocaleString()}</span>
         </div>
 
-        <div className={`stat-card weather-hud-chip ${hud.weather === 'RAIN' ? 'rain-active' : ''}`}>
+        <div
+          className={`stat-card weather-hud-chip ${hud.weather === 'RAIN' ? 'rain-active' : ''}`}
+          onClick={onToggleWeather}
+          style={{ cursor: onToggleWeather ? 'pointer' : 'default' }}
+          title="Toggle Cyber Rainstorm (or press 'C')"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onToggleWeather?.(); }}
+        >
           {hud.weather === 'RAIN' ? (
             <CloudRain size={13} className="weather-hud-icon rain" />
           ) : (
@@ -140,6 +154,18 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
           )}
           <span className="weather-hud-text">{hud.weather}</span>
         </div>
+
+        {onToggleAudio && (
+          <button
+            type="button"
+            className="stat-card audio-hud-btn"
+            onClick={onToggleAudio}
+            title={isMuted ? "Unmute Sound (or press 'M')" : "Mute Sound (or press 'M')"}
+            aria-label={isMuted ? "Unmute Sound" : "Mute Sound"}
+          >
+            {isMuted ? <VolumeX size={13} className="audio-hud-icon muted" /> : <Volume2 size={13} className="audio-hud-icon" />}
+          </button>
+        )}
       </div>
 
       {/* 6. BOTTOM-LEFT SPEEDOMETER & TACHOMETER INSTRUMENT WIDGET */}
@@ -227,6 +253,16 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
             />
           </div>
         </div>
+      </div>
+
+      {/* 8. DESKTOP KEYBOARD CONTROLS GUIDE (Non-obtrusive center-bottom bar) */}
+      <div className="desktop-hud-key-guide">
+        <span className="key-chip"><kbd>W</kbd> / <kbd>↑</kbd> GAS</span>
+        <span className="key-chip"><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> STEER</span>
+        <span className="key-chip"><kbd>S</kbd> / <kbd>SPACE</kbd> BRAKE</span>
+        <span className="key-chip"><kbd>SHIFT</kbd> NOS</span>
+        <span className="key-chip"><kbd>C</kbd> WEATHER</span>
+        <span className="key-chip"><kbd>M</kbd> MUTE</span>
       </div>
     </div>
   );

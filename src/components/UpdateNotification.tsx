@@ -17,7 +17,6 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ gameStat
   useEffect(() => {
     const unsubscribe = updateManager.onUpdate(() => {
       setUpdateReady(true);
-      HapticsManager.buttonTap();
     });
     return unsubscribe;
   }, []);
@@ -67,6 +66,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ gameStat
               HapticsManager.buttonTap();
               updateManager.applyUpdate();
             }}
+            aria-label="Restart to Apply Update"
           >
             <RefreshCw size={14} className="spin-slow" />
             <span>RESTART</span>
@@ -80,6 +80,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ gameStat
               setIsDismissed(true);
             }}
             title="Update on next open"
+            aria-label="Dismiss update notification"
           >
             <X size={15} />
           </button>

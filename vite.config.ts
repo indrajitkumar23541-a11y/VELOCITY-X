@@ -33,6 +33,36 @@ function swVersionPlugin(timestamp: string): Plugin {
   };
 }
 
+function htmlHeadersPlugin(): Plugin {
+  return {
+    name: 'html-headers-plugin',
+    configureServer(server) {
+      server.middlewares.use((_req, res, next) => {
+        const orig = res.setHeader.bind(res);
+        res.setHeader = function (key: string, val: any) {
+          if (typeof key === 'string' && key.toLowerCase() === 'content-type' && typeof val === 'string' && val.includes('text/html')) {
+            val = 'text/html; charset=utf-8';
+          }
+          return orig(key, val);
+        };
+        next();
+      });
+    },
+    configurePreviewServer(server) {
+      server.middlewares.use((_req, res, next) => {
+        const orig = res.setHeader.bind(res);
+        res.setHeader = function (key: string, val: any) {
+          if (typeof key === 'string' && key.toLowerCase() === 'content-type' && typeof val === 'string' && val.includes('text/html')) {
+            val = 'text/html; charset=utf-8';
+          }
+          return orig(key, val);
+        };
+        next();
+      });
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   base: './',
@@ -40,13 +70,25 @@ export default defineConfig({
     __BUILD_TIMESTAMP__: JSON.stringify(buildTimestamp),
     __APP_VERSION__: JSON.stringify(appVersion),
   },
-  plugins: [react(), swVersionPlugin(buildTimestamp)],
+  plugins: [react(), swVersionPlugin(buildTimestamp), htmlHeadersPlugin()],
   server: {
+    host: true,
+    port: 3000,
+  },
+  preview: {
     host: true,
     port: 3000,
   },
   build: {
     target: 'esnext',
     assetsInlineLimit: 4096,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three'],
+          vendor: ['react', 'react-dom', 'lucide-react'],
+        },
+      },
+    },
   },
 });

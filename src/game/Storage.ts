@@ -124,6 +124,9 @@ export class StorageManager {
   static saveStats(stats: Partial<GameStats>): GameStats {
     const current = this.getStats();
     const updated = { ...current, ...stats };
+    if (updated.playerCallsign) {
+      updated.playerCallsign = updated.playerCallsign.trim().replace(/[^A-Za-z0-9_\-\s]/g, '').slice(0, 16) || 'VIPER_01';
+    }
     try {
       localStorage.setItem(STATS_KEY, JSON.stringify(updated));
     } catch {
@@ -145,13 +148,13 @@ export class StorageManager {
             const underglowColor = (found.underglowColor === '#00f3ff' || found.underglowColor === '#ff7700') && dc.id === 'apex_roadster' ? dc.underglowColor : (found.underglowColor || dc.underglowColor);
             return { ...dc, ...found, name: dc.name, color, underglowColor };
           }
-          return dc;
+          return { ...dc };
         });
       }
     } catch {
       // ignore
     }
-    return DEFAULT_CARS;
+    return DEFAULT_CARS.map(c => ({ ...c }));
   }
 
   static saveCars(cars: CarConfig[]): void {
@@ -192,19 +195,27 @@ export class StorageManager {
     try {
       const data = localStorage.getItem(LEADERBOARD_KEY);
       if (data) {
-        const list: LeaderboardEntry[] = JSON.parse(data);
-        return list.sort((a, b) => b.score - a.score).slice(0, 10);
+        const list = JSON.parse(data);
+        if (Array.isArray(list)) {
+          return list.sort((a: LeaderboardEntry, b: LeaderboardEntry) => b.score - a.score).slice(0, 10);
+        }
       }
     } catch {
       // ignore
     }
-    return [...DEFAULT_LEADERBOARD];
+    return DEFAULT_LEADERBOARD.map(e => ({ ...e }));
   }
 
   static addLeaderboardScore(entry: Omit<LeaderboardEntry, 'id'>): LeaderboardEntry[] {
     const current = this.getLeaderboard();
+    const sanitizedCallsign = (entry.callsign || 'VIPER_01')
+      .trim()
+      .replace(/[^A-Za-z0-9_\-\s]/g, '')
+      .slice(0, 16) || 'VIPER_01';
+
     const newEntry: LeaderboardEntry = {
       ...entry,
+      callsign: sanitizedCallsign,
       id: 'lb_' + Date.now(),
       isPlayer: true,
     };

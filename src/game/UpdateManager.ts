@@ -54,8 +54,16 @@ class UpdateManager {
         });
       });
 
+      // Track whether there was an active controller when the page loaded
+      let hadInitialController = Boolean(navigator.serviceWorker.controller);
+
       // Reload when new service worker takes over control
       navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadInitialController) {
+          // Initial service worker installation claiming this client — do not reload!
+          hadInitialController = true;
+          return;
+        }
         if (!this.isRefreshing) {
           if (this.currentGameState === 'RACING') {
             this.pendingReload = true;

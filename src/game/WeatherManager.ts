@@ -17,18 +17,34 @@ export class WeatherManager {
   // Lighting Baseline Values (dynamic based on track mode)
   private baseDirIntensity = 1.8;
   private baseAmbientIntensity = 1.8;
+  public trackMode: 'NIGHT' | 'DAY' = 'NIGHT';
+
+  // Dynamic Weather Progression Cycle State
+  private weatherCycleTimer = 35; // 35s to first rainstorm on Night track
+  private isAutoWeatherEnabled = true;
 
   public setTrackMode(mode: 'NIGHT' | 'DAY'): void {
+    this.trackMode = mode;
     if (mode === 'NIGHT') {
       this.baseDirIntensity = 1.8;
       this.baseAmbientIntensity = 1.8;
+      this.weatherCycleTimer = 35 + Math.random() * 15;
     } else {
       this.baseDirIntensity = 3.6;
       this.baseAmbientIntensity = 2.4;
+      this.setWeather('CLEAR');
     }
     if (!this.isFlashing) {
       this.resetLighting();
     }
+  }
+
+  public reset(mode: 'NIGHT' | 'DAY' = 'NIGHT'): void {
+    this.isFlashing = false;
+    this.flashDuration = 0;
+    this.lightningTimer = 8;
+    this.setTrackMode(mode);
+    this.setWeather('CLEAR');
   }
 
   // Lightning Simulation State
@@ -53,8 +69,12 @@ export class WeatherManager {
     this.rainSystem = new RainSystem(scene);
   }
 
-  public setWeather(weather: WeatherType): void {
+  public setWeather(weather: WeatherType, userOverride = false): void {
     this.currentWeather = weather;
+    if (userOverride) {
+      // Pause automatic cycling briefly on manual player choice
+      this.weatherCycleTimer = 65;
+    }
     const isRain = weather === 'RAIN';
 
     // 1. Enable/Disable 3D Rain Streaks
@@ -85,11 +105,27 @@ export class WeatherManager {
 
   public toggleWeather(): WeatherType {
     const next: WeatherType = this.currentWeather === 'CLEAR' ? 'RAIN' : 'CLEAR';
-    this.setWeather(next);
+    this.setWeather(next, true);
     return next;
   }
 
   public update(delta: number, playerCarZ: number, playerCarX: number, playerSpeedKmh: number): void {
+    // 0. Dynamic Atmospheric Weather Progression Cycle (Tokyo Cyber Night)
+    if (this.trackMode === 'NIGHT' && this.isAutoWeatherEnabled) {
+      this.weatherCycleTimer -= delta;
+      if (this.weatherCycleTimer <= 0) {
+        if (this.currentWeather === 'CLEAR') {
+          // Cyberpunk midnight rainstorm rolls in
+          this.setWeather('RAIN');
+          this.weatherCycleTimer = 45 + Math.random() * 25; // 45-70s rainstorm duration
+        } else {
+          // Clouds part and storm subsides
+          this.setWeather('CLEAR');
+          this.weatherCycleTimer = 55 + Math.random() * 30; // 55-85s clear night
+        }
+      }
+    }
+
     if (this.currentWeather !== 'RAIN') return;
 
     // 1. Update Rain Particles

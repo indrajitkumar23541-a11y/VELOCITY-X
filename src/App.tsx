@@ -1,6 +1,6 @@
 // VELOCITY X - Complete 4-Step Cinematic Racing Flow & Hardware-Adaptive Engine
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Engine, HUDData, GameSummary } from './game/Engine';
+import React, { useEffect, useRef, useState, useCallback, Suspense } from 'react';
+import type { Engine, HUDData, GameSummary } from './game/Engine';
 import { StorageManager, CarConfig, GameStats } from './game/Storage';
 import { PlayerControls } from './game/PlayerCar';
 import { audioManager } from './game/AudioManager';
@@ -9,13 +9,15 @@ import { tiltManager } from './game/TiltManager';
 import { MobileHUD } from './components/MobileHUD';
 import { MobileControls } from './components/MobileControls';
 import { RearviewMirror } from './components/RearviewMirror';
-import { GameOverModal } from './components/GameOverModal';
 import { RotatePhonePrompt } from './components/RotatePhonePrompt';
 import { InstallPrompt, triggerGlobalAppInstall } from './components/InstallPrompt';
-import { LeaderboardModal } from './components/LeaderboardModal';
 import { RainScreenOverlay } from './components/RainScreenOverlay';
 import { UpdateNotification } from './components/UpdateNotification';
 import { updateManager } from './game/UpdateManager';
+
+// Lazy load modals to eliminate unused JavaScript on initial render
+const GameOverModal = React.lazy(() => import('./components/GameOverModal').then(m => ({ default: m.GameOverModal })));
+const LeaderboardModal = React.lazy(() => import('./components/LeaderboardModal').then(m => ({ default: m.LeaderboardModal })));
 import {
   Volume2,
   VolumeX,
@@ -62,7 +64,12 @@ export const App: React.FC = () => {
   // Persistence State
   const [stats, setStats] = useState<GameStats>(() => StorageManager.getStats());
   const [cars, setCars] = useState<CarConfig[]>(() => StorageManager.getCars());
-  const [activeCarIndex, setActiveCarIndex] = useState(0);
+  const [activeCarIndex, setActiveCarIndex] = useState(() => {
+    const saved = StorageManager.getCars();
+    const currentStats = StorageManager.getStats();
+    const idx = saved.findIndex(c => c.id === currentStats.selectedCarId);
+    return idx >= 0 ? idx : 0;
+  });
   const [activeCar, setActiveCar] = useState<CarConfig>(() => {
     const saved = StorageManager.getCars();
     const currentStats = StorageManager.getStats();
@@ -107,44 +114,52 @@ export const App: React.FC = () => {
   const [founderMilestoneAlert, setFounderMilestoneAlert] = useState<string | null>(null);
   const [summary, setSummary] = useState<GameSummary | null>(null);
 
-  // 1. Initialize Three.js Engine
+  // Asynchronous Engine Initializer (Separates 511KB Three.js chunk from initial Splash paint)
+  const initEngineAsync = useCallback(async (carConfig: CarConfig): Promise<Engine | null> => {
+    if (engineRef.current) return engineRef.current;
+    if (!canvasRef.current) return null;
+
+    try {
+      const { Engine: EngineClass } = await import('./game/Engine');
+      if (!engineRef.current && canvasRef.current) {
+        const engine = new EngineClass(canvasRef.current, carConfig);
+        engineRef.current = engine;
+
+        engine.onHUDUpdate = (data) => setHud(data);
+        engine.onNearMissAlert = (text, combo) => setNearMissAlert({ text, combo, id: Date.now() });
+        engine.onPursuitEvadedAlert = (bonus) => {
+          setEvadedBonus(bonus);
+          setTimeout(() => setEvadedBonus(null), 3000);
+        };
+        engine.onFounderMilestone = (milestoneMeters) => {
+          audioManager.playCoinUnlock();
+          HapticsManager.nearMiss();
+          setFounderMilestoneAlert(`👑 ${Math.round(milestoneMeters / 1000)},000M MILESTONE — INDRAJIT KUMAR FOUNDER ZONE`);
+          setTimeout(() => setFounderMilestoneAlert(null), 4500);
+        };
+        engine.onGameOver = (runSummary) => {
+          tiltManager.stop();
+          audioManager.stopAllGameSounds();
+          setSummary(runSummary);
+          setGameState('GAME_OVER');
+          setStats(StorageManager.getStats());
+        };
+        return engine;
+      }
+    } catch (err) {
+      console.warn('3D Engine load warning:', err);
+    }
+    return engineRef.current;
+  }, []);
+
+  // 1. Cleanup lifecycle for Three.js Engine and motion sensors
   useEffect(() => {
-    if (!canvasRef.current) return;
-
-    const engine = new Engine(canvasRef.current, activeCar);
-    engineRef.current = engine;
-
-    engine.onHUDUpdate = (data) => {
-      setHud(data);
-    };
-
-    engine.onNearMissAlert = (text, combo) => {
-      setNearMissAlert({ text, combo, id: Date.now() });
-    };
-
-    engine.onPursuitEvadedAlert = (bonus) => {
-      setEvadedBonus(bonus);
-      setTimeout(() => setEvadedBonus(null), 3000);
-    };
-
-    engine.onFounderMilestone = (milestoneMeters) => {
-      audioManager.playCoinUnlock();
-      HapticsManager.nearMiss();
-      setFounderMilestoneAlert(`👑 ${Math.round(milestoneMeters / 1000)},000M MILESTONE — INDRAJIT KUMAR FOUNDER ZONE`);
-      setTimeout(() => setFounderMilestoneAlert(null), 4500);
-    };
-
-    engine.onGameOver = (runSummary) => {
-      tiltManager.stop();
-      audioManager.stopAllGameSounds();
-      setSummary(runSummary);
-      setGameState('GAME_OVER');
-      setStats(StorageManager.getStats());
-    };
-
     return () => {
       tiltManager.stop();
-      engine.destroy();
+      if (engineRef.current) {
+        engineRef.current.destroy();
+        engineRef.current = null;
+      }
     };
   }, []);
 
@@ -163,7 +178,6 @@ export const App: React.FC = () => {
         window.removeEventListener('pointerdown', triggerIntro);
       };
       window.addEventListener('pointerdown', triggerIntro);
-      audioManager.playCinematicIntroSound();
 
       const startTime = Date.now();
       const interval = setInterval(() => {
@@ -198,13 +212,25 @@ export const App: React.FC = () => {
   // Desktop Keyboard Controls (W/A/S/D / Arrows / Shift / Space) + Blur/Visibility Safety
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      audioManager.unlock();
+      if (e.key.toLowerCase() === 'm') {
+        const muted = audioManager.toggleMute();
+        setIsMuted(muted);
+        return;
+      }
+      if (e.key.toLowerCase() === 'c' && engineRef.current) {
+        engineRef.current.toggleWeather();
+      }
       if (gameState !== 'RACING' || !engineRef.current) return;
       const c = engineRef.current.controls;
       if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') c.steerLeft = true;
       if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') c.steerRight = true;
       if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') { c.throttle = true; c.brake = false; }
       if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's' || e.key === ' ') { c.brake = true; c.throttle = false; }
-      if (e.shiftKey) c.nitro = true;
+      if (e.key === 'Shift') c.nitro = true;
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -214,7 +240,7 @@ export const App: React.FC = () => {
       if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') c.steerRight = false;
       if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'w') c.throttle = false;
       if (e.key === 'ArrowDown' || e.key.toLowerCase() === 's' || e.key === ' ') c.brake = false;
-      if (!e.shiftKey) c.nitro = false;
+      if (e.key === 'Shift' || !e.shiftKey) c.nitro = false;
     };
 
     const resetControls = () => {
@@ -255,18 +281,23 @@ export const App: React.FC = () => {
   const handlePlayFromSplash = () => {
     HapticsManager.buttonTap();
     audioManager.unlock();
-    document.documentElement.requestFullscreen().catch(() => {});
+    initEngineAsync(activeCar).catch(() => {});
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
     setGameState('SELECT_TRACK');
   };
 
   // Step 2 -> Step 3: Select Track (Night vs Day)
-  const handleSelectTrack = (track: 'NIGHT' | 'DAY') => {
+  const handleSelectTrack = async (track: 'NIGHT' | 'DAY') => {
     HapticsManager.buttonTap();
     setSelectedTrack(track);
-    if (engineRef.current) {
-      engineRef.current.setTrackEnvironment(track);
-    }
     setGameState('SELECT_CAR');
+    const engine = engineRef.current || await initEngineAsync(activeCar);
+    if (engine) {
+      engine.setTrackEnvironment(track);
+      engine.setTurntableMode(true);
+    }
   };
 
   // Step 3: Browse Cars in Showroom
@@ -275,6 +306,10 @@ export const App: React.FC = () => {
     const nextIdx = (activeCarIndex + 1) % cars.length;
     setActiveCarIndex(nextIdx);
     setActiveCar(cars[nextIdx]);
+    if (cars[nextIdx].unlocked) {
+      const updated = StorageManager.saveStats({ selectedCarId: cars[nextIdx].id });
+      setStats(updated);
+    }
   };
 
   const handlePrevCar = () => {
@@ -282,21 +317,27 @@ export const App: React.FC = () => {
     const prevIdx = (activeCarIndex - 1 + cars.length) % cars.length;
     setActiveCarIndex(prevIdx);
     setActiveCar(cars[prevIdx]);
+    if (cars[prevIdx].unlocked) {
+      const updated = StorageManager.saveStats({ selectedCarId: cars[prevIdx].id });
+      setStats(updated);
+    }
   };
 
   // Unlock Locked Car with Coins
   const handleUnlockCar = (carId: string) => {
     const success = StorageManager.unlockCar(carId);
     if (success) {
-      HapticsManager.crash();
+      HapticsManager.buttonTap();
       audioManager.playCoinUnlock();
       const updatedCars = StorageManager.getCars();
-      const updatedStats = StorageManager.getStats();
       setCars(updatedCars);
-      setStats(updatedStats);
       const unlocked = updatedCars.find(c => c.id === carId);
       if (unlocked) {
         setActiveCar(unlocked);
+        const idx = updatedCars.findIndex(c => c.id === carId);
+        if (idx >= 0) setActiveCarIndex(idx);
+        const updatedStats = StorageManager.saveStats({ selectedCarId: carId });
+        setStats(updatedStats);
       }
     }
   };
@@ -331,13 +372,25 @@ export const App: React.FC = () => {
   };
 
   // Instant 1-Tap Quick Race (Starts immediately in < 0.6s)
-  const launchQuickRace = useCallback(() => {
+  const launchQuickRace = useCallback(async () => {
+    if (gameState === 'COUNTDOWN') return;
     HapticsManager.buttonTap();
     audioManager.unlock();
-    document.documentElement.requestFullscreen().catch(() => {});
-    if (engineRef.current) {
-      engineRef.current.setTurntableMode(false);
-      engineRef.current.setTrackEnvironment(selectedTrack);
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+    const carToRace = activeCar.unlocked ? activeCar : (cars.find(c => c.unlocked) || cars[0]);
+    if (carToRace.id !== activeCar.id) {
+      setActiveCar(carToRace);
+      const idx = cars.findIndex(c => c.id === carToRace.id);
+      if (idx >= 0) setActiveCarIndex(idx);
+    }
+    StorageManager.saveStats({ selectedCarId: carToRace.id });
+    const engine = engineRef.current || await initEngineAsync(carToRace);
+    if (engine) {
+      engine.setCarConfig(carToRace);
+      engine.setTurntableMode(false);
+      engine.setTrackEnvironment(selectedTrack);
     }
 
     setGameState('COUNTDOWN');
@@ -359,15 +412,25 @@ export const App: React.FC = () => {
       setGameState('RACING');
       setTimeout(() => setCountdown(null), 500);
     }, 400);
-  }, [selectedTrack, tiltSteeringEnabled]);
+  }, [activeCar, cars, selectedTrack, tiltSteeringEnabled, gameState, initEngineAsync]);
 
   // Step 3 -> Step 4: Launch Race with Snappy 3-2-1-GO! Countdown (1.2s total)
-  const launchCountdownAndRace = useCallback(() => {
+  const launchCountdownAndRace = useCallback(async () => {
+    if (gameState === 'COUNTDOWN') return;
     HapticsManager.buttonTap();
     audioManager.unlock();
-    if (engineRef.current) {
-      engineRef.current.setTurntableMode(false);
-      engineRef.current.setTrackEnvironment(selectedTrack);
+    const carToRace = activeCar.unlocked ? activeCar : (cars.find(c => c.unlocked) || cars[0]);
+    if (carToRace.id !== activeCar.id) {
+      setActiveCar(carToRace);
+      const idx = cars.findIndex(c => c.id === carToRace.id);
+      if (idx >= 0) setActiveCarIndex(idx);
+    }
+    StorageManager.saveStats({ selectedCarId: carToRace.id });
+    const engine = engineRef.current || await initEngineAsync(carToRace);
+    if (engine) {
+      engine.setCarConfig(carToRace);
+      engine.setTurntableMode(false);
+      engine.setTrackEnvironment(selectedTrack);
     }
 
     setGameState('COUNTDOWN');
@@ -399,7 +462,7 @@ export const App: React.FC = () => {
       setGameState('RACING');
       setTimeout(() => setCountdown(null), 500);
     }, 1050);
-  }, [selectedTrack, tiltSteeringEnabled]);
+  }, [activeCar, cars, selectedTrack, tiltSteeringEnabled, gameState, initEngineAsync]);
 
   // Sound Toggle
   const toggleAudio = useCallback(() => {
@@ -468,7 +531,20 @@ export const App: React.FC = () => {
           ===================================================================== */}
       {gameState === 'SPLASH' && (
         <div className="splash-screen-overlay">
-          <div className="splash-bg-image" />
+          <picture className="splash-bg-picture">
+            <source media="(max-width: 768px)" srcSet="./images/splash-hero-mobile.webp" type="image/webp" />
+            <source srcSet="./images/splash-hero.webp" type="image/webp" />
+            <img
+              src="./images/splash-hero.webp"
+              alt="Cyber Highway Hypercar"
+              className="splash-bg-img"
+              width="1920"
+              height="1080"
+              decoding="async"
+              // @ts-expect-error fetchpriority supported in modern browsers
+              fetchpriority="high"
+            />
+          </picture>
           <div className="splash-vignette" />
 
           <div className="splash-content-card">
@@ -612,6 +688,7 @@ export const App: React.FC = () => {
                 style={{ padding: '8px 12px' }}
                 onClick={toggleAudio}
                 title={isMuted ? "Unmute Sound" : "Mute Sound"}
+                aria-label={isMuted ? "Unmute Sound" : "Mute Sound"}
               >
                 {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
@@ -622,6 +699,7 @@ export const App: React.FC = () => {
                 style={{ padding: '8px 12px' }}
                 onClick={() => setShowLeaderboard(true)}
                 title="Leaderboard"
+                aria-label="View Leaderboard"
               >
                 <Trophy size={16} />
               </button>
@@ -635,10 +713,10 @@ export const App: React.FC = () => {
 
           {/* Center Carousel Navigation Arrows */}
           <div className="showroom-nav-controls">
-            <button className="showroom-arrow-btn prev" onClick={handlePrevCar}>
+            <button className="showroom-arrow-btn prev" onClick={handlePrevCar} aria-label="Previous Hypercar">
               <ChevronLeft size={28} />
             </button>
-            <button className="showroom-arrow-btn next" onClick={handleNextCar}>
+            <button className="showroom-arrow-btn next" onClick={handleNextCar} aria-label="Next Hypercar">
               <ChevronRight size={28} />
             </button>
           </div>
@@ -706,10 +784,11 @@ export const App: React.FC = () => {
                       <button
                         key={c.hex}
                         type="button"
-                        className={`color-swatch-btn ${activeCar.color === c.hex ? 'active' : ''}`}
+                        className={`color-swatch-btn ${activeCar.color.toLowerCase() === c.hex.toLowerCase() ? 'active' : ''}`}
                         style={{ backgroundColor: c.hex }}
                         onClick={() => handlePaintSelect(c.hex)}
                         title={c.name}
+                        aria-label={`Select paint ${c.name}`}
                       />
                     ))}
                   </div>
@@ -722,10 +801,11 @@ export const App: React.FC = () => {
                       <button
                         key={u.hex}
                         type="button"
-                        className={`color-swatch-btn ${activeCar.underglowColor === u.hex ? 'active' : ''}`}
+                        className={`color-swatch-btn ${activeCar.underglowColor.toLowerCase() === u.hex.toLowerCase() ? 'active' : ''}`}
                         style={{ backgroundColor: u.hex, boxShadow: `0 0 8px ${u.hex}` }}
                         onClick={() => handleUnderglowSelect(u.hex)}
                         title={u.name}
+                        aria-label={`Select underglow ${u.name}`}
                       />
                     ))}
                   </div>
@@ -783,6 +863,9 @@ export const App: React.FC = () => {
             hud={hud}
             nearMissAlert={nearMissAlert}
             evadedBonus={evadedBonus}
+            onToggleWeather={() => engineRef.current?.toggleWeather()}
+            onToggleAudio={toggleAudio}
+            isMuted={isMuted}
           />
 
           {/* Milestone Founder Gantry Toast (Every 1,000m) */}
@@ -808,24 +891,22 @@ export const App: React.FC = () => {
         </>
       )}
 
-      {/* =====================================================================
-          GAME OVER / BUSTED MODAL
-          ===================================================================== */}
-      {gameState === 'GAME_OVER' && summary && (
-        <GameOverModal
-          summary={summary}
-          onRestart={() => {
-            setGameState('SELECT_TRACK');
-          }}
-          onOpenGarage={() => setGameState('SELECT_CAR')}
-          onOpenLeaderboard={() => setShowLeaderboard(true)}
-        />
-      )}
+      {/* Lazy Loaded Modals */}
+      <Suspense fallback={null}>
+        {gameState === 'GAME_OVER' && summary && (
+          <GameOverModal
+            summary={summary}
+            onRestart={launchQuickRace}
+            onOpenGarage={() => setGameState('SELECT_CAR')}
+            onOpenTracks={() => setGameState('SELECT_TRACK')}
+            onOpenLeaderboard={() => setShowLeaderboard(true)}
+          />
+        )}
 
-      {/* Global Leaderboard Modal */}
-      {showLeaderboard && (
-        <LeaderboardModal onClose={() => setShowLeaderboard(false)} />
-      )}
+        {showLeaderboard && (
+          <LeaderboardModal onClose={() => setShowLeaderboard(false)} />
+        )}
+      </Suspense>
     </div>
   );
 };

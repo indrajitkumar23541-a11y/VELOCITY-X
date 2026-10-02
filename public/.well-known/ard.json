@@ -1,0 +1,17 @@
+{
+  "specVersion": "1.0",
+  "entries": [
+    {
+      "identifier": "urn:air:indrajitkumar23541-a11y.github.io:velocity-x:agent",
+      "displayName": "VELOCITY X Web Game",
+      "type": "application/agent-card+json",
+      "url": "https://indrajitkumar23541-a11y.github.io/VELOCITY-X/agent-card.json",
+      "description": "Next-generation 3D WebGL highway racing and tactical police pursuit PWA game.",
+      "representativeQueries": [
+        "Play 3D highway racing game",
+        "Drive hypercars in police pursuit",
+        "Start Velocity X arcade racer"
+      ]
+    }
+  ]
+}

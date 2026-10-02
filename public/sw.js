@@ -11,7 +11,16 @@ const CORE_ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-192.svg',
-  './icons/icon-512.svg'
+  './icons/icon-512.svg',
+  './images/splash-hero.webp',
+  './images/splash-hero-mobile.webp',
+  './images/splash-hero.jpg',
+  './images/founder.jpg',
+  './fonts/orbitron.woff2',
+  './fonts/rajdhani.woff2',
+  './llms.txt',
+  './robots.txt',
+  './sitemap.xml'
 ];
 
 self.addEventListener('install', (event) => {
@@ -47,6 +56,10 @@ self.addEventListener('activate', (event) => {
 // Smart Caching: Network-First for HTML/Navigations, Cache-First with Background Update for Assets
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+  if (req.method !== 'GET' || !req.url.startsWith('http')) {
+    return;
+  }
+
   // Never cache version.json so remote update checks are always 100% fresh from network
   if (req.url.includes('version.json')) {
     event.respondWith(

@@ -47,7 +47,10 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
     });
   }, [onControlsChange]);
 
-  const handleSteerEnd = useCallback(() => {
+  const handleSteerEnd = useCallback((direction?: 'left' | 'right') => {
+    if (direction && activeSteerRef.current !== direction) {
+      return; // An opposite direction was activated, do not cancel it
+    }
     activeSteerRef.current = null;
     onControlsChange({
       steerLeft: false,
@@ -106,6 +109,7 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
                 if (onCalibrateTilt) onCalibrateTilt();
               }}
               title="Calibrate Center Angle"
+              aria-label="Calibrate Tilt Center Angle"
             >
               <Smartphone size={13} className="tilt-icon-anim" />
               <span>TILT {tiltAngle > 0 ? `+${tiltAngle}°` : `${tiltAngle}°`}</span>
@@ -116,10 +120,21 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
           <div className="steer-buttons-group">
             <button
               className="touch-btn steer-btn left-steer"
-              onPointerDown={(e) => { e.preventDefault(); handleSteerStart('left'); }}
-              onPointerUp={(e) => { e.preventDefault(); handleSteerEnd(); }}
-              onPointerCancel={(e) => { e.preventDefault(); handleSteerEnd(); }}
-              onPointerLeave={(e) => { e.preventDefault(); handleSteerEnd(); }}
+              aria-label="Steer Left"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+                handleSteerStart('left');
+              }}
+              onPointerUp={(e) => {
+                e.preventDefault();
+                (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+                handleSteerEnd('left');
+              }}
+              onPointerCancel={(e) => {
+                e.preventDefault();
+                handleSteerEnd('left');
+              }}
             >
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 18-6-6 6-6"/>
@@ -129,10 +144,21 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
 
             <button
               className="touch-btn steer-btn right-steer"
-              onPointerDown={(e) => { e.preventDefault(); handleSteerStart('right'); }}
-              onPointerUp={(e) => { e.preventDefault(); handleSteerEnd(); }}
-              onPointerCancel={(e) => { e.preventDefault(); handleSteerEnd(); }}
-              onPointerLeave={(e) => { e.preventDefault(); handleSteerEnd(); }}
+              aria-label="Steer Right"
+              onPointerDown={(e) => {
+                e.preventDefault();
+                (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+                handleSteerStart('right');
+              }}
+              onPointerUp={(e) => {
+                e.preventDefault();
+                (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+                handleSteerEnd('right');
+              }}
+              onPointerCancel={(e) => {
+                e.preventDefault();
+                handleSteerEnd('right');
+              }}
             >
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m9 18 6-6-6-6"/>
@@ -148,10 +174,21 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
         {/* NOS Rocket Button */}
         <button
           className={`touch-btn nos-btn ${isNitroActive ? 'nos-active' : ''} ${nitroPercent < 5 ? 'nos-depleted' : ''}`}
-          onPointerDown={(e) => { e.preventDefault(); handleNitroStart(); }}
-          onPointerUp={(e) => { e.preventDefault(); handleNitroEnd(); }}
-          onPointerCancel={(e) => { e.preventDefault(); handleNitroEnd(); }}
-          onPointerLeave={(e) => { e.preventDefault(); handleNitroEnd(); }}
+          aria-label="Activate Nitro Boost"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+            handleNitroStart();
+          }}
+          onPointerUp={(e) => {
+            e.preventDefault();
+            (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+            handleNitroEnd();
+          }}
+          onPointerCancel={(e) => {
+            e.preventDefault();
+            handleNitroEnd();
+          }}
         >
           <Zap className="nos-icon" size={24} />
           <span className="nos-label">NOS</span>
@@ -161,10 +198,21 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
         {/* Brake Pedal */}
         <button
           className="touch-btn pedal-btn brake-pedal"
-          onPointerDown={(e) => { e.preventDefault(); handleBrakeStart(); }}
-          onPointerUp={(e) => { e.preventDefault(); handleBrakeEnd(); }}
-          onPointerCancel={(e) => { e.preventDefault(); handleBrakeEnd(); }}
-          onPointerLeave={(e) => { e.preventDefault(); handleBrakeEnd(); }}
+          aria-label="Brake and Reverse"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+            handleBrakeStart();
+          }}
+          onPointerUp={(e) => {
+            e.preventDefault();
+            (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+            handleBrakeEnd();
+          }}
+          onPointerCancel={(e) => {
+            e.preventDefault();
+            handleBrakeEnd();
+          }}
         >
           <span className="pedal-label">BRAKE</span>
         </button>
@@ -172,10 +220,21 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
         {/* Gas / Race Pedal */}
         <button
           className="touch-btn pedal-btn gas-pedal"
-          onPointerDown={(e) => { e.preventDefault(); handleThrottleStart(); }}
-          onPointerUp={(e) => { e.preventDefault(); handleThrottleEnd(); }}
-          onPointerCancel={(e) => { e.preventDefault(); handleThrottleEnd(); }}
-          onPointerLeave={(e) => { e.preventDefault(); handleThrottleEnd(); }}
+          aria-label="Accelerate Throttle"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+            handleThrottleStart();
+          }}
+          onPointerUp={(e) => {
+            e.preventDefault();
+            (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+            handleThrottleEnd();
+          }}
+          onPointerCancel={(e) => {
+            e.preventDefault();
+            handleThrottleEnd();
+          }}
         >
           <span className="pedal-label">GAS</span>
         </button>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://indrajitkumar23541-a11y.github.io/VELOCITY-X/sitemap.xml
