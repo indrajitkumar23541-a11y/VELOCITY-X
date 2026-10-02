@@ -145,7 +145,12 @@ export const MobileHUD: React.FC<MobileHUDProps> = ({
           title="Toggle Cyber Rainstorm (or press 'C')"
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onToggleWeather?.(); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onToggleWeather?.();
+            }
+          }}
         >
           {hud.weather === 'RAIN' ? (
             <CloudRain size={13} className="weather-hud-icon rain" />

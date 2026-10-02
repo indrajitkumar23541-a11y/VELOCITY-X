@@ -135,6 +135,14 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
                 e.preventDefault();
                 handleSteerEnd('left');
               }}
+              onLostPointerCapture={(e) => {
+                e.preventDefault();
+                handleSteerEnd('left');
+              }}
+              onPointerLeave={(e) => {
+                e.preventDefault();
+                handleSteerEnd('left');
+              }}
             >
               <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m15 18-6-6 6-6"/>
@@ -156,6 +164,14 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
                 handleSteerEnd('right');
               }}
               onPointerCancel={(e) => {
+                e.preventDefault();
+                handleSteerEnd('right');
+              }}
+              onLostPointerCapture={(e) => {
+                e.preventDefault();
+                handleSteerEnd('right');
+              }}
+              onPointerLeave={(e) => {
                 e.preventDefault();
                 handleSteerEnd('right');
               }}
@@ -189,6 +205,14 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             e.preventDefault();
             handleNitroEnd();
           }}
+          onLostPointerCapture={(e) => {
+            e.preventDefault();
+            handleNitroEnd();
+          }}
+          onPointerLeave={(e) => {
+            e.preventDefault();
+            handleNitroEnd();
+          }}
         >
           <Zap className="nos-icon" size={24} />
           <span className="nos-label">NOS</span>
@@ -213,6 +237,14 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             e.preventDefault();
             handleBrakeEnd();
           }}
+          onLostPointerCapture={(e) => {
+            e.preventDefault();
+            handleBrakeEnd();
+          }}
+          onPointerLeave={(e) => {
+            e.preventDefault();
+            handleBrakeEnd();
+          }}
         >
           <span className="pedal-label">BRAKE</span>
         </button>
@@ -232,6 +264,14 @@ export const MobileControls: React.FC<MobileControlsProps> = ({
             handleThrottleEnd();
           }}
           onPointerCancel={(e) => {
+            e.preventDefault();
+            handleThrottleEnd();
+          }}
+          onLostPointerCapture={(e) => {
+            e.preventDefault();
+            handleThrottleEnd();
+          }}
+          onPointerLeave={(e) => {
             e.preventDefault();
             handleThrottleEnd();
           }}

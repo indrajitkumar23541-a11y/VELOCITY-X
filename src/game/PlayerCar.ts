@@ -58,6 +58,12 @@ export class PlayerCar {
   // Active Aero flaps for Pagani
   private activeAeroFlaps: THREE.Mesh[] = [];
 
+  // Disposal & Asynchronous Model Streaming Guard
+  private isDisposed: boolean = false;
+  private currentLoadTaskId: number = 0;
+  private pendingIdleCallbackId: number | null = null;
+  private pendingTimeoutId: any = null;
+
   // Dual Exhaust Positions for Particle Flames
   public leftExhaustPos = new THREE.Vector3();
   public rightExhaustPos = new THREE.Vector3();
@@ -217,24 +223,45 @@ export class PlayerCar {
         break;
     }
 
+    // Invalidate any previous pending load tasks
+    const taskId = ++this.currentLoadTaskId;
+    if (this.pendingIdleCallbackId !== null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+      (window as any).cancelIdleCallback(this.pendingIdleCallbackId);
+      this.pendingIdleCallbackId = null;
+    }
+    if (this.pendingTimeoutId !== null) {
+      clearTimeout(this.pendingTimeoutId);
+      this.pendingTimeoutId = null;
+    }
+
     // Stream authentic 3D GLB supercar model during idle time so initial paint/Lighthouse completes instantly
     const loadModelTask = () => {
+      this.pendingIdleCallbackId = null;
+      this.pendingTimeoutId = null;
+      if (this.isDisposed || this.currentLoadTaskId !== taskId) return;
       if (targetGroup === this.carRoot) {
-        this.loadRealSupercarGLB(modelPath, rotY, targetLength, targetGroup);
+        this.loadRealSupercarGLB(modelPath, rotY, targetLength, targetGroup, taskId);
       }
     };
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(loadModelTask, { timeout: 1500 });
+      this.pendingIdleCallbackId = (window as any).requestIdleCallback(loadModelTask, { timeout: 1500 });
     } else {
-      setTimeout(loadModelTask, 600);
+      this.pendingTimeoutId = setTimeout(loadModelTask, 600);
     }
   }
 
-  private loadRealSupercarGLB(modelPath: string, rotY: number, targetLength: number, targetGroup: THREE.Group): void {
+  private loadRealSupercarGLB(modelPath: string, rotY: number, targetLength: number, targetGroup: THREE.Group, taskId: number): void {
     gltfLoader.load(
       modelPath,
       (gltf) => {
-        if (targetGroup !== this.carRoot) return;
+        if (this.isDisposed || this.currentLoadTaskId !== taskId || targetGroup !== this.carRoot) {
+          gltf.scene?.traverse((child) => {
+            if (child instanceof THREE.Mesh && child.geometry) {
+              child.geometry.dispose();
+            }
+          });
+          return;
+        }
 
         // Clean up procedural placeholder children
         while (targetGroup.children.length > 0) {
@@ -1105,6 +1132,17 @@ export class PlayerCar {
   }
 
   public dispose(): void {
+    this.isDisposed = true;
+    this.currentLoadTaskId++;
+    if (this.pendingIdleCallbackId !== null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+      (window as any).cancelIdleCallback(this.pendingIdleCallbackId);
+      this.pendingIdleCallbackId = null;
+    }
+    if (this.pendingTimeoutId !== null) {
+      clearTimeout(this.pendingTimeoutId);
+      this.pendingTimeoutId = null;
+    }
+
     if (this.carRoot) {
       this.mesh.remove(this.carRoot);
       this.carRoot.traverse((child) => {

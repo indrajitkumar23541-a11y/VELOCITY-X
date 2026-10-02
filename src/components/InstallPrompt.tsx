@@ -86,8 +86,13 @@ export const InstallPrompt: React.FC = () => {
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
+        try {
+          if (!document.execCommand('copy')) {
+            throw new Error('execCommand copy failed');
+          }
+        } finally {
+          document.body.removeChild(textArea);
+        }
       }
       setCopiedUrl(true);
       setTimeout(() => setCopiedUrl(false), 2000);

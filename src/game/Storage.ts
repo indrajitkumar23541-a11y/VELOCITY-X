@@ -124,7 +124,7 @@ export class StorageManager {
   static saveStats(stats: Partial<GameStats>): GameStats {
     const current = this.getStats();
     const updated = { ...current, ...stats };
-    if (updated.playerCallsign) {
+    if (typeof updated.playerCallsign === 'string') {
       updated.playerCallsign = updated.playerCallsign.trim().replace(/[^A-Za-z0-9_\-\s]/g, '').slice(0, 16) || 'VIPER_01';
     }
     try {

@@ -17,6 +17,8 @@ export const RotatePhonePrompt: React.FC = () => {
       if (!portrait && document.body.classList.contains('force-virtual-landscape')) {
         document.body.classList.remove('force-virtual-landscape');
         setIsVirtualLandscape(false);
+        // Explicitly trigger a synthetic resize event so Three.js camera projection and WebGL renderer
+        // update immediately when virtual landscape rotation transform is stripped from <body>.
         window.dispatchEvent(new Event('resize'));
       }
     };

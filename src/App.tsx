@@ -60,6 +60,7 @@ const UNDERGLOW_COLORS = [
 export const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<Engine | null>(null);
+  const isLaunchingRaceRef = useRef<boolean>(false);
 
   // Persistence State
   const [stats, setStats] = useState<GameStats>(() => StorageManager.getStats());
@@ -138,6 +139,7 @@ export const App: React.FC = () => {
           setTimeout(() => setFounderMilestoneAlert(null), 4500);
         };
         engine.onGameOver = (runSummary) => {
+          isLaunchingRaceRef.current = false;
           tiltManager.stop();
           audioManager.stopAllGameSounds();
           setSummary(runSummary);
@@ -217,12 +219,15 @@ export const App: React.FC = () => {
       }
       audioManager.unlock();
       if (e.key.toLowerCase() === 'm') {
+        if (e.repeat) return;
         const muted = audioManager.toggleMute();
         setIsMuted(muted);
         return;
       }
       if (e.key.toLowerCase() === 'c' && engineRef.current) {
+        if (e.repeat) return;
         engineRef.current.toggleWeather();
+        return;
       }
       if (gameState !== 'RACING' || !engineRef.current) return;
       const c = engineRef.current.controls;
@@ -373,7 +378,8 @@ export const App: React.FC = () => {
 
   // Instant 1-Tap Quick Race (Starts immediately in < 0.6s)
   const launchQuickRace = useCallback(async () => {
-    if (gameState === 'COUNTDOWN') return;
+    if (gameState === 'COUNTDOWN' || isLaunchingRaceRef.current) return;
+    isLaunchingRaceRef.current = true;
     HapticsManager.buttonTap();
     audioManager.unlock();
     if (document.documentElement.requestFullscreen) {
@@ -386,12 +392,27 @@ export const App: React.FC = () => {
       if (idx >= 0) setActiveCarIndex(idx);
     }
     StorageManager.saveStats({ selectedCarId: carToRace.id });
-    const engine = engineRef.current || await initEngineAsync(carToRace);
-    if (engine) {
-      engine.setCarConfig(carToRace);
-      engine.setTurntableMode(false);
-      engine.setTrackEnvironment(selectedTrack);
+
+    let engine = engineRef.current;
+    if (!engine) {
+      try {
+        engine = await initEngineAsync(carToRace);
+      } catch (err) {
+        console.error('Failed to initialize engine for quick race:', err);
+        isLaunchingRaceRef.current = false;
+        return;
+      }
     }
+
+    if (!engine) {
+      console.warn('Game engine unavailable for quick race');
+      isLaunchingRaceRef.current = false;
+      return;
+    }
+
+    engine.setCarConfig(carToRace);
+    engine.setTurntableMode(false);
+    engine.setTrackEnvironment(selectedTrack);
 
     setGameState('COUNTDOWN');
     setCountdown(1);
@@ -410,13 +431,15 @@ export const App: React.FC = () => {
         tiltManager.stop();
       }
       setGameState('RACING');
+      isLaunchingRaceRef.current = false;
       setTimeout(() => setCountdown(null), 500);
     }, 400);
   }, [activeCar, cars, selectedTrack, tiltSteeringEnabled, gameState, initEngineAsync]);
 
   // Step 3 -> Step 4: Launch Race with Snappy 3-2-1-GO! Countdown (1.2s total)
   const launchCountdownAndRace = useCallback(async () => {
-    if (gameState === 'COUNTDOWN') return;
+    if (gameState === 'COUNTDOWN' || isLaunchingRaceRef.current) return;
+    isLaunchingRaceRef.current = true;
     HapticsManager.buttonTap();
     audioManager.unlock();
     const carToRace = activeCar.unlocked ? activeCar : (cars.find(c => c.unlocked) || cars[0]);
@@ -426,12 +449,27 @@ export const App: React.FC = () => {
       if (idx >= 0) setActiveCarIndex(idx);
     }
     StorageManager.saveStats({ selectedCarId: carToRace.id });
-    const engine = engineRef.current || await initEngineAsync(carToRace);
-    if (engine) {
-      engine.setCarConfig(carToRace);
-      engine.setTurntableMode(false);
-      engine.setTrackEnvironment(selectedTrack);
+
+    let engine = engineRef.current;
+    if (!engine) {
+      try {
+        engine = await initEngineAsync(carToRace);
+      } catch (err) {
+        console.error('Failed to initialize engine for countdown race:', err);
+        isLaunchingRaceRef.current = false;
+        return;
+      }
     }
+
+    if (!engine) {
+      console.warn('Game engine unavailable for countdown race');
+      isLaunchingRaceRef.current = false;
+      return;
+    }
+
+    engine.setCarConfig(carToRace);
+    engine.setTurntableMode(false);
+    engine.setTrackEnvironment(selectedTrack);
 
     setGameState('COUNTDOWN');
     setCountdown(3);
@@ -460,6 +498,7 @@ export const App: React.FC = () => {
         tiltManager.stop();
       }
       setGameState('RACING');
+      isLaunchingRaceRef.current = false;
       setTimeout(() => setCountdown(null), 500);
     }, 1050);
   }, [activeCar, cars, selectedTrack, tiltSteeringEnabled, gameState, initEngineAsync]);
