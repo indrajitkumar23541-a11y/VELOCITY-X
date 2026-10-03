@@ -2,7 +2,7 @@
 import React from 'react';
 import { GameSummary } from '../game/Engine';
 import { HapticsManager } from '../game/HapticsManager';
-import { RotateCcw, Wrench, Trophy, Coins, Flame, ShieldAlert } from 'lucide-react';
+import { RotateCcw, Wrench, Trophy, Coins, Flame, ShieldAlert, Compass } from 'lucide-react';
 
 interface GameOverModalProps {
   summary: GameSummary;
@@ -118,6 +118,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
                 onOpenTracks();
               }}
             >
+              <Compass size={18} />
               <span>TRACKS</span>
             </button>
           )}

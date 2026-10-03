@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState, useCallback, Suspense } from 'react';
 import type { Engine, HUDData, GameSummary } from './game/Engine';
 import { StorageManager, CarConfig, GameStats } from './game/Storage';
-import { PlayerControls } from './game/PlayerCar';
+import { PlayerCar, PlayerControls } from './game/PlayerCar';
 import { audioManager } from './game/AudioManager';
 import { HapticsManager } from './game/HapticsManager';
 import { tiltManager } from './game/TiltManager';
@@ -154,8 +154,10 @@ export const App: React.FC = () => {
     return engineRef.current;
   }, []);
 
-  // 1. Cleanup lifecycle for Three.js Engine and motion sensors
+  // 1. Preload authentic 3D supercars on launch and cleanup lifecycle
   useEffect(() => {
+    // Preload default hypercar model during splash screen so Quick Race starts with zero delay and real 3D model
+    PlayerCar.preloadModel('./models/porsche.glb').catch(() => {});
     return () => {
       tiltManager.stop();
       if (engineRef.current) {
@@ -410,6 +412,9 @@ export const App: React.FC = () => {
       return;
     }
 
+    const modelPath = carToRace.type === 'gt' ? './models/lamborghini.glb' : carToRace.type === 'muscle' ? './models/supercar_1.glb' : './models/porsche.glb';
+    await PlayerCar.preloadModel(modelPath).catch(() => {});
+
     engine.setCarConfig(carToRace);
     engine.setTurntableMode(false);
     engine.setTrackEnvironment(selectedTrack);
@@ -466,6 +471,9 @@ export const App: React.FC = () => {
       isLaunchingRaceRef.current = false;
       return;
     }
+
+    const modelPath = carToRace.type === 'gt' ? './models/lamborghini.glb' : carToRace.type === 'muscle' ? './models/supercar_1.glb' : './models/porsche.glb';
+    await PlayerCar.preloadModel(modelPath).catch(() => {});
 
     engine.setCarConfig(carToRace);
     engine.setTurntableMode(false);
@@ -559,8 +567,8 @@ export const App: React.FC = () => {
       {/* Over-The-Air Real-time Cloud Update Banner */}
       <UpdateNotification gameState={gameState} />
 
-      {/* PWA 1-Tap Offline Standalone Game Installer (Hidden during race to keep road 100% clean) */}
-      {gameState !== 'RACING' && <InstallPrompt />}
+      {/* PWA 1-Tap Offline Standalone Game Installer (Hidden during race, countdown, and game over to keep screen clean) */}
+      {gameState !== 'RACING' && gameState !== 'GAME_OVER' && gameState !== 'COUNTDOWN' && <InstallPrompt gameState={gameState} />}
 
       {/* Mobile Landscape Orientation Enforcement Overlay */}
       <RotatePhonePrompt />

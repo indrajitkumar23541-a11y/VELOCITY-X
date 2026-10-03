@@ -1,7 +1,7 @@
-// VELOCITY X - 4K Photorealistic PBR Supercars (Pagani Huayra, Bugatti Chiron, Cyber Muscle) & Physics
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { CarConfig } from './Storage';
 import { RoadManager } from './RoadManager';
 
@@ -170,6 +170,35 @@ export class PlayerCar {
     this.underglowLight.color.set(underglowColor);
   }
 
+  // Static model cache for instant zero-delay supercar instantiation
+  private static cachedGLTFs = new Map<string, any>();
+  private static loadingPromises = new Map<string, Promise<any>>();
+
+  public static preloadModel(modelPath: string): Promise<any> {
+    if (PlayerCar.cachedGLTFs.has(modelPath)) {
+      return Promise.resolve(PlayerCar.cachedGLTFs.get(modelPath));
+    }
+    if (PlayerCar.loadingPromises.has(modelPath)) {
+      return PlayerCar.loadingPromises.get(modelPath)!;
+    }
+    const p = new Promise<any>((resolve, reject) => {
+      gltfLoader.load(
+        modelPath,
+        (gltf) => {
+          PlayerCar.cachedGLTFs.set(modelPath, gltf);
+          resolve(gltf);
+        },
+        undefined,
+        (err) => {
+          console.warn(`[GLTFLoader] Preload failed for ${modelPath}:`, err);
+          reject(err);
+        }
+      );
+    });
+    PlayerCar.loadingPromises.set(modelPath, p);
+    return p;
+  }
+
   public buildSupercarModel(): void {
     if (this.carRoot) {
       this.mesh.remove(this.carRoot);
@@ -191,32 +220,27 @@ export class PlayerCar {
     const targetGroup = this.carRoot;
     this.mesh.add(this.carRoot);
 
-    // Initial instant fallback procedural architecture
     let modelPath = './models/porsche.glb';
     let targetLength = 4.7;
     let rotY = 0;
 
     switch (this.config.type) {
       case 'roadster':
-        this.buildPaganiRoadster(targetGroup);
         modelPath = './models/porsche.glb';
         targetLength = 4.7;
         rotY = 0;
         break;
       case 'gt':
-        this.buildBugattiGT(targetGroup);
         modelPath = './models/lamborghini.glb';
         targetLength = 4.85;
         rotY = Math.PI / 2;
         break;
       case 'muscle':
-        this.buildTitanMuscle(targetGroup);
         modelPath = './models/supercar_1.glb';
         targetLength = 4.65;
         rotY = Math.PI;
         break;
       default:
-        this.buildPaganiRoadster(targetGroup);
         modelPath = './models/porsche.glb';
         targetLength = 4.7;
         rotY = 0;
@@ -234,127 +258,132 @@ export class PlayerCar {
       this.pendingTimeoutId = null;
     }
 
-    // Stream authentic 3D GLB supercar model during idle time so initial paint/Lighthouse completes instantly
-    const loadModelTask = () => {
-      this.pendingIdleCallbackId = null;
-      this.pendingTimeoutId = null;
-      if (this.isDisposed || this.currentLoadTaskId !== taskId) return;
-      if (targetGroup === this.carRoot) {
-        this.loadRealSupercarGLB(modelPath, rotY, targetLength, targetGroup, taskId);
-      }
-    };
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      this.pendingIdleCallbackId = (window as any).requestIdleCallback(loadModelTask, { timeout: 1500 });
-    } else {
-      this.pendingTimeoutId = setTimeout(loadModelTask, 600);
+    // 🏎️ INSTANT ZERO-DELAY: If authentic 3D supercar model is cached, apply immediately!
+    if (PlayerCar.cachedGLTFs.has(modelPath)) {
+      const cached = PlayerCar.cachedGLTFs.get(modelPath);
+      this.applySupercarScene(cached, rotY, targetLength, targetGroup);
+      return;
     }
+
+    // Otherwise, build lightweight procedural fallback while streaming model in background
+    switch (this.config.type) {
+      case 'roadster':
+        this.buildPaganiRoadster(targetGroup);
+        break;
+      case 'gt':
+        this.buildBugattiGT(targetGroup);
+        break;
+      case 'muscle':
+        this.buildTitanMuscle(targetGroup);
+        break;
+      default:
+        this.buildPaganiRoadster(targetGroup);
+        break;
+    }
+
+    // Load authentic 3D GLB supercar model immediately (no artificial idle delays)
+    this.loadRealSupercarGLB(modelPath, rotY, targetLength, targetGroup, taskId);
   }
 
   private loadRealSupercarGLB(modelPath: string, rotY: number, targetLength: number, targetGroup: THREE.Group, taskId: number): void {
-    gltfLoader.load(
-      modelPath,
-      (gltf) => {
-        if (this.isDisposed || this.currentLoadTaskId !== taskId || targetGroup !== this.carRoot) {
-          gltf.scene?.traverse((child) => {
-            if (child instanceof THREE.Mesh && child.geometry) {
-              child.geometry.dispose();
-            }
-          });
-          return;
-        }
+    PlayerCar.preloadModel(modelPath).then((gltf) => {
+      if (this.isDisposed || this.currentLoadTaskId !== taskId || targetGroup !== this.carRoot) {
+        return;
+      }
 
-        // Clean up procedural placeholder children
-        while (targetGroup.children.length > 0) {
-          const c = targetGroup.children[0];
-          targetGroup.remove(c);
-          c.traverse?.((child) => {
-            if (child instanceof THREE.Mesh && child.geometry) {
-              child.geometry.dispose();
-            }
-          });
-        }
-        this.frontWheels = [];
-        this.allWheels = [];
-        this.gltfWheels = [];
-        this.activeAeroFlaps = [];
-        this.headlightCones = [];
-
-        const scene = gltf.scene;
-
-        // Apply rotation to align front with +Z
-        scene.rotation.y = rotY;
-        scene.updateMatrixWorld(true);
-
-        // Normalize scale to realistic car length in meters
-        const initialBbox = new THREE.Box3().setFromObject(scene);
-        const initialSize = new THREE.Vector3();
-        initialBbox.getSize(initialSize);
-
-        const currentLength = initialSize.z > 0.1 ? initialSize.z : Math.max(initialSize.x, initialSize.y);
-        const scaleFactor = targetLength / currentLength;
-        scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
-        scene.updateMatrixWorld(true);
-
-        // Ground the tires flush with asphalt (y = 0) and center on X & Z
-        const finalBbox = new THREE.Box3().setFromObject(scene);
-        const center = new THREE.Vector3();
-        finalBbox.getCenter(center);
-
-        scene.position.x = -center.x;
-        scene.position.z = -center.z;
-        scene.position.y = -finalBbox.min.y;
-        scene.updateMatrixWorld(true);
-
-        // Traverse hierarchy to assign metallic paint, PBR clearcoat, and identify wheels
-        scene.traverse((child) => {
-          if (child instanceof THREE.Mesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-
-            const name = (child.name || '').toLowerCase();
-            const matName = child.material && 'name' in child.material ? ((child.material as THREE.Material).name || '').toLowerCase() : '';
-
-            // Apply player custom paint to exterior body panels
-            const isBodyPaint =
-              name.includes('body') ||
-              name.includes('carrosserie') ||
-              name.includes('paint') ||
-              matName.includes('body') ||
-              matName.includes('paint') ||
-              matName === 'mt_body' ||
-              matName === 'body_color';
-
-            if (isBodyPaint) {
-              child.material = this.carPaintMaterial;
-            } else if (child.material instanceof THREE.MeshStandardMaterial || child.material instanceof THREE.MeshPhysicalMaterial) {
-              child.material.envMapIntensity = 0.85;
-              child.material.roughness = Math.min(child.material.roughness, 0.35);
-              child.material.needsUpdate = true;
-            }
-
-            // Identify wheels for dynamic steering
-            if (name.includes('wheel') || name.includes('tyre') || name.includes('tire') || name.includes('roue')) {
-              const worldPos = new THREE.Vector3();
-              child.getWorldPosition(worldPos);
-              this.gltfWheels.push({
-                obj: child,
-                initialEuler: child.rotation.clone(),
-                isFront: worldPos.z > 0.1,
-              });
-            }
+      // Clean up procedural placeholder children
+      while (targetGroup.children.length > 0) {
+        const c = targetGroup.children[0];
+        targetGroup.remove(c);
+        c.traverse?.((child) => {
+          if (child instanceof THREE.Mesh && child.geometry) {
+            child.geometry.dispose();
           }
         });
-
-        // Add Realistic Xenon Projector Headlights
-        this.addRealisticHeadlights(targetGroup, targetLength);
-
-        targetGroup.add(scene);
-      },
-      undefined,
-      (err) => {
-        console.warn(`[GLTFLoader] Failed to load ${modelPath}, kept procedural fallback:`, err);
       }
-    );
+      this.frontWheels = [];
+      this.allWheels = [];
+      this.gltfWheels = [];
+      this.activeAeroFlaps = [];
+      this.headlightCones = [];
+
+      this.applySupercarScene(gltf, rotY, targetLength, targetGroup);
+    }).catch((err) => {
+      console.warn(`[GLTFLoader] Failed to load ${modelPath}, kept procedural fallback:`, err);
+    });
+  }
+
+  private applySupercarScene(gltf: any, rotY: number, targetLength: number, targetGroup: THREE.Group): void {
+    const scene = SkeletonUtils.clone(gltf.scene) as THREE.Group;
+
+    // Apply rotation to align front with +Z
+    scene.rotation.y = rotY;
+    scene.updateMatrixWorld(true);
+
+    // Normalize scale to realistic car length in meters
+    const initialBbox = new THREE.Box3().setFromObject(scene);
+    const initialSize = new THREE.Vector3();
+    initialBbox.getSize(initialSize);
+
+    const currentLength = initialSize.z > 0.1 ? initialSize.z : Math.max(initialSize.x, initialSize.y);
+    const scaleFactor = targetLength / currentLength;
+    scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    scene.updateMatrixWorld(true);
+
+    // Ground the tires flush with asphalt (y = 0) and center on X & Z
+    const finalBbox = new THREE.Box3().setFromObject(scene);
+    const center = new THREE.Vector3();
+    finalBbox.getCenter(center);
+
+    scene.position.x = -center.x;
+    scene.position.z = -center.z;
+    scene.position.y = -finalBbox.min.y;
+    scene.updateMatrixWorld(true);
+
+    // Traverse hierarchy to assign metallic paint, PBR clearcoat, and identify wheels
+    scene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+
+        const name = (child.name || '').toLowerCase();
+        const matName = child.material && 'name' in child.material ? ((child.material as THREE.Material).name || '').toLowerCase() : '';
+
+        // Apply player custom paint to exterior body panels
+        const isBodyPaint =
+          name.includes('body') ||
+          name.includes('carrosserie') ||
+          name.includes('paint') ||
+          matName.includes('body') ||
+          matName.includes('paint') ||
+          matName === 'mt_body' ||
+          matName === 'body_color';
+
+        if (isBodyPaint) {
+          child.material = this.carPaintMaterial;
+        } else if (child.material instanceof THREE.MeshStandardMaterial || child.material instanceof THREE.MeshPhysicalMaterial) {
+          child.material.envMapIntensity = 0.85;
+          child.material.roughness = Math.min(child.material.roughness, 0.35);
+          child.material.needsUpdate = true;
+        }
+
+        // Identify wheels for dynamic steering
+        if (name.includes('wheel') || name.includes('tyre') || name.includes('tire') || name.includes('roue')) {
+          const worldPos = new THREE.Vector3();
+          child.getWorldPosition(worldPos);
+          this.gltfWheels.push({
+            obj: child,
+            initialEuler: child.rotation.clone(),
+            isFront: worldPos.z > 0.1,
+          });
+        }
+      }
+    });
+
+    // Add Realistic Xenon Projector Headlights
+    this.addRealisticHeadlights(targetGroup, targetLength);
+
+    targetGroup.add(scene);
   }
 
   private addRealisticHeadlights(parent: THREE.Group, carLength: number): void {

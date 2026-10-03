@@ -14,7 +14,11 @@ export const triggerGlobalAppInstall = () => {
   }
 };
 
-export const InstallPrompt: React.FC = () => {
+interface InstallPromptProps {
+  gameState?: string;
+}
+
+export const InstallPrompt: React.FC<InstallPromptProps> = ({ gameState }) => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
@@ -116,8 +120,8 @@ export const InstallPrompt: React.FC = () => {
         <span>INSTALL APP</span>
       </button>
 
-      {/* Persistent Floating Install Banner at the Bottom */}
-      {showBanner && (
+      {/* Persistent Floating Install Banner at the Bottom - Hidden during gameplay, countdown, and game over */}
+      {showBanner && gameState !== 'RACING' && gameState !== 'GAME_OVER' && gameState !== 'COUNTDOWN' && (
         <div className="install-floating-banner">
           <div className="banner-left">
             <div className="banner-icon-glow">
