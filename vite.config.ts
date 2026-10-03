@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 const buildTimestamp = Date.now().toString();
-const appVersion = '1.2.0';
+const appVersion = '1.3.0';
 
 function swVersionPlugin(timestamp: string): Plugin {
   return {

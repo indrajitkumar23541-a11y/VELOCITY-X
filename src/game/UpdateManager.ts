@@ -94,8 +94,8 @@ class UpdateManager {
         }
       }, 45000);
 
-      // Initial check after startup
-      setTimeout(() => this.checkForUpdate(), 2500);
+      // Initial check immediately after startup
+      setTimeout(() => this.checkForUpdate(), 800);
     } catch (err) {
       console.warn('[UpdateManager] Registration error:', err);
     }

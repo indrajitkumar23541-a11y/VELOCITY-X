@@ -24,6 +24,9 @@ const CORE_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
+  // Activate new service worker immediately across all installed instances
+  self.skipWaiting();
+
   // Pre-cache core shell assets
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
