@@ -81,7 +81,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
         {/* Actions */}
         <div className="game-over-actions">
           <button
+            type="button"
             className="action-btn garage-btn"
+            aria-label="Return to Garage"
             onClick={() => {
               HapticsManager.buttonTap();
               onOpenGarage();
@@ -93,7 +95,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
           {onOpenLeaderboard && (
             <button
+              type="button"
               className="action-btn leaderboard-action-btn"
+              aria-label="View Leaderboard Hall of Fame"
               onClick={() => {
                 HapticsManager.buttonTap();
                 onOpenLeaderboard();
@@ -106,7 +110,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
           {onOpenTracks && (
             <button
+              type="button"
               className="action-btn tracks-btn"
+              aria-label="Choose Tracks"
               onClick={() => {
                 HapticsManager.buttonTap();
                 onOpenTracks();
@@ -117,7 +123,9 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           )}
 
           <button
+            type="button"
             className="action-btn restart-btn"
+            aria-label="Restart Race Again"
             onClick={() => {
               HapticsManager.buttonTap();
               onRestart();
