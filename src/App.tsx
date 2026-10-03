@@ -156,8 +156,9 @@ export const App: React.FC = () => {
 
   // 1. Preload authentic 3D supercars on launch and cleanup lifecycle
   useEffect(() => {
-    // Preload default hypercar model during splash screen so Quick Race starts with zero delay and real 3D model
+    // Preload authentic 3D supercar models during splash screen for instant player and highway traffic loading
     PlayerCar.preloadModel('./models/porsche.glb').catch(() => {});
+    PlayerCar.preloadModel('./models/supercar_1.glb').catch(() => {});
     return () => {
       tiltManager.stop();
       if (engineRef.current) {

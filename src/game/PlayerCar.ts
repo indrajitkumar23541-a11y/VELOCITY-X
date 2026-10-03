@@ -171,8 +171,8 @@ export class PlayerCar {
   }
 
   // Static model cache for instant zero-delay supercar instantiation
-  private static cachedGLTFs = new Map<string, any>();
-  private static loadingPromises = new Map<string, Promise<any>>();
+  public static cachedGLTFs = new Map<string, any>();
+  public static loadingPromises = new Map<string, Promise<any>>();
 
   public static preloadModel(modelPath: string): Promise<any> {
     if (PlayerCar.cachedGLTFs.has(modelPath)) {
