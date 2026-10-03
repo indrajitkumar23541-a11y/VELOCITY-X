@@ -1,7 +1,9 @@
 // VELOCITY X - High-Speed Police Chase AI, Tactical Flanking & Anti-Camera Occlusion
 import * as THREE from 'three';
+import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { audioManager } from './AudioManager';
 import { HapticsManager } from './HapticsManager';
+import { PlayerCar } from './PlayerCar';
 
 export type ChaseState = 'IDLE' | 'WARNING' | 'PURSUIT' | 'EVADED' | 'BUSTED';
 
@@ -41,6 +43,8 @@ export class PoliceChase {
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
+    // Preload authentic 3D supercar interceptor model for instant pursuit rendering
+    PlayerCar.preloadModel('./models/supercar_1.glb').catch(() => {});
     this.initCruisers();
   }
 
@@ -56,85 +60,9 @@ export class PoliceChase {
 
   private buildPoliceCruiserModel(): PoliceCruiser {
     const group = new THREE.Group();
-    const size = new THREE.Vector3(2.05, 1.4, 4.65);
+    const size = new THREE.Vector3(2.1, 1.45, 4.75);
 
-    // 1. Lower Chassis (Deep Obsidian Black High-Gloss)
-    const chassisGeom = new THREE.BoxGeometry(2.05, 0.36, 4.65);
-    const blackMat = new THREE.MeshStandardMaterial({
-      color: 0x0a0c12,
-      metalness: 0.85,
-      roughness: 0.22,
-    });
-    const chassis = new THREE.Mesh(chassisGeom, blackMat);
-    chassis.position.y = 0.32;
-    chassis.castShadow = true;
-    group.add(chassis);
-
-    // 2. Aerodynamic Sloped Muscle Hood
-    const hoodGeom = new THREE.BoxGeometry(1.94, 0.24, 1.55);
-    const hood = new THREE.Mesh(hoodGeom, blackMat);
-    hood.position.set(0, 0.48, 1.45);
-    group.add(hood);
-
-    // 3. Rear Trunk Deck
-    const trunkGeom = new THREE.BoxGeometry(1.94, 0.28, 1.35);
-    const trunk = new THREE.Mesh(trunkGeom, blackMat);
-    trunk.position.set(0, 0.52, -1.45);
-    group.add(trunk);
-
-    // 4. Pure White Highway Patrol Door Livery
-    const doorLiveryGeom = new THREE.BoxGeometry(2.08, 0.38, 1.8);
-    const whiteMat = new THREE.MeshStandardMaterial({
-      color: 0xf5f7fb,
-      metalness: 0.35,
-      roughness: 0.28,
-    });
-    const doorLivery = new THREE.Mesh(doorLiveryGeom, whiteMat);
-    doorLivery.position.set(0, 0.42, 0);
-    group.add(doorLivery);
-
-    // 5. Dark Tinted Stealth Cabin
-    const cabinGeom = new THREE.BoxGeometry(1.65, 0.48, 2.1);
-    const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x05070a,
-      roughness: 0.08,
-      metalness: 0.9,
-      opacity: 0.92,
-      transparent: true,
-    });
-    const cabin = new THREE.Mesh(cabinGeom, glassMat);
-    cabin.position.set(0, 0.82, -0.1);
-    group.add(cabin);
-
-    // 6. Heavy Steel Push Bumper (Bullbar) with Vertical Ramming Posts
-    const bullbarMat = new THREE.MeshStandardMaterial({
-      color: 0x181c24,
-      metalness: 0.92,
-      roughness: 0.25,
-    });
-    const bullbarCrossGeom = new THREE.BoxGeometry(1.76, 0.34, 0.16);
-    const bullbarCross = new THREE.Mesh(bullbarCrossGeom, bullbarMat);
-    bullbarCross.position.set(0, 0.38, 2.38);
-    group.add(bullbarCross);
-
-    // 2 Vertical Ramming Posts
-    const postGeom = new THREE.BoxGeometry(0.12, 0.48, 0.2);
-    const postLeft = new THREE.Mesh(postGeom, bullbarMat);
-    postLeft.position.set(-0.48, 0.42, 2.4);
-    group.add(postLeft);
-
-    const postRight = new THREE.Mesh(postGeom, bullbarMat);
-    postRight.position.set(0.48, 0.42, 2.4);
-    group.add(postRight);
-
-    // 7. Ultra-Low Profile Rooftop Emergency LED Lightbar
-    const barBaseGeom = new THREE.BoxGeometry(1.2, 0.04, 0.16);
-    const barBase = new THREE.Mesh(barBaseGeom, bullbarMat);
-    barBase.position.set(0, 1.08, -0.15);
-    group.add(barBase);
-
-    // Flashing Strobe Caps — High-Intensity Bloom
-    const strobeGeom = new THREE.BoxGeometry(0.46, 0.08, 0.14);
+    // Strobe Materials for High-Intensity Bloom
     const redMat = new THREE.MeshStandardMaterial({
       color: 0xff002b,
       emissive: new THREE.Color(0xff002b),
@@ -148,69 +76,101 @@ export class PoliceChase {
       roughness: 0.0,
     });
 
+    // 1. Ultra-Low Profile Rooftop Emergency LED Lightbar
+    const barGroup = new THREE.Group();
+    barGroup.position.set(0, 1.25, -0.2);
+
+    const barBaseGeom = new THREE.BoxGeometry(1.15, 0.04, 0.16);
+    const barBaseMat = new THREE.MeshStandardMaterial({ color: 0x111318, metalness: 0.9, roughness: 0.2 });
+    const barBase = new THREE.Mesh(barBaseGeom, barBaseMat);
+    barGroup.add(barBase);
+
+    // Rooftop Flashing Strobe Caps
+    const strobeGeom = new THREE.BoxGeometry(0.44, 0.08, 0.14);
     const redMesh = new THREE.Mesh(strobeGeom, redMat);
-    redMesh.position.set(-0.32, 1.13, -0.15);
-    group.add(redMesh);
+    redMesh.position.set(-0.32, 0.05, 0);
+    barGroup.add(redMesh);
 
     const blueMesh = new THREE.Mesh(strobeGeom, blueMat);
-    blueMesh.position.set(0.32, 1.13, -0.15);
-    group.add(blueMesh);
+    blueMesh.position.set(0.32, 0.05, 0);
+    barGroup.add(blueMesh);
 
-    // Center Takedown / Scene Light
-    const centerTakedownGeom = new THREE.BoxGeometry(0.12, 0.08, 0.14);
+    // Center Takedown Light
+    const takedownGeom = new THREE.BoxGeometry(0.14, 0.08, 0.14);
     const takedownMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       emissive: new THREE.Color(0xffffff),
       emissiveIntensity: 3.5,
     });
-    const takedownMesh = new THREE.Mesh(centerTakedownGeom, takedownMat);
-    takedownMesh.position.set(0, 1.13, -0.15);
-    group.add(takedownMesh);
+    const takedownMesh = new THREE.Mesh(takedownGeom, takedownMat);
+    takedownMesh.position.set(0, 0.05, 0);
+    barGroup.add(takedownMesh);
 
-    // 8. Front Grille Wig-Wag Strobes
+    group.add(barGroup);
+
+    // 2. Front Grille Wig-Wag Strobes
     const wigWagGeom = new THREE.BoxGeometry(0.24, 0.09, 0.06);
     const grilleRedMesh = new THREE.Mesh(wigWagGeom, redMat);
-    grilleRedMesh.position.set(-0.62, 0.44, 2.37);
+    grilleRedMesh.position.set(-0.58, 0.42, 2.36);
     group.add(grilleRedMesh);
 
     const grilleBlueMesh = new THREE.Mesh(wigWagGeom, blueMat);
-    grilleBlueMesh.position.set(0.62, 0.44, 2.37);
+    grilleBlueMesh.position.set(0.58, 0.42, 2.36);
     group.add(grilleBlueMesh);
 
-    // 9. Rear LED Taillight Strip
-    const tailStripGeom = new THREE.BoxGeometry(1.82, 0.07, 0.06);
-    const tailMat = new THREE.MeshStandardMaterial({
-      color: 0xff1122,
-      emissive: new THREE.Color(0xff0011),
-      emissiveIntensity: 2.5,
+    // 3. Heavy Steel Push Bumper (Tactical Bullbar) with Ramming Posts
+    const bullbarMat = new THREE.MeshStandardMaterial({
+      color: 0x181c24,
+      metalness: 0.92,
+      roughness: 0.25,
     });
-    const tailStrip = new THREE.Mesh(tailStripGeom, tailMat);
-    tailStrip.position.set(0, 0.54, -2.34);
-    group.add(tailStrip);
+    const bullbarCrossGeom = new THREE.BoxGeometry(1.78, 0.28, 0.14);
+    const bullbarCross = new THREE.Mesh(bullbarCrossGeom, bullbarMat);
+    bullbarCross.position.set(0, 0.38, 2.38);
+    group.add(bullbarCross);
 
-    // 10. High-Intensity Dynamic PointLights
-    const redLight = new THREE.PointLight(0xff002b, 4.5, 20);
-    redLight.position.set(-0.32, 1.25, -0.15);
+    const postGeom = new THREE.BoxGeometry(0.12, 0.44, 0.18);
+    const postLeft = new THREE.Mesh(postGeom, bullbarMat);
+    postLeft.position.set(-0.48, 0.42, 2.4);
+    group.add(postLeft);
+
+    const postRight = new THREE.Mesh(postGeom, bullbarMat);
+    postRight.position.set(0.48, 0.42, 2.4);
+    group.add(postRight);
+
+    // 4. High-Intensity Dynamic PointLights
+    const redLight = new THREE.PointLight(0xff002b, 4.5, 22);
+    redLight.position.set(-0.32, 1.35, -0.2);
     group.add(redLight);
 
-    const blueLight = new THREE.PointLight(0x0055ff, 4.5, 20);
-    blueLight.position.set(0.32, 1.25, -0.15);
+    const blueLight = new THREE.PointLight(0x0055ff, 4.5, 22);
+    blueLight.position.set(0.32, 1.35, -0.2);
     group.add(blueLight);
 
-    // 11. 4 Sport Interceptor Wheels with Alloy Rims
-    const wheelGeom = new THREE.CylinderGeometry(0.34, 0.34, 0.25, 16);
-    wheelGeom.rotateZ(Math.PI / 2);
-    const tireMat = new THREE.MeshStandardMaterial({ color: 0x111114, roughness: 0.8 });
-    const wheelPositions = [
-      [-0.98, 0.34, 1.35],
-      [0.98, 0.34, 1.35],
-      [-0.98, 0.34, -1.35],
-      [0.98, 0.34, -1.35],
-    ];
-    for (const [wx, wy, wz] of wheelPositions) {
-      const w = new THREE.Mesh(wheelGeom, tireMat);
-      w.position.set(wx, wy, wz);
-      group.add(w);
+    // 5. Authentic 3D GLB Supercar Interceptor Body
+    const modelPath = './models/supercar_1.glb';
+    const rotY = Math.PI; // faces +Z forward
+    const targetLength = 4.75;
+
+    const carBodyHolder = new THREE.Group();
+    group.add(carBodyHolder);
+
+    if (PlayerCar.cachedGLTFs.has(modelPath)) {
+      const gltf = PlayerCar.cachedGLTFs.get(modelPath);
+      this.applySupercarPoliceScene(carBodyHolder, gltf, rotY, targetLength);
+    } else {
+      PlayerCar.preloadModel(modelPath).then((gltf) => {
+        while (carBodyHolder.children.length > 0) {
+          const c = carBodyHolder.children[0];
+          carBodyHolder.remove(c);
+          c.traverse?.((child: any) => {
+            if (child.isMesh && child.geometry) child.geometry.dispose();
+          });
+        }
+        this.applySupercarPoliceScene(carBodyHolder, gltf, rotY, targetLength);
+      }).catch((err) => {
+        console.warn(`[PoliceChase] Failed to load GLB for police cruiser:`, err);
+      });
     }
 
     return {
@@ -228,6 +188,96 @@ export class PoliceChase {
       grilleBlueMesh,
       active: false,
     };
+  }
+
+  /**
+   * Applies authentic 3D GLB supercar geometry with Highway Patrol Interceptor livery
+   */
+  private applySupercarPoliceScene(
+    targetGroup: THREE.Group,
+    gltf: any,
+    rotY: number,
+    targetLength: number
+  ): void {
+    const scene = SkeletonUtils.clone(gltf.scene) as THREE.Group;
+
+    // Align front with +Z
+    scene.rotation.y = rotY;
+    scene.updateMatrixWorld(true);
+
+    // Normalize scale to realistic supercar length in meters
+    const initialBbox = new THREE.Box3().setFromObject(scene);
+    const initialSize = new THREE.Vector3();
+    initialBbox.getSize(initialSize);
+
+    const currentLength = initialSize.z > 0.1 ? initialSize.z : Math.max(initialSize.x, initialSize.y);
+    const scaleFactor = targetLength / currentLength;
+    scene.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    scene.updateMatrixWorld(true);
+
+    // Ground tires flush with asphalt (y = 0) and center on X & Z
+    const finalBbox = new THREE.Box3().setFromObject(scene);
+    const center = new THREE.Vector3();
+    finalBbox.getCenter(center);
+
+    scene.position.x = -center.x;
+    scene.position.z = -center.z;
+    scene.position.y = -finalBbox.min.y;
+    scene.updateMatrixWorld(true);
+
+    // High-Gloss Highway Patrol Obsidian Black Paint
+    const policeBlackMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x090b10,
+      metalness: 0.9,
+      roughness: 0.16,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.08,
+    });
+
+    scene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+
+        const name = (child.name || '').toLowerCase();
+        const matName = child.material && 'name' in child.material ? ((child.material as THREE.Material).name || '').toLowerCase() : '';
+
+        const isBodyPaint =
+          name.includes('body') ||
+          name.includes('carrosserie') ||
+          name.includes('paint') ||
+          matName.includes('body') ||
+          matName.includes('paint') ||
+          matName === 'mt_body' ||
+          matName === 'body_color';
+
+        if (isBodyPaint) {
+          child.material = policeBlackMaterial;
+        } else if (child.material instanceof THREE.MeshStandardMaterial || child.material instanceof THREE.MeshPhysicalMaterial) {
+          child.material.envMapIntensity = 0.85;
+          child.material.roughness = Math.min(child.material.roughness, 0.35);
+        }
+      }
+    });
+
+    // Highway Patrol High-Contrast Pure White Door Decals
+    const doorDecalGeom = new THREE.BoxGeometry(2.14, 0.42, 1.4);
+    const doorDecalMat = new THREE.MeshStandardMaterial({
+      color: 0xf5f7fb,
+      metalness: 0.3,
+      roughness: 0.28,
+    });
+    const doorDecal = new THREE.Mesh(doorDecalGeom, doorDecalMat);
+    doorDecal.position.set(0, 0.48, 0.15);
+    scene.add(doorDecal);
+
+    // Highway Patrol White Hood Decal Stripe
+    const hoodDecalGeom = new THREE.BoxGeometry(1.2, 0.04, 1.2);
+    const hoodDecal = new THREE.Mesh(hoodDecalGeom, doorDecalMat);
+    hoodDecal.position.set(0, 0.72, 1.45);
+    scene.add(hoodDecal);
+
+    targetGroup.add(scene);
   }
 
   public triggerPursuit(playerZ: number, playerLaneX: number): void {
