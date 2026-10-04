@@ -28,6 +28,16 @@ class UpdateManager {
 
   private async init(): Promise<void> {
     try {
+      if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) {
+            await reg.unregister();
+          }
+        }
+        return;
+      }
+
       // Register with relative path so it works across GitHub Pages, Vercel, and localhost
       const swUrl = './sw.js';
       this.registration = await navigator.serviceWorker.register(swUrl, {
@@ -106,6 +116,9 @@ class UpdateManager {
    */
   public async checkForUpdate(): Promise<void> {
     if (!navigator.onLine) return;
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      return;
+    }
 
     try {
       // 1. Direct version.json network check (bypasses browser heuristics)

@@ -45,6 +45,35 @@
     <link rel="alternate" type="text/markdown" href="./llms.txt" title="LLM Context" />
     <link rel="help" type="text/markdown" href="./llms.txt" title="Agentic Roadmap" />
     <link rel="ai-catalog" type="application/json" href="./.well-known/ai-catalog.json" />
+
+    <!-- Fallback dark theme to prevent blank white flash -->
+    <style>
+      html, body {
+        background-color: #080b12 !important;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+      #root {
+        width: 100%;
+        height: 100%;
+        background-color: #080b12;
+      }
+    </style>
+
+    <script>
+      // Clear outdated Service Workers and stale caches on localhost during development
+      if ('serviceWorker' in navigator && (location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (var r of regs) {
+            r.unregister();
+          }
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

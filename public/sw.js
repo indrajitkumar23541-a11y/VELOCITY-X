@@ -2,6 +2,8 @@
 const BUILD_TIME = '__BUILD_TIMESTAMP__';
 const CACHE_NAME = 'velocity-x-' + BUILD_TIME;
 
+const isLocalhost = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -27,6 +29,8 @@ self.addEventListener('install', (event) => {
   // Activate new service worker immediately across all installed instances
   self.skipWaiting();
 
+  if (isLocalhost) return;
+
   // Pre-cache core shell assets
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -38,6 +42,13 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  if (isLocalhost) {
+    event.waitUntil(
+      caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))).then(() => self.clients.claim())
+    );
+    return;
+  }
+
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -58,6 +69,9 @@ self.addEventListener('activate', (event) => {
 
 // Smart Caching: Network-First for HTML/Navigations, Cache-First with Background Update for Assets
 self.addEventListener('fetch', (event) => {
+  if (isLocalhost) {
+    return; // Direct network bypass on localhost
+  }
   const req = event.request;
   if (req.method !== 'GET' || !req.url.startsWith('http')) {
     return;

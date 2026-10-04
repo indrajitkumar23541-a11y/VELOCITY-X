@@ -21,6 +21,24 @@ export interface PlayerControls {
   steerAxis?: number; // Analog steering: -1.0 (full left) to +1.0 (full right)
 }
 
+export function getModelPathForCarType(type: string): string {
+  switch (type) {
+    case 'gt':
+      return './models/lamborghini.glb';
+    case 'muscle':
+      return './models/supercar_1.glb';
+    case 'gemera':
+      return './models/gemera.glb';
+    case 'regera':
+      return './models/regera.glb';
+    case 'agera':
+      return './models/agera.glb';
+    case 'roadster':
+    default:
+      return './models/porsche.glb';
+  }
+}
+
 export class PlayerCar {
   public mesh: THREE.Group;
   public config: CarConfig;
@@ -240,6 +258,21 @@ export class PlayerCar {
         targetLength = 4.65;
         rotY = Math.PI;
         break;
+      case 'gemera':
+        modelPath = './models/gemera.glb';
+        targetLength = 5.0;
+        rotY = 0;
+        break;
+      case 'regera':
+        modelPath = './models/regera.glb';
+        targetLength = 4.75;
+        rotY = 0;
+        break;
+      case 'agera':
+        modelPath = './models/agera.glb';
+        targetLength = 4.85;
+        rotY = 0;
+        break;
       default:
         modelPath = './models/porsche.glb';
         targetLength = 4.7;
@@ -271,9 +304,12 @@ export class PlayerCar {
         this.buildPaganiRoadster(targetGroup);
         break;
       case 'gt':
+      case 'gemera':
+      case 'regera':
         this.buildBugattiGT(targetGroup);
         break;
       case 'muscle':
+      case 'agera':
         this.buildTitanMuscle(targetGroup);
         break;
       default:
@@ -356,6 +392,8 @@ export class PlayerCar {
           name.includes('paint') ||
           matName.includes('body') ||
           matName.includes('paint') ||
+          matName.includes('liquidgraphite') ||
+          matName.includes('satingraphite') ||
           matName === 'mt_body' ||
           matName === 'body_color';
 

@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState, useCallback, Suspense } from 'react';
 import type { Engine, HUDData, GameSummary } from './game/Engine';
 import { StorageManager, CarConfig, GameStats } from './game/Storage';
-import { PlayerCar, PlayerControls } from './game/PlayerCar';
+import { PlayerCar, PlayerControls, getModelPathForCarType } from './game/PlayerCar';
 import { audioManager } from './game/AudioManager';
 import { HapticsManager } from './game/HapticsManager';
 import { tiltManager } from './game/TiltManager';
@@ -159,6 +159,9 @@ export const App: React.FC = () => {
     // Preload authentic 3D supercar models during splash screen for instant player and highway traffic loading
     PlayerCar.preloadModel('./models/porsche.glb').catch(() => {});
     PlayerCar.preloadModel('./models/supercar_1.glb').catch(() => {});
+    PlayerCar.preloadModel('./models/gemera.glb').catch(() => {});
+    PlayerCar.preloadModel('./models/regera.glb').catch(() => {});
+    PlayerCar.preloadModel('./models/agera.glb').catch(() => {});
     return () => {
       tiltManager.stop();
       if (engineRef.current) {
@@ -314,6 +317,9 @@ export const App: React.FC = () => {
     const nextIdx = (activeCarIndex + 1) % cars.length;
     setActiveCarIndex(nextIdx);
     setActiveCar(cars[nextIdx]);
+    if (engineRef.current) {
+      engineRef.current.setCarConfig(cars[nextIdx]);
+    }
     if (cars[nextIdx].unlocked) {
       const updated = StorageManager.saveStats({ selectedCarId: cars[nextIdx].id });
       setStats(updated);
@@ -325,6 +331,9 @@ export const App: React.FC = () => {
     const prevIdx = (activeCarIndex - 1 + cars.length) % cars.length;
     setActiveCarIndex(prevIdx);
     setActiveCar(cars[prevIdx]);
+    if (engineRef.current) {
+      engineRef.current.setCarConfig(cars[prevIdx]);
+    }
     if (cars[prevIdx].unlocked) {
       const updated = StorageManager.saveStats({ selectedCarId: cars[prevIdx].id });
       setStats(updated);
@@ -413,7 +422,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    const modelPath = carToRace.type === 'gt' ? './models/lamborghini.glb' : carToRace.type === 'muscle' ? './models/supercar_1.glb' : './models/porsche.glb';
+    const modelPath = getModelPathForCarType(carToRace.type);
     await PlayerCar.preloadModel(modelPath).catch(() => {});
 
     engine.setCarConfig(carToRace);
@@ -473,7 +482,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    const modelPath = carToRace.type === 'gt' ? './models/lamborghini.glb' : carToRace.type === 'muscle' ? './models/supercar_1.glb' : './models/porsche.glb';
+    const modelPath = getModelPathForCarType(carToRace.type);
     await PlayerCar.preloadModel(modelPath).catch(() => {});
 
     engine.setCarConfig(carToRace);

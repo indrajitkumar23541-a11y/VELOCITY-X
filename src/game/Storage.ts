@@ -2,7 +2,7 @@
 export interface CarConfig {
   id: string;
   name: string;
-  type: 'roadster' | 'gt' | 'muscle';
+  type: 'roadster' | 'gt' | 'muscle' | 'gemera' | 'regera' | 'agera';
   price: number;
   unlocked: boolean;
   topSpeedKmh: number;
@@ -48,7 +48,7 @@ const DEFAULT_CARS: CarConfig[] = [
     acceleration: 9.6,
     handling: 9.7,
     armor: 7.2,
-    color: '#d61a1a', // Guards Red (Matches User's Reference Image 2!)
+    color: '#d61a1a', // Guards Red
     underglowColor: '#ff2200',
   },
   {
@@ -76,6 +76,45 @@ const DEFAULT_CARS: CarConfig[] = [
     armor: 8.5,
     color: '#0055ff', // French Racing Blue / Modena
     underglowColor: '#00d4ff',
+  },
+  {
+    id: 'koenigsegg_gemera',
+    name: 'Koenigsegg Gemera',
+    type: 'gemera',
+    price: 6500,
+    unlocked: false,
+    topSpeedKmh: 385,
+    acceleration: 9.8,
+    handling: 9.4,
+    armor: 8.2,
+    color: '#222831', // Sleek Liquid Graphite
+    underglowColor: '#00f3ff', // Cyan Neon
+  },
+  {
+    id: 'koenigsegg_regera',
+    name: 'Koenigsegg Regera',
+    type: 'regera',
+    price: 8000,
+    unlocked: false,
+    topSpeedKmh: 410,
+    acceleration: 9.9,
+    handling: 9.6,
+    armor: 8.6,
+    color: '#ff0044', // Crimson Flare
+    underglowColor: '#ff0088', // Magenta Neon
+  },
+  {
+    id: 'koenigsegg_agera',
+    name: 'Koenigsegg Agera RS',
+    type: 'agera',
+    price: 9500,
+    unlocked: false,
+    topSpeedKmh: 445,
+    acceleration: 10.0,
+    handling: 9.8,
+    armor: 9.0,
+    color: '#e6c300', // Liquid Gold
+    underglowColor: '#ffaa00', // Solar Amber
   }
 ];
 
@@ -140,16 +179,22 @@ export class StorageManager {
       const data = localStorage.getItem(CARS_KEY);
       if (data) {
         const parsed = JSON.parse(data);
-        return DEFAULT_CARS.map(dc => {
-          const found = parsed.find((p: CarConfig) => p.id === dc.id);
-          if (found) {
-            // Migrate to authentic Image 2 Guards Red if user was on old default colors
-            const color = (found.color === '#00f3ff' || found.color === '#e59500') && dc.id === 'apex_roadster' ? dc.color : found.color;
-            const underglowColor = (found.underglowColor === '#00f3ff' || found.underglowColor === '#ff7700') && dc.id === 'apex_roadster' ? dc.underglowColor : (found.underglowColor || dc.underglowColor);
-            return { ...dc, ...found, name: dc.name, color, underglowColor };
-          }
-          return { ...dc };
-        });
+        if (Array.isArray(parsed)) {
+          return DEFAULT_CARS.map(dc => {
+            const found = parsed.find((p: any) => p && typeof p === 'object' && p.id === dc.id);
+            if (found) {
+              const color = found.color || dc.color;
+              const underglowColor = found.underglowColor || dc.underglowColor;
+              return {
+                ...dc,
+                unlocked: typeof found.unlocked === 'boolean' ? found.unlocked : dc.unlocked,
+                color,
+                underglowColor
+              };
+            }
+            return { ...dc };
+          });
+        }
       }
     } catch {
       // ignore
