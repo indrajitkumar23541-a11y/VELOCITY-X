@@ -187,7 +187,7 @@ export const InstallPrompt: React.FC<InstallPromptProps> = ({ gameState }) => {
                   <h4>Android Phone & Tablet</h4>
                   <p>Chrome me <strong>"Install app"</strong> dabayein ya direct APK download karein:</p>
                   <a
-                    href="https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases/download/v1.2.0/VELOCITY-X.apk"
+                    href="https://github.com/indrajitkumar23541-a11y/VELOCITY-X/releases/latest/download/VELOCITY-X.apk"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="apk-download-link-btn"

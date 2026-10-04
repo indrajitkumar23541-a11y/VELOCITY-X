@@ -1,6 +1,8 @@
 // VELOCITY X - Auto-Updating Offline Service Worker (OTA Hot-Sync)
-const BUILD_TIME = '1790317852207';
+const BUILD_TIME = '1791077679942';
 const CACHE_NAME = 'velocity-x-' + BUILD_TIME;
+
+const isLocalhost = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
 
 const CORE_ASSETS = [
   './',
@@ -11,10 +13,24 @@ const CORE_ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-192.svg',
-  './icons/icon-512.svg'
+  './icons/icon-512.svg',
+  './images/splash-hero.webp',
+  './images/splash-hero-mobile.webp',
+  './images/splash-hero.jpg',
+  './images/founder.jpg',
+  './fonts/orbitron.woff2',
+  './fonts/rajdhani.woff2',
+  './llms.txt',
+  './robots.txt',
+  './sitemap.xml'
 ];
 
 self.addEventListener('install', (event) => {
+  // Activate new service worker immediately across all installed instances
+  self.skipWaiting();
+
+  if (isLocalhost) return;
+
   // Pre-cache core shell assets
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -26,6 +42,13 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+  if (isLocalhost) {
+    event.waitUntil(
+      caches.keys().then((keys) => Promise.all(keys.map((k) => caches.delete(k)))).then(() => self.clients.claim())
+    );
+    return;
+  }
+
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
@@ -46,7 +69,14 @@ self.addEventListener('activate', (event) => {
 
 // Smart Caching: Network-First for HTML/Navigations, Cache-First with Background Update for Assets
 self.addEventListener('fetch', (event) => {
+  if (isLocalhost) {
+    return; // Direct network bypass on localhost
+  }
   const req = event.request;
+  if (req.method !== 'GET' || !req.url.startsWith('http')) {
+    return;
+  }
+
   // Never cache version.json so remote update checks are always 100% fresh from network
   if (req.url.includes('version.json')) {
     event.respondWith(

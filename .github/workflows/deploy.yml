@@ -101,10 +101,16 @@ jobs:
         continue-on-error: true
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.3.0
-          name: "VELOCITY X v1.3.0 — Official Universal Release (Android, Windows, iOS & Web)"
+          tag_name: v1.3.4
+          name: "VELOCITY X v1.3.4 — Koenigsegg Hypercar Fleet Update (Gemera, Regera & Agera RS)"
           body: |
-            ## 🏎️ VELOCITY X — Cyber Highway Police Pursuit
+            ## 🏎️ VELOCITY X v1.3.4 — Koenigsegg Hypercar Fleet Update
+
+            ### 🚀 What's New in v1.3.4:
+            - **Koenigsegg Gemera** (6,500 Coins) — 385 km/h Twin-Turbo Mega-GT with Cyan Neon Underglow.
+            - **Koenigsegg Regera** (8,000 Coins) — 410 km/h Direct-Drive Hybrid with Magenta Neon Underglow.
+            - **Koenigsegg Agera RS** (9,500 Coins) — 445 km/h World-Record Hypercar with Solar Amber Underglow.
+            - **Automatic OTA Hot-Sync**: Mobile devices with the game installed auto-update seamlessly in the background!
 
             ### 📱 Download & Play on Every Device:
             - **Android (Phones & Tablets)**: Download `VELOCITY-X.apk` below and install directly!
@@ -165,7 +171,7 @@ jobs:
         continue-on-error: true
         if: startsWith(github.ref, 'refs/heads/main')
         with:
-          tag_name: v1.2.0
+          tag_name: v1.3.4
           files: |
             ./VELOCITY-X-Setup.exe
         env:

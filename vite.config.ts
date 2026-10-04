@@ -3,8 +3,9 @@ import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
 
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'));
 const buildTimestamp = Date.now().toString();
-const appVersion = '1.3.0';
+const appVersion = pkg.version || '1.3.4';
 
 function swVersionPlugin(timestamp: string): Plugin {
   return {

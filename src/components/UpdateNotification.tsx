@@ -11,7 +11,7 @@ interface UpdateNotificationProps {
 
 export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ gameState }) => {
   const [updateReady, setUpdateReady] = useState(false);
-  const [countdown, setCountdown] = useState(4);
+  const [countdown, setCountdown] = useState(3);
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
@@ -41,6 +41,8 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ gameStat
 
   if (!updateReady || isDismissed) return null;
 
+  const version = updateManager.getRemoteVersion();
+
   return (
     <div className="update-toast-overlay">
       <div className="update-toast-card">
@@ -50,11 +52,11 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ gameStat
 
         <div className="update-info">
           <div className="update-title-row">
-            <h4>⚡ GAME UPDATE READY</h4>
-            <span className="update-version-tag">NEW</span>
+            <h4>⚡ GAME UPDATED (v{version})</h4>
+            <span className="update-version-tag">NEW CARS</span>
           </div>
           <p className="update-desc">
-            New features & fixes downloaded from GitHub! {gameState !== 'RACING' ? `Restarting in ${countdown}s...` : 'Will update after current run.'}
+            Koenigsegg Gemera, Regera & Agera RS added! {gameState !== 'RACING' ? `Restarting in ${countdown}s...` : 'Will update after current run.'}
           </p>
         </div>
 

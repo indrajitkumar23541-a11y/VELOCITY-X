@@ -1,0 +1,56 @@
+# VELOCITY X — Cyber Highway Police Pursuit
+
+> Next-generation 3D WebGL hypercar highway racing and tactical police pursuit progressive web application (PWA) engineered with Three.js r160, React 18, TypeScript, and procedural Web Audio API.
+
+## Quick Links
+
+- [Play Velocity X Online](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/)
+- [Project Documentation](https://github.com/indrajitkumar23541-a11y/VELOCITY-X)
+- [XML Sitemap](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/sitemap.xml)
+- [Web Application Manifest](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/manifest.json)
+- [Full LLM Context](https://indrajitkumar23541-a11y.github.io/VELOCITY-X/llms-full.txt)
+
+## Overview & Capabilities
+
+VELOCITY X is a high-performance web game delivering console-quality 60–120 FPS arcade racing directly in modern desktop and mobile web browsers without plugins or downloads.
+
+- **Offline-First PWA**: Fully functional in Airplane Mode via Service Worker caching with automated Over-The-Air (OTA) updates.
+- **Procedural 3D Environment**: Infinite highway generation with dynamic traffic AI, procedural skyline silhouettes, dynamic day/night lighting, and real-time weather effects (rain, lightning, wet road specular sheen).
+- **Zero Asset Audio**: 100% real-time procedural audio synthesis using the Web Audio API with zero external MP3/WAV download overhead.
+- **Dual Platform Input**: Full desktop keyboard controls (WASD, Arrows, Shift, Space, M, C) and mobile multi-touch HUD controls with gyroscope tilt-to-steer support.
+
+## Interactive Controls & Hotkeys
+
+Autonomous agents and human operators can interact with the game via standard keyboard events and pointer gestures:
+
+- `W` or `ArrowUp`: Throttle / Accelerate
+- `S` or `ArrowDown` or `Space`: Brake / Decelerate
+- `A` or `ArrowLeft`: Steer Left
+- `D` or `ArrowRight`: Steer Right
+- `Shift`: Activate Nitro Boost (NOS)
+- `M`: Toggle Sound Mute
+- `C`: Toggle Dynamic Weather (Tokyo Rainstorm / Clear Sky)
+- `Enter` or `Pointer Tap`: Start Quick Race from Splash Screen
+
+## Game Modes & Garage System
+
+1. **Highway Pursuit Mode**: High-speed traffic evasion with aggressive police interceptors deploying PIT maneuvers, spike strips, and road barriers.
+2. **Track Select**:
+   - `NEON HIGHWAY (NIGHT)`: Cyberpunk metropolitan skyline, neon reflections, and wet asphalt sheen.
+   - `PACIFIC COAST (DAY)`: High-noon sun, crisp shadows, and coastal horizon lighting.
+3. **Hypercar Showroom**:
+   - Multiple unlockable hypercars with distinctive top speed, handling, and acceleration curves.
+   - Custom automotive paint finishes and neon underglow customization.
+
+## Technical Architecture
+
+- **Rendering Engine**: Three.js r160 WebGL 2.0 with ACES Filmic tone mapping, PCF soft shadows, and UnrealBloom post-processing.
+- **Frontend Stack**: React 18, TypeScript, Vite 5, Vanilla CSS with hardware-accelerated transform layers.
+- **Performance Budget**: Initial load bundle under 80 KB gzipped, Total Blocking Time (TBT) of 0ms, and Cumulative Layout Shift (CLS) under 0.03.
+- **Accessibility & Compliance**: 100/100 WCAG 2.1 AA accessibility tree with full semantic landmarks, descriptive ARIA attributes, and accessible name matching.
+
+## Developer & Founder
+
+- **Lead Software Architect**: Indrajit Kumar
+- **License**: MIT
+- **Repository**: [indrajitkumar23541-a11y/VELOCITY-X](https://github.com/indrajitkumar23541-a11y/VELOCITY-X)
