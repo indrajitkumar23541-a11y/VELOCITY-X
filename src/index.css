@@ -3530,10 +3530,11 @@ body.force-virtual-landscape #root {
 }
 
 .rotate-card {
+  position: relative;
   background: rgba(14, 22, 38, 0.94);
   border: 2px solid var(--cyan);
   border-radius: 22px;
-  padding: 32px 24px;
+  padding: 34px 24px 26px 24px;
   max-width: 360px;
   width: 100%;
   text-align: center;
@@ -3541,6 +3542,32 @@ body.force-virtual-landscape #root {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.rotate-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 5;
+}
+
+.rotate-close-btn:hover,
+.rotate-close-btn:active {
+  background: rgba(255, 0, 85, 0.25);
+  border-color: #ff0055;
+  color: #fff;
+  transform: scale(0.95);
 }
 
 .phone-rotate-anim {
@@ -3579,7 +3606,7 @@ body.force-virtual-landscape #root {
 
 .rotate-title {
   font-family: var(--font-racing);
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 900;
   letter-spacing: 2px;
   color: #fff;
@@ -3603,10 +3630,10 @@ body.force-virtual-landscape #root {
   margin-bottom: 16px;
 }
 
-.auto-landscape-btn {
+.play-portrait-btn {
   background: linear-gradient(135deg, #00f3ff 0%, #0066ff 100%);
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   color: #060910;
   font-family: var(--font-racing);
   font-size: 13px;
@@ -3618,29 +3645,53 @@ body.force-virtual-landscape #root {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 0 20px rgba(0, 243, 255, 0.6);
-  transition: transform 0.15s ease;
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.7);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.auto-landscape-btn:active {
+.play-portrait-btn:active {
   transform: scale(0.96);
 }
 
-.portrait-install-action-btn {
+.auto-landscape-btn {
   background: rgba(18, 28, 48, 0.85);
-  border: 1px solid rgba(0, 243, 255, 0.35);
+  border: 1px solid rgba(0, 243, 255, 0.4);
   border-radius: 12px;
-  color: #fff;
+  color: var(--cyan);
   font-family: var(--font-racing);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   padding: 12px 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.auto-landscape-btn:active {
+  transform: scale(0.96);
+  background: rgba(0, 243, 255, 0.15);
+}
+
+.portrait-install-action-btn {
+  background: rgba(18, 28, 48, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: #cbd5e1;
+  font-family: var(--font-racing);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 11px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
 }
 
 .portrait-install-action-btn:active {
@@ -3649,10 +3700,77 @@ body.force-virtual-landscape #root {
 
 .rotate-pill {
   font-family: var(--font-racing);
-  font-size: 10px;
-  letter-spacing: 1.5px;
+  font-size: 9.5px;
+  letter-spacing: 1px;
   color: #64748b;
   margin-top: 6px;
+}
+
+/* -------------------------------------------------------------
+   Responsive Mobile Portrait Adaptations (<600px width / portrait)
+   ------------------------------------------------------------- */
+@media (max-width: 600px), (orientation: portrait) {
+  .mobile-controls-container {
+    padding: 0 max(8px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .touch-zone {
+    gap: 8px;
+  }
+
+  .steer-btn {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+  }
+
+  .steer-btn svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .gas-pedal {
+    width: 62px;
+    height: 76px;
+    border-radius: 14px;
+  }
+
+  .brake-pedal {
+    width: 52px;
+    height: 64px;
+    border-radius: 12px;
+  }
+
+  .nos-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+  }
+
+  .top-hud-left,
+  .top-hud-right {
+    gap: 6px;
+  }
+
+  .stat-card {
+    padding: 4px 10px;
+  }
+
+  .stat-card .stat-value {
+    font-size: 13px;
+  }
+
+  .rearview-mirror-container {
+    transform: translateX(-50%) scale(0.8);
+    transform-origin: top center;
+  }
+
+  .hud-bottom-left {
+    bottom: 86px;
+    left: 8px;
+    transform: scale(0.9);
+    transform-origin: bottom left;
+  }
 }
 
 /* 1,000m Founder Milestone HUD Toast */

@@ -34,15 +34,24 @@ export class CameraManager {
 
   public resize(width: number, height: number): void {
     this.camera.aspect = width / height;
+    const isPortrait = width < height;
+    this.baseFOV = isPortrait ? 76 : 64;
+    this.maxFOV = isPortrait ? 88 : 76;
+    this.camera.fov = this.baseFOV;
     this.camera.updateProjectionMatrix();
   }
 
   public reset(carPos: THREE.Vector3): void {
     this.shakeIntensity = 0;
     this.pursuitBlend = 0;
+    const isPortrait = this.camera.aspect < 1.0;
+    this.baseFOV = isPortrait ? 76 : 64;
+    this.maxFOV = isPortrait ? 88 : 76;
     this.camera.fov = this.baseFOV;
     this.camera.updateProjectionMatrix();
-    this.currentPos.set(carPos.x * 0.72, carPos.y + 1.45, carPos.z - 4.4);
+    const back = isPortrait ? 5.4 : 4.4;
+    const height = isPortrait ? 1.8 : 1.45;
+    this.currentPos.set(carPos.x * 0.72, carPos.y + height, carPos.z - back);
     this.camera.position.copy(this.currentPos);
     this.lookTarget.set(carPos.x * 0.85, carPos.y + 0.85, carPos.z + 10);
     this.camera.lookAt(this.lookTarget);
@@ -69,12 +78,16 @@ export class CameraManager {
     this.camera.updateProjectionMatrix();
 
     // 3. Camera Chase Distance & Height (Elevates during pursuit for unobstructed vision)
-    const normalBackDistance = 4.4 + speedRatio * 0.7;
-    const pursuitBackDistance = 5.8 + speedRatio * 0.8;
+    const isPortrait = this.camera.aspect < 1.0;
+    const portraitExtraBack = isPortrait ? 1.0 : 0.0;
+    const portraitExtraHeight = isPortrait ? 0.35 : 0.0;
+
+    const normalBackDistance = 4.4 + speedRatio * 0.7 + portraitExtraBack;
+    const pursuitBackDistance = 5.8 + speedRatio * 0.8 + portraitExtraBack;
     const backDistance = THREE.MathUtils.lerp(normalBackDistance, pursuitBackDistance, this.pursuitBlend);
 
-    const normalHeight = 1.45 + speedRatio * 0.2;
-    const pursuitHeight = 2.35 + speedRatio * 0.25;
+    const normalHeight = 1.45 + speedRatio * 0.2 + portraitExtraHeight;
+    const pursuitHeight = 2.35 + speedRatio * 0.25 + portraitExtraHeight;
     const height = THREE.MathUtils.lerp(normalHeight, pursuitHeight, this.pursuitBlend);
 
     // Rigidly lock Z distance to eliminate oscillating frame-rate micro-stutter

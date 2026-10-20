@@ -1,28 +1,43 @@
-// VELOCITY X - Auto Landscape Orientation Lock & Virtual Widescreen Engine
-import React, { useState, useEffect } from 'react';
-import { Smartphone, RotateCw, Download, Play } from 'lucide-react';
+// VELOCITY X - Auto Landscape Orientation Lock & Portrait Play Engine
+import React, { useState, useEffect, useCallback } from 'react';
+import { Smartphone, RotateCw, Download, Play, X } from 'lucide-react';
 import { triggerGlobalAppInstall } from './InstallPrompt';
 
 export const RotatePhonePrompt: React.FC = () => {
   const [isPortrait, setIsPortrait] = useState(false);
   const [isVirtualLandscape, setIsVirtualLandscape] = useState(false);
+  const [isDismissed, setIsDismissed] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('vx_portrait_dismissed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const checkOrientation = useCallback(() => {
+    // Only apply on touch/mobile devices; desktop browsers with narrow windows shouldn't be blocked
+    const isTouchOrMobile =
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (!isTouchOrMobile) {
+      setIsPortrait(false);
+      return;
+    }
+
+    const portrait = window.innerWidth < window.innerHeight;
+    setIsPortrait(portrait);
+
+    // If user physically rotated to landscape, remove virtual CSS rotation
+    if (!portrait && document.body.classList.contains('force-virtual-landscape')) {
+      document.body.classList.remove('force-virtual-landscape');
+      setIsVirtualLandscape(false);
+      window.dispatchEvent(new Event('resize'));
+    }
+  }, []);
 
   useEffect(() => {
-    const checkOrientation = () => {
-      // If width < height, phone is being held in portrait
-      const portrait = window.innerWidth < window.innerHeight;
-      setIsPortrait(portrait);
-
-      // If user physically rotated to landscape, remove virtual CSS rotation
-      if (!portrait && document.body.classList.contains('force-virtual-landscape')) {
-        document.body.classList.remove('force-virtual-landscape');
-        setIsVirtualLandscape(false);
-        // Explicitly trigger a synthetic resize event so Three.js camera projection and WebGL renderer
-        // update immediately when virtual landscape rotation transform is stripped from <body>.
-        window.dispatchEvent(new Event('resize'));
-      }
-    };
-
     checkOrientation();
     window.addEventListener('resize', checkOrientation);
     if (window.screen?.orientation) {
@@ -45,7 +60,19 @@ export const RotatePhonePrompt: React.FC = () => {
       }
       document.body.classList.remove('force-virtual-landscape');
     };
-  }, []);
+  }, [checkOrientation]);
+
+  const handlePlayInPortrait = () => {
+    setIsDismissed(true);
+    try {
+      sessionStorage.setItem('vx_portrait_dismissed', 'true');
+    } catch {
+      // storage unavailable
+    }
+    document.body.classList.remove('force-virtual-landscape');
+    setIsVirtualLandscape(false);
+    window.dispatchEvent(new Event('resize'));
+  };
 
   const handleForceLandscape = async () => {
     try {
@@ -68,30 +95,52 @@ export const RotatePhonePrompt: React.FC = () => {
     window.dispatchEvent(new Event('resize'));
   };
 
-  if (!isPortrait || isVirtualLandscape) return null;
+  if (!isPortrait || isVirtualLandscape || isDismissed) return null;
 
   return (
-    <div className="rotate-prompt-overlay">
+    <div className="rotate-prompt-overlay" role="dialog" aria-modal="true" aria-label="Orientation suggestion">
       <div className="rotate-card">
+        {/* Top-Right Dismiss Button */}
+        <button
+          type="button"
+          className="rotate-close-btn"
+          onClick={handlePlayInPortrait}
+          title="Close and play in portrait"
+          aria-label="Close"
+        >
+          <X size={18} />
+        </button>
+
         <div className="phone-rotate-anim">
-          <Smartphone size={54} className="phone-icon" />
-          <RotateCw size={26} className="rotate-spinner-icon" />
+          <Smartphone size={52} className="phone-icon" />
+          <RotateCw size={24} className="rotate-spinner-icon" />
         </div>
 
-        <h2 className="rotate-title">ROTATE YOUR PHONE</h2>
+        <h2 className="rotate-title">LANDSCAPE RECOMMENDED</h2>
         <p className="rotate-desc">
-          VELOCITY X is engineered for 4K widescreen landscape hypercar racing.
+          VELOCITY X is optimized for widescreen racing. You can play in portrait or turn your phone horizontally.
         </p>
 
         <div className="rotate-actions-group">
-          {/* Primary 1-Tap Auto-Rotate Button */}
+          {/* Primary Action: Immediate Portrait Play */}
+          <button
+            type="button"
+            className="play-portrait-btn"
+            onClick={handlePlayInPortrait}
+            aria-label="PLAY IN PORTRAIT - Race Immediately"
+          >
+            <Play size={18} fill="currentColor" />
+            <span>PLAY IN PORTRAIT (RACE NOW)</span>
+          </button>
+
+          {/* Secondary Action: Force Fullscreen Landscape */}
           <button
             type="button"
             className="auto-landscape-btn"
             onClick={handleForceLandscape}
             aria-label="FORCE AUTO-LANDSCAPE - Fullscreen Mode"
           >
-            <Play size={18} fill="currentColor" />
+            <RotateCw size={16} />
             <span>FORCE AUTO-LANDSCAPE</span>
           </button>
 
@@ -100,14 +149,14 @@ export const RotatePhonePrompt: React.FC = () => {
             type="button"
             className="portrait-install-action-btn"
             onClick={() => triggerGlobalAppInstall()}
-            aria-label="INSTALL APP (PERMANENT LANDSCAPE) - Add to Home Screen"
+            aria-label="INSTALL APP - Add to Home Screen"
           >
-            <Download size={16} />
+            <Download size={15} />
             <span>INSTALL APP (PERMANENT LANDSCAPE)</span>
           </button>
         </div>
 
-        <div className="rotate-pill">OR TURN PHONE HORIZONTALLY</div>
+        <div className="rotate-pill">💡 TIP: TURN ON AUTO-ROTATE IN PHONE SETTINGS</div>
       </div>
     </div>
   );
